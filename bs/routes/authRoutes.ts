@@ -1,4 +1,4 @@
-import { loginUser } from '@/api/authApi'
+import { loginUser } from '@/api/authClientApi'
 
 export async function handleLogin(phone: string, name: string) {
   const { data, error } = await loginUser(phone, name)
