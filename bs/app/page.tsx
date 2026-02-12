@@ -1,20 +1,15 @@
-import { createClient } from '@/utils/supabase/server'
 
-export default async function Home() {
+import { createClient } from '@/utils/supabase/server'
+import RegisterPage from './register/RegisterPage'
+
+export default async function Page() {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.auth.getSession()
+  const { data: todos } = await supabase.from('todos').select()
 
   return (
     <main>
-      <h1>Bible Study</h1>
-      <p>Welcome to your Bible study app.</p>
-      {error ? (
-        <p>❌ Connection failed: {error.message}</p>
-      ) : (
-        <p>✅ Supabase is connected and working!</p>
-      )}
+      <RegisterPage></RegisterPage>
     </main>
   )
 }
-

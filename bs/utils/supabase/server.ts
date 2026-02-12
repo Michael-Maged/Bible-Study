@@ -4,10 +4,10 @@ import { cookies } from "next/headers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
 
 export const createClient = async () => {
-  const cookieStore = await cookies()
-  
+  const cookieStore = await cookies();
   return createServerClient(
     supabaseUrl!,
     supabaseKey!,
@@ -25,6 +25,19 @@ export const createClient = async () => {
             // user sessions.
           }
         },
+      },
+    },
+  );
+};
+
+export const createAdminClient = () => {
+  return createServerClient(
+    supabaseUrl!,
+    supabaseServiceKey!,
+    {
+      cookies: {
+        getAll() { return [] },
+        setAll() {},
       },
     },
   );
