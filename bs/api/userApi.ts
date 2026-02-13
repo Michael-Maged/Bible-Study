@@ -24,7 +24,6 @@ export async function createUser(userData: any) {
     age: userData.age,
     gender: userData.gender,
     phone_number: userData.phone,
-    pn_role: userData.familyRole,
     status: 'inprogress'
   }).select().single()
   

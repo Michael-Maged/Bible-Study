@@ -16,7 +16,7 @@ export default function RegisterPage() {
   const [selectedTenant, setSelectedTenant] = useState('')
   const [selectedGrade, setSelectedGrade] = useState('')
   const [selectedGender, setSelectedGender] = useState('')
-  const [selectedRole, setSelectedRole] = useState('')
+
   const [selectedClass, setSelectedClass] = useState('')
 
   useEffect(() => {
@@ -177,22 +177,6 @@ export default function RegisterPage() {
                 required
               />
             </div>
-
-            {/* Phone Holder Role */}
-            <CustomSelect
-              id="familyRole"
-              name="familyRole"
-              value={selectedRole}
-              onChange={setSelectedRole}
-              options={[
-                { value: 'user', label: 'User' },
-                { value: 'mother', label: 'Mother' },
-                { value: 'father', label: 'Father' }
-              ]}
-              placeholder="Phone Holder Role"
-              icon="👥"
-              required
-            />
 
             {/* Church Stage */}
             <CustomSelect

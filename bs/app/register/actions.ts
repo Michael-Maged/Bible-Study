@@ -8,7 +8,6 @@ export async function registerKid(formData: FormData) {
     phone: formData.get('phone') as string,
     age: parseInt(formData.get('age') as string),
     gender: formData.get('gender') as 'male' | 'female',
-    familyRole: formData.get('familyRole') as 'user' | 'mother' | 'father',
     tenantId: formData.get('tenant') as string,
     gradeId: formData.get('grade') as string,
     classId: formData.get('classes') as string
