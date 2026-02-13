@@ -20,6 +20,7 @@ export async function createAdmin(adminData: {
   grade: number
   role: 'admin' | 'superuser'
   tenant: string
+  status: 'pending' 
 }) {
   const supabase = await createClient()
   return await supabase.from('admin').insert(adminData).select().single()

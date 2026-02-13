@@ -32,7 +32,7 @@ export async function createUser(userData: any) {
     await supabase.from('enrollment').insert({
       user_id: user.id,
       class: userData.classId,
-      status: 'Pending'
+      status: 'pending'
     })
   }
   
