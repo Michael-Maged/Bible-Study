@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { registerKid } from './actions'
 import { fetchTenants, fetchGradesByTenant, fetchClassesByGrade } from './tenantActions'
 import CustomSelect from './CustomSelect'
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
   
@@ -70,12 +72,8 @@ export default function RegisterPage() {
       
       if (result.success) {
         setStatus('success')
-        setMessage('Waiting for admin approval')
-        if (form) form.reset()
-        setSelectedTenant('')
-        setSelectedGrade('')
-        setGrades([])
-        setClasses([])
+        setMessage('Registration successful! Redirecting to login...')
+        setTimeout(() => router.push('/login'), 2000)
       } else {
         setStatus('error')
         setMessage(result.error || 'Registration failed')

@@ -1,4 +1,4 @@
-import { getPendingUsers, approveUser, getAllUsersByRole } from '@/api/adminApi'
+import { getPendingUsers, approveUser, getAllUsersByRole, createAdmin } from '@/api/adminApi'
 
 export async function handleGetPendingUsers() {
   const { data, error } = await getPendingUsers()
@@ -14,6 +14,17 @@ export async function handleApproveUser(userId: string, approved: boolean) {
 
 export async function handleGetUsersByRole(role: string) {
   const { data, error } = await getAllUsersByRole(role)
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function handleAdminRegistration(adminData: {
+  user_id: string
+  grade: number
+  role: 'admin' | 'superuser'
+  tenant: string
+}) {
+  const { data, error } = await createAdmin(adminData)
   if (error) throw new Error(error.message)
   return data
 }

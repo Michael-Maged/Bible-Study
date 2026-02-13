@@ -10,7 +10,7 @@ export async function registerKid(formData: FormData) {
     gender: formData.get('gender') as 'male' | 'female',
     tenantId: formData.get('tenant') as string,
     gradeId: formData.get('grade') as string,
-    classId: formData.get('classes') as string
+    classId: formData.get('class') as string
   }
 
   try {

@@ -24,7 +24,6 @@ export async function createUser(userData: any) {
     age: userData.age,
     gender: userData.gender,
     phone_number: userData.phone,
-    status: 'inprogress'
   }).select().single()
   
   if (userError || !user) return { data: null, error: userError }
@@ -32,7 +31,8 @@ export async function createUser(userData: any) {
   if (userData.classId) {
     await supabase.from('enrollment').insert({
       user_id: user.id,
-      class: userData.classId
+      class: userData.classId,
+      status: 'Pending'
     })
   }
   
@@ -57,4 +57,19 @@ export async function updateUser(id: string, updates: any) {
 export async function deleteUser(id: string) {
   const supabase = getClient()
   return await supabase.from('user').delete().eq('id', id)
+}
+
+export async function createAdminUser(userData: any) {
+  const supabase = getAdminClient()
+  
+  const { data: user, error: userError } = await supabase.from('user').insert({
+    name: userData.name,
+    age: userData.age,
+    gender: userData.gender,
+    phone_number: userData.phone
+  }).select().single()
+  
+  if (userError || !user) return { data: null, error: userError }
+  
+  return { data: user, error: null }
 }

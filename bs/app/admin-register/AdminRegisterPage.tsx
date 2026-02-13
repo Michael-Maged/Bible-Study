@@ -1,17 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { registerAdmin } from './actions'
-import { fetchTenants } from '../register/tenantActions'
-import CustomSelect from '@/shared/components/CustomSelect'
+import { fetchTenants, fetchGradesByTenant } from '../register/tenantActions'
+import CustomSelect from '../register/CustomSelect'
 
 export default function AdminRegisterPage() {
+  const router = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
   const [tenants, setTenants] = useState<any[]>([])
+  const [grades, setGrades] = useState<any[]>([])
   const [selectedTenant, setSelectedTenant] = useState('')
   const [selectedRole, setSelectedRole] = useState('')
   const [selectedGrade, setSelectedGrade] = useState('')
+  const [selectedGender, setSelectedGender] = useState('')
 
   useEffect(() => {
     loadTenants()
@@ -21,6 +25,19 @@ export default function AdminRegisterPage() {
     const result = await fetchTenants()
     if (result.success) {
       setTenants(result.data || [])
+    }
+  }
+
+  async function handleTenantChange(tenantId: string) {
+    setSelectedTenant(tenantId)
+    setSelectedGrade('')
+    setGrades([])
+    
+    if (tenantId) {
+      const result = await fetchGradesByTenant(tenantId)
+      if (result.success) {
+        setGrades(result.data || [])
+      }
     }
   }
 
@@ -35,11 +52,8 @@ export default function AdminRegisterPage() {
       
       if (result.success) {
         setStatus('success')
-        setMessage('Admin registered successfully')
-        if (form) form.reset()
-        setSelectedTenant('')
-        setSelectedRole('')
-        setSelectedGrade('')
+        setMessage('Admin registered successfully. Redirecting to login...')
+        setTimeout(() => router.push('/login'), 2000)
       } else {
         setStatus('error')
         setMessage(result.error || 'Registration failed')
@@ -87,25 +101,48 @@ export default function AdminRegisterPage() {
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">👤</span>
               <input
                 type="text"
-                name="user_id"
+                name="name"
                 required
-                placeholder="User ID"
+                placeholder="Full Name"
                 className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
               />
             </div>
 
             <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">🎓</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">📱</span>
               <input
-                type="number"
-                name="grade"
+                type="tel"
+                name="phone"
                 required
-                min="1"
-                max="12"
-                placeholder="Grade"
-                value={selectedGrade}
-                onChange={(e) => setSelectedGrade(e.target.value)}
+                placeholder="Phone Number"
                 className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative group">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">🎂</span>
+                <input
+                  type="number"
+                  name="age"
+                  required
+                  min="18"
+                  placeholder="Age"
+                  className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+                />
+              </div>
+              <CustomSelect
+                id="gender"
+                name="gender"
+                value={selectedGender}
+                onChange={setSelectedGender}
+                options={[
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' }
+                ]}
+                placeholder="Gender"
+                icon="⚧"
+                required
               />
             </div>
 
@@ -127,10 +164,22 @@ export default function AdminRegisterPage() {
               id="tenant"
               name="tenant"
               value={selectedTenant}
-              onChange={setSelectedTenant}
+              onChange={handleTenantChange}
               options={tenants.map(t => ({ value: t.id, label: t.name }))}
               placeholder="Select Tenant"
               icon="⛪"
+              required
+            />
+
+            <CustomSelect
+              id="grade"
+              name="grade"
+              value={selectedGrade}
+              onChange={setSelectedGrade}
+              options={grades.map(g => ({ value: g.id, label: g.name }))}
+              placeholder="Select Grade"
+              icon="🎓"
+              disabled={!selectedTenant}
               required
             />
 

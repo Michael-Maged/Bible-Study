@@ -14,3 +14,13 @@ export async function getAllUsersByRole(role: string) {
   const supabase = await createClient()
   return await supabase.from('user').select('*').eq('role', role)
 }
+
+export async function createAdmin(adminData: {
+  user_id: string
+  grade: number
+  role: 'admin' | 'superuser'
+  tenant: string
+}) {
+  const supabase = await createClient()
+  return await supabase.from('admin').insert(adminData).select().single()
+}
