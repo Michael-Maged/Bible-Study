@@ -31,13 +31,9 @@ export default function CustomSelect({
   required = false
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedLabel, setSelectedLabel] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const selected = options.find(opt => opt.value === value)
-    setSelectedLabel(selected ? selected.label : '')
-  }, [value, options])
+  const selectedLabel = options.find(opt => opt.value === value)?.label || ''
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -66,6 +62,7 @@ export default function CustomSelect({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
+        suppressHydrationWarning
         className={`w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white focus:ring-2 focus:ring-[#6ef516] transition-all appearance-none text-left ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         } ${!selectedLabel ? 'text-[#7cb85f]/50' : ''}`}
@@ -74,7 +71,7 @@ export default function CustomSelect({
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-20 w-full mt-2 bg-white dark:bg-[#243d1c] rounded-2xl shadow-xl shadow-[#6ef516]/10 max-h-60 overflow-y-auto border border-[#6ef516]/20">
+        <div className="absolute z-[100] w-full mt-2 mb-2 bg-white dark:bg-[#243d1c] rounded-2xl shadow-xl shadow-[#6ef516]/10 max-h-60 overflow-y-auto border border-[#6ef516]/20 bottom-auto">
           {options.map((option) => (
             <button
               key={option.value}
