@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { registerKid } from './actions'
 import { fetchTenants, fetchGradesByTenant, fetchClassesByGrade } from './tenantActions'
-import CustomSelect from './CustomSelect'
+import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
 
 export default function RegisterPage() {

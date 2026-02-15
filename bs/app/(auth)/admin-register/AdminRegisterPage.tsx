@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { registerAdmin } from './actions'
 import { fetchTenants, fetchGradesByTenant } from '../register/tenantActions'
-import CustomSelect from '../register/CustomSelect'
+import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
 
 export default function AdminRegisterPage() {
