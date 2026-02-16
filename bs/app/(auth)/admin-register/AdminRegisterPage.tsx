@@ -120,7 +120,6 @@ export default function AdminRegisterPage() {
                 name="phone"
                 required
                 placeholder="1234567890"
-                pattern="[0-9]{10}"
                 className="w-full pl-[4.5rem] pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
               />
             </div>

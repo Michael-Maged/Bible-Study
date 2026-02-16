@@ -24,7 +24,7 @@ export async function handleAdminRegistration(adminData: {
   role: 'admin' | 'superuser'
   tenant: string
 }) {
-  const { data, error } = await createAdmin(adminData)
+  const { data, error } = await createAdmin({ ...adminData, status: 'pending' })
   if (error) throw new Error(error.message)
   return data
 }
