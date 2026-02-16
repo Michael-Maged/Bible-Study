@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { handleLogin } from '@/routes/authRoutes'
+import MessageBox from '@/components/MessageBox'
 
 export default function LoginPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
@@ -53,7 +54,7 @@ export default function LoginPage() {
           >
             {status === 'loading' ? 'Logging in...' : 'Login'}
           </button>
-          {status === 'error' && <p className="text-red-500 text-sm">{message}</p>}
+          {status === 'error' && message && <MessageBox type="error" message={message} />}
         </form>
       </div>
     </div>

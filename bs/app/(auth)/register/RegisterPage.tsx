@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { registerKid } from './actions'
 import { fetchTenants, fetchGradesByTenant, fetchClassesByGrade } from './tenantActions'
-import CustomSelect from './CustomSelect'
+import CustomSelect from '@/components/CustomSelect'
+import MessageBox from '@/components/MessageBox'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -72,8 +73,12 @@ export default function RegisterPage() {
       
       if (result.success) {
         setStatus('success')
-        setMessage('Registration successful! Redirecting to login...')
-        setTimeout(() => router.push('/login'), 2000)
+        setMessage('Verification code sent! Check your phone...')
+        // Store pending registration data in sessionStorage
+        if (result.pendingData) {
+          sessionStorage.setItem('pendingRegistration', JSON.stringify(result.pendingData))
+        }
+        router.push(`/verify-phone?phone=${encodeURIComponent(result.phone || '')}&type=kid`)
       } else {
         setStatus('error')
         setMessage(result.error || 'Registration failed')
@@ -136,13 +141,14 @@ export default function RegisterPage() {
             {/* Phone */}
             <div className="relative group">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">📱</span>
+              <span className="absolute left-12 top-1/2 -translate-y-1/2 text-[#0d1a08] dark:text-white">+2</span>
               <input
                 type="tel"
                 id="phone"
                 name="phone"
                 required
-                placeholder="Phone Number"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+                placeholder="1234567890"
+                className="w-full pl-[4.5rem] pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
               />
             </div>
 
@@ -215,16 +221,12 @@ export default function RegisterPage() {
             />
 
             {/* Status Messages */}
-            {status === 'success' && (
-              <div className="p-4 bg-[#6ef516]/10 border border-[#6ef516]/20 rounded-2xl text-[#0d1a08] dark:text-white text-sm">
-                {message}
-              </div>
+            {status === 'success' && message && (
+              <MessageBox type="success" message={message} />
             )}
 
-            {status === 'error' && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-600 dark:text-red-400 text-sm">
-                {message}
-              </div>
+            {status === 'error' && message && (
+              <MessageBox type="error" message={message} />
             )}
 
             {/* Submit Button */}
