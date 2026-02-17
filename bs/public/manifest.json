@@ -1,0 +1,17 @@
+{
+  "name": "Bible Study App",
+  "short_name": "Bible Study",
+  "description": "Bible study platform for kids",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f8f5",
+  "theme_color": "#59f20d",
+  "icons": [
+    {
+      "src": "/image.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
