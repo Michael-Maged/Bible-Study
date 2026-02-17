@@ -17,20 +17,33 @@ export async function registerAdmin(formData: FormData) {
       formattedPhone = '+' + formattedPhone
     }
     
+    // Generate unique email from phone + name
+    const uniqueEmail = `${formattedPhone.replace(/\+/g, '')}.${name.toLowerCase().replace(/\s+/g, '')}@biblestudy.app`
+    
     const supabase = await createClient()
-    const { error } = await supabase.auth.signInWithOtp({ 
-      phone: formattedPhone,
+    // Sign up with email but send OTP to phone
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: uniqueEmail,
+      password: Math.random().toString(36),
       options: {
-        channel: 'sms'
+        emailRedirectTo: undefined // Disable email confirmation
       }
     })
     
-    if (error) throw new Error(error.message)
+    if (signUpError) throw new Error(signUpError.message)
+    
+    // Send OTP to phone
+    const { error: otpError } = await supabase.auth.signInWithOtp({ 
+      phone: formattedPhone,
+      options: { channel: 'sms' }
+    })
+    
+    if (otpError) throw new Error(otpError.message)
     
     return {
       success: true,
       phone: formattedPhone,
-      pendingData: { name, phone: formattedPhone, age, gender, role, tenant, grade }
+      pendingData: { name, phone: formattedPhone, age, gender, role, tenant, grade, email: uniqueEmail }
     }
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to send verification code' }

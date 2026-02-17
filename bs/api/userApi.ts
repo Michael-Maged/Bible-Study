@@ -24,6 +24,7 @@ export async function createUser(userData: any) {
     age: userData.age,
     gender: userData.gender,
     phone_number: userData.phone,
+    auth_id: userData.auth_id
   }).select().single()
   
   if (userError || !user) return { data: null, error: userError }
@@ -66,7 +67,8 @@ export async function createAdminUser(userData: any) {
     name: userData.name,
     age: userData.age,
     gender: userData.gender,
-    phone_number: userData.phone
+    phone_number: userData.phone,
+    auth_id: userData.auth_id
   }).select().single()
   
   if (userError || !user) return { data: null, error: userError }

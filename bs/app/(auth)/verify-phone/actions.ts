@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { createUser, createAdminUser } from '@/api/userApi'
 import { handleAdminRegistration } from '@/routes/adminRoutes'
 import { fetchGradesByTenant } from '../register/tenantActions'
@@ -23,6 +23,12 @@ export async function verifyAndCreateUser(phone: string, code: string, type: 'ki
       throw new Error('Verification failed. Please try again.')
     }
 
+    // Get auth user by email using admin client
+    const adminClient = createAdminClient()
+    const { data: { users } } = await adminClient.auth.admin.listUsers()
+    const matchedAuthUser = users.find(u => u.email === pendingData.email)
+    const authUserId = matchedAuthUser?.id
+
     if (type === 'kid') {
       const userData = {
         name: pendingData.name,
@@ -31,7 +37,8 @@ export async function verifyAndCreateUser(phone: string, code: string, type: 'ki
         gender: pendingData.gender,
         tenantId: pendingData.tenantId,
         gradeId: pendingData.gradeId,
-        classId: pendingData.classId
+        classId: pendingData.classId,
+        auth_id: authUserId
       }
 
       console.log('Creating user with data:', userData)
@@ -46,7 +53,8 @@ export async function verifyAndCreateUser(phone: string, code: string, type: 'ki
         name: pendingData.name,
         phone: pendingData.phone,
         age: parseInt(pendingData.age),
-        gender: pendingData.gender as 'male' | 'female'
+        gender: pendingData.gender as 'male' | 'female',
+        auth_id: authUserId
       }
 
       console.log('Creating admin user with data:', userData)
