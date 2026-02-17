@@ -36,8 +36,8 @@ export async function sendLoginOtp(name: string, phone: string) {
     })
     
     if (error) {
-      console.error('OTP Error:', error)
-      return { success: false, error: 'Failed to send verification code' }
+      console.error('OTP Error:', JSON.stringify(error))
+      return { success: false, error: error.message || 'Failed to send verification code' }
     }
     
     return { success: true, role: userRole, userName: user.name }

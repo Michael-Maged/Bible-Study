@@ -38,6 +38,12 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { session } } = await supabase.auth.getSession()
+  
+  // Refresh session if it exists
+  if (session) {
+    await supabase.auth.getUser()
+  }
+  
   const userRole = request.cookies.get('user-role')?.value
 
   // Protect non-public routes
@@ -54,5 +60,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|manifest.json|.*\\.png|.*\\.svg).*)']
 }
