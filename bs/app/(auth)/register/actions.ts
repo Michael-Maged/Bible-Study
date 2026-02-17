@@ -36,21 +36,38 @@ export async function registerKid(formData: FormData) {
       formattedPhone = '+' + formattedPhone
     }
     
-    // Send OTP first, don't create user yet
+    // Generate unique email from phone + name
+    const uniqueEmail = `${formattedPhone.replace(/\+/g, '')}.${userData.name.toLowerCase().replace(/\s+/g, '')}@biblestudy.app`
+    
     const supabase = await createClient()
-    const { error } = await supabase.auth.signInWithOtp({ 
-      phone: formattedPhone,
+    // Sign up with email to create auth.users row
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: uniqueEmail,
+      password: Math.random().toString(36),
       options: {
-        channel: 'sms'
+        emailRedirectTo: undefined,
+        data: { phone: formattedPhone }
       }
     })
     
-    if (error) {
-      throw new Error(getUserFriendlyError(error.message))
+    if (signUpError) {
+      console.error('SignUp Error:', signUpError)
+      throw new Error(getUserFriendlyError(signUpError.message))
+    }
+    
+    // Send OTP to phone
+    const { error: otpError } = await supabase.auth.signInWithOtp({ 
+      phone: formattedPhone,
+      options: { channel: 'sms' }
+    })
+    
+    if (otpError) {
+      console.error('OTP Error:', otpError)
+      throw new Error(getUserFriendlyError(otpError.message))
     }
     
     // Return user data to be stored temporarily
-    return { success: true, phone: formattedPhone, pendingData: userData }
+    return { success: true, phone: formattedPhone, pendingData: { ...userData, phone: formattedPhone, email: uniqueEmail } }
   } catch (error: any) {
     return { success: false, error: error.message || 'Registration failed' }
   }
