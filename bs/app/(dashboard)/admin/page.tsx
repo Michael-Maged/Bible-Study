@@ -6,20 +6,23 @@ import { createClient } from '@/utils/supabase/client'
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [userRole, setUserRole] = useState<string>('')
   const router = useRouter()
 
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      const userRole = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
+      const role = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
       
-      if (!session || (userRole !== 'admin' && userRole !== 'superuser')) {
+      if (!session || (role !== 'admin' && role !== 'superuser')) {
         router.push('/login')
+      } else {
+        setUserRole(role || '')
       }
     }
     checkAuth()
-  }, [])
+  }, [router])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -36,7 +39,7 @@ export default function AdminDashboard() {
             <span className="text-2xl">📖</span>
           </div>
           <div>
-            <h1 className="text-lg font-bold leading-none">Admin Dashboard</h1>
+            <h1 className="text-lg font-bold leading-none">{userRole === 'superuser' ? 'Superuser' : 'Admin'} Dashboard</h1>
             <p className="text-xs text-zinc-500 font-medium mt-1">Manage Bible Study</p>
           </div>
         </div>

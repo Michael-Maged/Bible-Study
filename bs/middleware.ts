@@ -4,18 +4,16 @@ import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const publicPaths = ['/login', '/register', '/admin-register', '/verify-phone', '/pending']
-  const alwaysAccessible = ['/test-otp']
+  const publicPaths = ['/login', '/register', '/admin-register', '/verify-phone']
   const adminPaths = ['/admin']
   const kidPaths = ['/dashboard', '/classes', '/profile']
   
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
-  const isAlwaysAccessible = alwaysAccessible.some(path => pathname.startsWith(path))
   const isAdminPath = adminPaths.some(path => pathname.startsWith(path))
   const isKidPath = kidPaths.some(path => pathname.startsWith(path))
 
   // Allow public paths without any checks
-  if (isPublicPath || isAlwaysAccessible) {
+  if (isPublicPath) {
     return NextResponse.next()
   }
 
