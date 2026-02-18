@@ -1,0 +1,85 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+
+export default function PendingRequestsPage() {
+  const router = useRouter()
+
+  return (
+    <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-[#f6f8f5] min-h-screen flex flex-col">
+      <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md border-b border-[#59f20d]/10">
+        <div className="flex items-center p-4 justify-between max-w-md mx-auto w-full">
+          <button onClick={() => router.back()} className="flex size-10 items-center justify-center rounded-full hover:bg-[#59f20d]/10 transition-colors">
+            <span className="text-2xl">←</span>
+          </button>
+          <h1 className="text-lg font-bold tracking-tight flex-1 text-center">Pending Requests</h1>
+          <div className="flex w-10 items-center justify-end">
+            <span className="bg-[#59f20d] text-black text-xs font-bold px-2 py-1 rounded-full shrink-0 shadow-sm">12</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto pb-24 max-w-md mx-auto w-full px-4">
+        <div className="py-4">
+          <label className="relative flex items-center w-full">
+            <span className="absolute left-4 text-[#59f20d]/70 text-xl">🔍</span>
+            <input className="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base placeholder:text-gray-400 dark:placeholder:text-gray-500" placeholder="Search by kid's name..." type="text"/>
+          </label>
+        </div>
+
+        <div className="space-y-4">
+          {[
+            { name: 'Liam Johnson', age: 8, grade: '3rd Grade' },
+            { name: 'Sophia Martinez', age: 7, grade: '2nd Grade' },
+            { name: 'Noah Williams', age: 10, grade: '5th Grade' },
+            { name: 'Ava Brown', age: 9, grade: '4th Grade' }
+          ].map((kid, idx) => (
+            <div key={idx} className="bg-white dark:bg-[#1f2e18] rounded-xl overflow-hidden shadow-sm border border-[#59f20d]/5">
+              <div className="p-4 flex gap-4">
+                <div className="size-16 rounded-lg bg-[#59f20d]/20 shrink-0 flex items-center justify-center text-3xl">
+                  👤
+                </div>
+                <div className="flex flex-col justify-center">
+                  <h3 className="text-lg font-bold">{kid.name}</h3>
+                  <div className="flex gap-3 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1">📅 {kid.age} yrs</span>
+                    <span className="flex items-center gap-1">🎓 {kid.grade}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3 p-4 pt-0">
+                <button className="flex-1 h-12 rounded-full bg-[#59f20d]/10 text-[#121c0d] dark:text-[#59f20d] font-bold text-sm hover:bg-[#59f20d]/20 transition-colors border border-[#59f20d]/20">
+                  Reject
+                </button>
+                <button className="flex-[2] h-12 rounded-full bg-[#59f20d] text-black font-bold text-sm shadow-md active:scale-95 transition-all">
+                  Approve
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#1f2e18]/90 backdrop-blur-lg border-t border-[#59f20d]/10 pb-6 pt-2 z-50">
+        <div className="max-w-md mx-auto flex justify-around px-4">
+          <button className="flex flex-col items-center gap-1 text-[#59f20d]">
+            <span className="text-2xl">⏳</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Pending</span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">📜</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">History</span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">👥</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Admins</span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">⚙️</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Settings</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  )
+}
