@@ -21,9 +21,9 @@ export async function createUser(userData: any) {
   
   const { data: user, error: userError } = await supabase.from('user').insert({
     name: userData.name,
+    email: userData.email,
     age: userData.age,
     gender: userData.gender,
-    phone_number: userData.phone,
     auth_id: userData.auth_id
   }).select().single()
   
@@ -65,9 +65,9 @@ export async function createAdminUser(userData: any) {
   
   const { data: user, error: userError } = await supabase.from('user').insert({
     name: userData.name,
+    email: userData.email,
     age: userData.age,
     gender: userData.gender,
-    phone_number: userData.phone,
     auth_id: userData.auth_id
   }).select().single()
   
