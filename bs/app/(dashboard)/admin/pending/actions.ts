@@ -76,3 +76,33 @@ export async function handleApproveRequest(type: 'admin' | 'kid', id: string, ap
   
   return { success: true }
 }
+
+export async function getRequestDetails(type: 'admin' | 'kid', id: string) {
+  const supabase = await createClient()
+  
+  if (type === 'admin') {
+    const { data, error } = await supabase
+      .from('admin')
+      .select('*, user(*), grade:grade!admin_grade_fkey(*)')
+      .eq('id', id)
+      .single()
+    
+    if (error || !data) {
+      return { success: false, error: 'Request not found' }
+    }
+    
+    return { success: true, data: { ...data, type: 'admin' } }
+  } else {
+    const { data, error } = await supabase
+      .from('enrollment')
+      .select('*, user(*), class:classes(*)')
+      .eq('id', id)
+      .single()
+    
+    if (error || !data) {
+      return { success: false, error: 'Request not found' }
+    }
+    
+    return { success: true, data: { ...data, type: 'kid' } }
+  }
+}

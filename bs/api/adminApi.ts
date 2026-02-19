@@ -16,7 +16,7 @@ export async function getPendingRequestsForAdmin(adminUserId: string) {
   
   const { tenant, role: adminRole } = adminData
   const adminGradeNum = adminData.grade.grade_num
-  const isMixedGender = adminData.grade.gender === 'mix'
+  const isMixedGender = adminData.grade.gender === 'mix' || adminData.grade.gender === 'mixed'
   
   console.log('Admin grade num:', adminGradeNum, 'Tenant:', tenant, 'Mixed gender:', isMixedGender)
   

@@ -34,12 +34,17 @@ export default function PendingRequestsPage() {
         ...result.data.superusers.map((s: any) => ({ ...s, type: 'admin' as const })),
         ...result.data.kids.map((k: any) => ({ ...k, type: 'kid' as const }))
       ]
+      console.log('All requests count:', allRequests.length)
       console.log('All requests:', allRequests)
+      console.log('Request IDs:', allRequests.map(r => `${r.type}-${r.id}`))
       setRequests(allRequests)
       
-      // Extract unique class names
-      const classes = [...new Set(allRequests.filter(r => r.class?.name).map(r => r.class!.name))]
-      setAvailableClasses(classes)
+      // Extract unique class names using Set with proper mapping
+      const classNames = allRequests
+        .filter(r => r.class?.name)
+        .map(r => r.class!.name)
+      const uniqueClasses = Array.from(new Set(classNames))
+      setAvailableClasses(uniqueClasses)
     }
     setLoading(false)
   }
@@ -108,8 +113,11 @@ export default function PendingRequestsPage() {
         ) : (
           <div className="space-y-4">
             {filteredRequests.map((request) => (
-              <div key={request.id} className="bg-white dark:bg-[#1f2e18] rounded-xl overflow-hidden shadow-sm border border-[#59f20d]/5">
-                <div className="p-4">
+              <div key={`${request.type}-${request.id}`} className="bg-white dark:bg-[#1f2e18] rounded-xl overflow-hidden shadow-sm border border-[#59f20d]/5">
+                <button 
+                  onClick={() => router.push(`/admin/pending/${request.type}/${request.id}`)}
+                  className="w-full p-4 text-left hover:bg-[#59f20d]/5 transition-colors"
+                >
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="text-lg font-bold">{request.user.name}</h3>
@@ -120,7 +128,7 @@ export default function PendingRequestsPage() {
                     </div>
                     {request.type === 'admin' && <span className="text-[#59f20d] font-bold text-xs px-2 py-1 bg-[#59f20d]/10 rounded-full">Superuser</span>}
                   </div>
-                </div>
+                </button>
                 <div className="flex gap-3 p-4 pt-0">
                   <button 
                     onClick={() => handleAction(request.id, request.type, false)}
