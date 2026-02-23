@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { registerAdmin } from './actions'
+import { registerAdminWithEmail } from '../register/emailActions'
 import { fetchTenants, fetchGradesByTenant } from '../register/tenantActions'
 import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
@@ -49,15 +49,12 @@ export default function AdminRegisterPage() {
     const form = e.currentTarget
     const formData = new FormData(form)
     try {
-      const result = await registerAdmin(formData)
+      const result = await registerAdminWithEmail(formData)
       
       if (result.success) {
         setStatus('success')
-        setMessage('Verification code sent! Check your phone...')
-        if (result.pendingData) {
-          sessionStorage.setItem('pendingAdminRegistration', JSON.stringify(result.pendingData))
-        }
-        router.push(`/verify-phone?phone=${encodeURIComponent(result.phone || '')}&type=admin`)
+        setMessage('Registration successful! Waiting for admin approval...')
+        setTimeout(() => router.push('/login'), 2000)
       } else {
         setStatus('error')
         setMessage(result.error || 'Registration failed')
@@ -113,14 +110,25 @@ export default function AdminRegisterPage() {
             </div>
 
             <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">📱</span>
-              <span className="absolute left-12 top-1/2 -translate-y-1/2 text-[#0d1a08] dark:text-white">+2</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">📧</span>
               <input
-                type="tel"
-                name="phone"
+                type="email"
+                name="email"
                 required
-                placeholder="1234567890"
-                className="w-full pl-[4.5rem] pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+                placeholder="your@email.com"
+                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+              />
+            </div>
+
+            <div className="relative group">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">🔒</span>
+              <input
+                type="password"
+                name="password"
+                required
+                minLength={6}
+                placeholder="Password (min 6 characters)"
+                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
               />
             </div>
 

@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import { getDashboardStats } from './actions'
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [userRole, setUserRole] = useState<string>('')
+  const [stats, setStats] = useState({ totalUsers: 0, pendingCount: 0 })
   const router = useRouter()
 
   useEffect(() => {
@@ -19,10 +21,30 @@ export default function AdminDashboard() {
         router.push('/login')
       } else {
         setUserRole(role || '')
+        loadStats()
       }
     }
     checkAuth()
+    
+    // Reload stats when page becomes visible (user returns from another page)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadStats()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [router])
+
+  const loadStats = async () => {
+    const result = await getDashboardStats()
+    if (result.success && result.data) {
+      setStats(result.data)
+    }
+  }
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -56,12 +78,12 @@ export default function AdminDashboard() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Kids</p>
-              <p className="text-3xl font-bold text-[#59f20d]">24</p>
+              <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">{userRole === 'admin' ? 'Total Users' : 'Total Kids'}</p>
+              <p className="text-3xl font-bold text-[#59f20d]">{stats.totalUsers}</p>
             </div>
             <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
               <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Pending</p>
-              <p className="text-3xl font-bold text-orange-500">12</p>
+              <p className="text-3xl font-bold text-orange-500">{stats.pendingCount}</p>
             </div>
           </div>
         </section>
@@ -79,7 +101,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="text-left">
                   <p className="font-bold">Approve Requests</p>
-                  <p className="text-xs text-zinc-500">12 pending approvals</p>
+                  <p className="text-xs text-zinc-500">{stats.pendingCount} pending approvals</p>
                 </div>
               </div>
               <span className="text-zinc-400">→</span>
