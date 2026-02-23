@@ -1,8 +1,30 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import { useEffect, useState } from 'react'
+import { getTodayReading } from './actions'
 
 export default function DashboardPage() {
+  const router = useRouter()
+  const [reading, setReading] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadReading()
+  }, [])
+
+  const loadReading = async () => {
+    const result = await getTodayReading()
+    console.log('Reading result:', result)
+    if (result.success) {
+      setReading(result.data)
+    } else {
+      console.error('Failed to load reading:', result.error)
+    }
+    setLoading(false)
+  }
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -10,23 +32,174 @@ export default function DashboardPage() {
     window.location.href = '/login'
   }
 
-  return (
-    <div className="min-h-screen bg-[#f0fde4] dark:bg-[#1a2c14] p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-full transition-all"
-        >
-          Logout
-        </button>
+  if (loading) {
+    return (
+      <div className="bg-[#f6f8f5] dark:bg-[#162210] min-h-screen flex items-center justify-center">
+        <div className="text-2xl font-bold text-[#59f20d]">Loading...</div>
       </div>
-      <div className="grid gap-4">
-        <div className="p-6 bg-white dark:bg-[#243d1c] rounded-xl">
-          <h2 className="text-xl font-semibold mb-2">Welcome</h2>
-          <p>Your dashboard content here</p>
+    )
+  }
+
+  if (!reading) {
+    return (
+      <div className="bg-[#f6f8f5] dark:bg-[#162210] min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4">📖</div>
+            <h2 className="text-2xl font-bold mb-2">No Reading Today</h2>
+            <p className="text-slate-600 dark:text-slate-400">Check back later for today's assignment!</p>
+          </div>
         </div>
+        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
+          <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
+            <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
+              <span className="text-2xl">📖</span>
+              <span className="text-[10px] font-black uppercase mt-1">Reading</span>
+            </button>
+            <button onClick={() => router.push('/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+              <span className="text-2xl">📊</span>
+              <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
+            </button>
+            <button onClick={() => router.push('/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+              <span className="text-2xl">👤</span>
+              <span className="text-[10px] font-black uppercase mt-1">Profile</span>
+            </button>
+            <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
+              <span className="text-2xl">❌</span>
+              <span className="text-[10px] font-black uppercase mt-1">Logout</span>
+            </button>
+          </div>
+        </nav>
       </div>
+    )
+  }
+
+  return (
+    <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen">
+      <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
+        <div className="flex items-center gap-3">
+          <div className="bg-[#59f20d] p-2 rounded-full flex items-center justify-center text-slate-900 shadow-lg shadow-[#59f20d]/20">
+            <span className="text-2xl font-bold">📖</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-extrabold tracking-tight">Bible Kids</h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-[#59f20d]/20 shadow-sm">
+            <span className="text-orange-500 text-xl mr-1">🔥</span>
+            <span className="font-bold text-sm">5 Day Streak!</span>
+          </div>
+          <div className="w-10 h-10 rounded-full border-2 border-[#59f20d] overflow-hidden bg-slate-200 flex items-center justify-center text-2xl">
+            😊
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-6 pt-8 pb-32">
+        <section className="mb-10 text-center md:text-left">
+          <h2 className="text-4xl md:text-5xl font-black mb-2">Hi! 👋</h2>
+          <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">Ready for today's adventure with God?</p>
+        </section>
+
+        <section className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-[#59f20d]/10 shadow-xl mb-10">
+          <div className="relative h-64 md:h-80 w-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+            <div className="text-8xl">📖</div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-end p-8 flex-col justify-end">
+              <span className="bg-[#59f20d] text-slate-900 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-2 w-fit">Today's Reading</span>
+              <h3 className="text-3xl md:text-4xl font-black text-white leading-tight">{reading.bookName}</h3>
+            </div>
+          </div>
+          <div className="p-8 md:p-12">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="bg-[#59f20d]/20 px-4 py-2 rounded-full border border-[#59f20d]/20">
+                <span className="text-[#59f20d] font-bold">{reading.reference}</span>
+              </div>
+            </div>
+            <div className="space-y-4 text-xl md:text-2xl leading-relaxed font-medium text-right" dir="rtl">
+              {reading.text.map((verse: string, idx: number) => {
+                const parts = verse.split(/(\d+)\s/)
+                let currentVerse: Array<{type: string, text: string}> = []
+                let verses: Array<Array<{type: string, text: string}>> = []
+                
+                parts.forEach((part) => {
+                  if (!part.trim()) return
+                  
+                  if (/^\d+$/.test(part)) {
+                    if (currentVerse.length > 0) {
+                      verses.push([...currentVerse])
+                      currentVerse = []
+                    }
+                    currentVerse.push({ type: 'number', text: part })
+                  } else {
+                    currentVerse.push({ type: 'text', text: part })
+                  }
+                })
+                
+                if (currentVerse.length > 0) {
+                  verses.push(currentVerse)
+                }
+                
+                return verses.map((verseContent, verseIdx) => (
+                  <p key={`${idx}-${verseIdx}`} className="leading-relaxed">
+                    {verseContent.map((item, itemIdx) => 
+                      item.type === 'number' ? (
+                        <span key={itemIdx} className="text-[#59f20d] font-bold text-base ml-2">
+                          {item.text}
+                        </span>
+                      ) : (
+                        <span key={itemIdx}>{item.text}</span>
+                      )
+                    )}
+                  </p>
+                ))
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-[#59f20d]/10 flex items-center gap-6">
+            <div className="bg-yellow-100 dark:bg-yellow-900/30 w-16 h-16 rounded-full flex items-center justify-center">
+              <span className="text-yellow-500 text-3xl">⭐</span>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-500 uppercase">Stars Collected</p>
+              <p className="text-3xl font-black">124</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-[#59f20d]/10 flex items-center gap-6">
+            <div className="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center">
+              <span className="text-blue-500 text-3xl">🏆</span>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-500 uppercase">Rank</p>
+              <p className="text-3xl font-black">#12</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
+        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
+          <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
+            <span className="text-2xl">📖</span>
+            <span className="text-[10px] font-black uppercase mt-1">Reading</span>
+          </button>
+          <button onClick={() => router.push('/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">📊</span>
+            <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
+          </button>
+          <button onClick={() => router.push('/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">👤</span>
+            <span className="text-[10px] font-black uppercase mt-1">Profile</span>
+          </button>
+          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
+            <span className="text-2xl">❌</span>
+            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
+          </button>
+        </div>
+      </nav>
     </div>
   )
 }
