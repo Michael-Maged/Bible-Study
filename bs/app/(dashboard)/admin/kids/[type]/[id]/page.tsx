@@ -29,7 +29,7 @@ export default function RequestDetailPage() {
     const id = params.id as string
     const result = await handleApproveRequest(type, id, approved)
     if (result.success) {
-      router.push('/admin/pending')
+      router.push('/admin/kids')
     }
   }
 
@@ -117,27 +117,33 @@ export default function RequestDetailPage() {
 
             <div>
               <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Status</p>
-              <span className="inline-block px-3 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-full text-sm font-bold">
-                Pending
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
+                request.status === 'accepted' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
+                request.status === 'pending' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400' :
+                'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+              }`}>
+                {request.status}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <button 
-            onClick={() => handleAction(false)}
-            className="flex-1 h-14 rounded-full bg-[#59f20d]/10 text-[#121c0d] dark:text-[#59f20d] font-bold text-base hover:bg-[#59f20d]/20 transition-colors border border-[#59f20d]/20"
-          >
-            Reject
-          </button>
-          <button 
-            onClick={() => handleAction(true)}
-            className="flex-[2] h-14 rounded-full bg-[#59f20d] text-black font-bold text-base shadow-md active:scale-95 transition-all"
-          >
-            Approve Request
-          </button>
-        </div>
+        {request.status === 'pending' && (
+          <div className="flex gap-3">
+            <button 
+              onClick={() => handleAction(false)}
+              className="flex-1 h-14 rounded-full bg-[#59f20d]/10 text-[#121c0d] dark:text-[#59f20d] font-bold text-base hover:bg-[#59f20d]/20 transition-colors border border-[#59f20d]/20"
+            >
+              Reject
+            </button>
+            <button 
+              onClick={() => handleAction(true)}
+              className="flex-[2] h-14 rounded-full bg-[#59f20d] text-black font-bold text-base shadow-md active:scale-95 transition-all"
+            >
+              Approve Request
+            </button>
+          </div>
+        )}
       </main>
     </div>
   )
