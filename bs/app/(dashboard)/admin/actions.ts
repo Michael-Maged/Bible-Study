@@ -3,7 +3,11 @@
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 
-export async function getDashboardStats() {
+export async function getDashboardStats(cacheData?: any) {
+  // If offline and cache provided, return cached data
+  if (cacheData) {
+    return { success: true, data: cacheData, fromCache: true }
+  }
   try {
     const supabase = await createClient()
     const cookieStore = await cookies()
@@ -63,13 +67,12 @@ export async function getDashboardStats() {
         return enrollment.class?.grade === adminRecord.grade
       })
       
-      return {
-        success: true,
-        data: {
-          totalUsers: (acceptedSuperusers?.length || 0) + (filteredAcceptedKids?.length || 0),
-          pendingCount: (pendingSuperusers?.length || 0) + filteredKids.length
-        }
+      const result = {
+        totalUsers: (acceptedSuperusers?.length || 0) + (filteredAcceptedKids?.length || 0),
+        pendingCount: (pendingSuperusers?.length || 0) + filteredKids.length,
+        lastUpdated: new Date().toISOString()
       }
+      return { success: true, data: result }
     } else {
       // Superuser sees: only kids from their grade/tenant
       const { data: pendingKids } = await supabase
@@ -90,13 +93,12 @@ export async function getDashboardStats() {
         return enrollment.class?.grade === adminRecord.grade
       })
       
-      return {
-        success: true,
-        data: {
-          totalUsers: filteredAcceptedKids?.length || 0,
-          pendingCount: filteredKids.length
-        }
+      const result = {
+        totalUsers: filteredAcceptedKids?.length || 0,
+        pendingCount: filteredKids.length,
+        lastUpdated: new Date().toISOString()
       }
+      return { success: true, data: result }
     }
   } catch (error: any) {
     return { success: false, error: error.message }

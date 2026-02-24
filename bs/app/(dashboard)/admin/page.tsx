@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { getDashboardStats } from './actions'
 
+const CACHE_KEY = 'admin_dashboard_cache'
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [userRole, setUserRole] = useState<string>('')
-  const [stats, setStats] = useState({ totalUsers: 0, pendingCount: 0 })
+  const [stats, setStats] = useState({ totalUsers: 0, pendingCount: 0, lastUpdated: '' })
+  const [isOffline, setIsOffline] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -26,23 +29,45 @@ export default function AdminDashboard() {
     }
     checkAuth()
     
-    // Reload stats when page becomes visible (user returns from another page)
+    // Online/offline detection
+    const handleOnline = () => { setIsOffline(false); loadStats() }
+    const handleOffline = () => setIsOffline(true)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    setIsOffline(!navigator.onLine)
+    
     const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        loadStats()
-      }
+      if (!document.hidden) loadStats()
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
     
     return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [router])
 
   const loadStats = async () => {
-    const result = await getDashboardStats()
-    if (result.success && result.data) {
-      setStats(result.data)
+    try {
+      // Load from cache first
+      const cached = localStorage.getItem(CACHE_KEY)
+      if (cached) {
+        setStats(JSON.parse(cached))
+      }
+      
+      // Try to fetch fresh data if online
+      if (navigator.onLine) {
+        const result = await getDashboardStats()
+        if (result.success && result.data) {
+          setStats(result.data)
+          localStorage.setItem(CACHE_KEY, JSON.stringify(result.data))
+        }
+      }
+    } catch (error) {
+      // Use cached data on error
+      const cached = localStorage.getItem(CACHE_KEY)
+      if (cached) setStats(JSON.parse(cached))
     }
   }
 
@@ -55,6 +80,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-white min-h-screen pb-24">
+      {isOffline && (
+        <div className="sticky top-0 z-30 bg-orange-500 text-white text-xs py-2 px-4 text-center font-medium">
+          📡 Offline Mode - Viewing cached data
+        </div>
+      )}
       <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-700">
@@ -94,7 +124,7 @@ export default function AdminDashboard() {
             <h2 className="text-lg font-bold">Quick Actions</h2>
           </div>
           <div className="space-y-3">
-            <button onClick={() => router.push('/admin/kids')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
+            <button onClick={() => router.push('/admin/kids')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all" disabled={isOffline}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center">
                   <span className="text-2xl">⏳</span>
@@ -107,7 +137,7 @@ export default function AdminDashboard() {
               <span className="text-zinc-400">→</span>
             </button>
 
-            <button onClick={() => router.push('/admin/assignments')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
+            <button onClick={() => router.push('/admin/assignments')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all" disabled={isOffline}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                   <span className="text-2xl">📚</span>
@@ -120,7 +150,7 @@ export default function AdminDashboard() {
               <span className="text-zinc-400">→</span>
             </button>
 
-<button onClick={() => router.push('/admin/leaderboard')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
+<button onClick={() => router.push('/admin/leaderboard')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all" disabled={isOffline}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
                   <span className="text-2xl">🏆</span>

@@ -103,10 +103,22 @@ export default function AssignmentsPage() {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/api/user')
-      const data = await response.json()
-      setUserGrade(data.grade)
-      setUserTenant(data.tenant)
+      const { createClient } = await import('@/utils/supabase/client')
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { data: userData } = await supabase
+          .from('user')
+          .select('*, admin(*)')
+          .eq('auth_id', user.id)
+          .single()
+        
+        if (userData?.admin?.[0]) {
+          setUserGrade(userData.admin[0].grade)
+          setUserTenant(userData.admin[0].tenant)
+        }
+      }
     } catch (error) {
       console.error('Error fetching user data:', error)
     }
