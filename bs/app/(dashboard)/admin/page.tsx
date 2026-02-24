@@ -94,13 +94,13 @@ export default function AdminDashboard() {
             <h2 className="text-lg font-bold">Quick Actions</h2>
           </div>
           <div className="space-y-3">
-            <button onClick={() => router.push('/admin/pending')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
+            <button onClick={() => router.push('/admin/kids')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center">
                   <span className="text-2xl">⏳</span>
                 </div>
                 <div className="text-left">
-                  <p className="font-bold">Approve Requests</p>
+                  <p className="font-bold">Manage Kids</p>
                   <p className="text-xs text-zinc-500">{stats.pendingCount} pending approvals</p>
                 </div>
               </div>
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
               <span className="text-zinc-400">→</span>
             </button>
 
-            <button onClick={() => router.push('/admin/leaderboard')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
+<button onClick={() => router.push('/admin/leaderboard')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
                   <span className="text-2xl">🏆</span>
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
             <span className="text-2xl">📖</span>
             <span className="text-[10px] font-bold">Content</span>
           </button>
-          <button onClick={() => router.push('/admin/pending')} className={`flex flex-col items-center gap-1 ${activeTab === 'kids' ? 'text-[#59f20d]' : 'text-zinc-400'}`}>
+          <button onClick={() => router.push('/admin/kids')} className={`flex flex-col items-center gap-1 ${activeTab === 'kids' ? 'text-[#59f20d]' : 'text-zinc-400'}`}>
             <span className="text-2xl">👥</span>
             <span className="text-[10px] font-bold">Kids</span>
           </button>
