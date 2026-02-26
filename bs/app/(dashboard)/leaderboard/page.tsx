@@ -1,22 +1,54 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { getLeaderboard, getCurrentUserRank } from './actions'
 
 export default function LeaderboardPage() {
   const router = useRouter()
+  const [users, setUsers] = useState<any[]>([])
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  const topThree = [
-    { name: 'Emma L.', points: 980, rank: 2 },
-    { name: 'Noah S.', points: 1250, rank: 1 },
-    { name: 'Liam W.', points: 850, rank: 3 }
-  ]
+  useEffect(() => {
+    loadData()
+  }, [])
 
-  const students = [
-    { name: 'Sophia M.', points: 720, title: 'Master Reader' },
-    { name: 'Lucas G.', points: 685, title: 'Quiz King' },
-    { name: 'Chloe B.', points: 540, title: 'Star Explorer' },
-    { name: 'James R.', points: 490, title: 'Brave Scout' }
-  ]
+  const loadData = async () => {
+    const [leaderboardResult, userRankResult] = await Promise.all([
+      getLeaderboard(),
+      getCurrentUserRank()
+    ])
+    
+    if (leaderboardResult.success) {
+      setUsers(leaderboardResult.data)
+    }
+    
+    if (userRankResult.success) {
+      setCurrentUser(userRankResult.data)
+    }
+    
+    setLoading(false)
+  }
+
+  const handleLogout = async () => {
+    const { createClient } = await import('@/utils/supabase/client')
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    window.location.href = '/login'
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-[#f6f8f5] dark:bg-[#162210] min-h-screen flex items-center justify-center">
+        <div className="text-2xl font-bold text-[#59f20d]">Loading...</div>
+      </div>
+    )
+  }
+
+  const topThree = users.slice(0, 3)
+  const restUsers = users.slice(3)
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
@@ -34,95 +66,108 @@ export default function LeaderboardPage() {
 
       <main className="flex-1 pb-40">
         <div className="px-6 pt-4 pb-8 flex items-end justify-center gap-2 sm:gap-6">
-          <div className="flex flex-col items-center group">
-            <div className="relative mb-2">
-              <div className="w-16 h-16 rounded-full border-4 border-slate-300 overflow-hidden shadow-md bg-slate-200 flex items-center justify-center text-3xl">
-                👧
+          {topThree[1] && (
+            <div className="flex flex-col items-center group">
+              <div className="relative mb-2">
+                <div className="w-16 h-16 rounded-full border-4 border-slate-300 overflow-hidden shadow-md bg-slate-200 flex items-center justify-center text-3xl">
+                  👧
+                </div>
+                <div className="absolute -bottom-2 -right-1 bg-slate-300 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">2</div>
               </div>
-              <div className="absolute -bottom-2 -right-1 bg-slate-300 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">2</div>
+              <p className="text-sm font-bold truncate w-20 text-center">{topThree[1].name}</p>
+              <span className="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{topThree[1].current_score} pts</span>
             </div>
-            <p className="text-sm font-bold truncate w-20 text-center">{topThree[0].name}</p>
-            <span className="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{topThree[0].points} pts</span>
-          </div>
+          )}
 
-          <div className="flex flex-col items-center scale-110">
-            <div className="relative mb-4">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-yellow-400 text-4xl">
-                🏆
+          {topThree[0] && (
+            <div className="flex flex-col items-center scale-110">
+              <div className="relative mb-4">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-yellow-400 text-4xl">
+                  🏆
+                </div>
+                <div className="w-24 h-24 rounded-full border-4 border-[#59f20d] overflow-hidden shadow-xl shadow-[#59f20d]/20 bg-[#59f20d]/20 flex items-center justify-center text-5xl">
+                  👦
+                </div>
+                <div className="absolute -bottom-2 -right-1 bg-[#59f20d] text-white text-sm font-bold rounded-full w-8 h-8 flex items-center justify-center border-2 border-white">1</div>
               </div>
-              <div className="w-24 h-24 rounded-full border-4 border-[#59f20d] overflow-hidden shadow-xl shadow-[#59f20d]/20 bg-[#59f20d]/20 flex items-center justify-center text-5xl">
-                👦
-              </div>
-              <div className="absolute -bottom-2 -right-1 bg-[#59f20d] text-white text-sm font-bold rounded-full w-8 h-8 flex items-center justify-center border-2 border-white">1</div>
+              <p className="text-base font-bold">{topThree[0].name}</p>
+              <span className="text-xs uppercase font-bold text-white bg-[#59f20d] px-3 py-1 rounded-full shadow-sm">{topThree[0].current_score} pts</span>
             </div>
-            <p className="text-base font-bold">{topThree[1].name}</p>
-            <span className="text-xs uppercase font-bold text-white bg-[#59f20d] px-3 py-1 rounded-full shadow-sm">{topThree[1].points} pts</span>
-          </div>
+          )}
 
-          <div className="flex flex-col items-center group">
-            <div className="relative mb-2">
-              <div className="w-16 h-16 rounded-full border-4 border-orange-300 overflow-hidden shadow-md bg-orange-100 flex items-center justify-center text-3xl">
-                👦
+          {topThree[2] && (
+            <div className="flex flex-col items-center group">
+              <div className="relative mb-2">
+                <div className="w-16 h-16 rounded-full border-4 border-orange-300 overflow-hidden shadow-md bg-orange-100 flex items-center justify-center text-3xl">
+                  👦
+                </div>
+                <div className="absolute -bottom-2 -right-1 bg-orange-300 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">3</div>
               </div>
-              <div className="absolute -bottom-2 -right-1 bg-orange-300 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">3</div>
+              <p className="text-sm font-bold truncate w-20 text-center">{topThree[2].name}</p>
+              <span className="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{topThree[2].current_score} pts</span>
             </div>
-            <p className="text-sm font-bold truncate w-20 text-center">{topThree[2].name}</p>
-            <span className="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{topThree[2].points} pts</span>
-          </div>
+          )}
         </div>
 
         <div className="px-6 space-y-3">
-          {students.map((student, idx) => (
-            <div key={idx} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+          {restUsers.map((user, idx) => (
+            <div key={user.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
               <div className="flex items-center gap-4">
                 <span className="text-slate-400 font-bold w-4 text-center">{idx + 4}</span>
                 <div className="w-10 h-10 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center text-2xl">
                   {idx % 2 === 0 ? '👧' : '👦'}
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800 dark:text-slate-100">{student.name}</p>
-                  <p className="text-xs text-slate-500">{student.title}</p>
+                  <p className="font-bold text-slate-800 dark:text-slate-100">{user.name}</p>
                 </div>
               </div>
               <div className="bg-[#59f20d]/10 px-3 py-1 rounded-full">
-                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{student.points}</span>
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{user.current_score}</span>
               </div>
             </div>
           ))}
         </div>
       </main>
 
-      <div className="fixed bottom-[88px] left-0 right-0 px-6 z-10">
-        <div className="max-w-md mx-auto bg-[#59f20d] text-white rounded-xl p-4 shadow-xl shadow-[#59f20d]/30 flex items-center justify-between border-2 border-white/20">
-          <div className="flex items-center gap-4">
-            <span className="font-black text-xl italic">12th</span>
-            <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-white/20 flex items-center justify-center text-2xl">
-              😊
+      {currentUser && (
+        <div className="fixed bottom-[88px] left-0 right-0 px-6 z-10">
+          <div className="max-w-md mx-auto bg-[#59f20d] text-white rounded-xl p-4 shadow-xl shadow-[#59f20d]/30 flex items-center justify-between border-2 border-white/20">
+            <div className="flex items-center gap-4">
+              <span className="font-black text-xl italic">{currentUser.rank}{currentUser.rank === 1 ? 'st' : currentUser.rank === 2 ? 'nd' : currentUser.rank === 3 ? 'rd' : 'th'}</span>
+              <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-white/20 flex items-center justify-center text-2xl">
+                😊
+              </div>
+              <div>
+                <p className="font-bold leading-none">You ({currentUser.name})</p>
+                <p className="text-[10px] uppercase font-bold opacity-80">{currentUser.rank <= 10 ? 'Top 10!' : 'Keep going!'}</p>
+              </div>
             </div>
-            <div>
-              <p className="font-bold leading-none">You (Sammy)</p>
-              <p className="text-[10px] uppercase font-bold opacity-80">Almost at top 10!</p>
+            <div className="bg-white text-[#59f20d] px-3 py-1 rounded-full font-black text-sm">
+              {currentUser.score} pts
             </div>
-          </div>
-          <div className="bg-white text-[#59f20d] px-3 py-1 rounded-full font-black text-sm">
-            325 pts
           </div>
         </div>
-      </div>
+      )}
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white dark:bg-slate-900 shadow-2xl rounded-full px-2 py-2 flex items-center justify-around z-30 border border-slate-100 dark:border-slate-800">
-        <button onClick={() => router.push('/dashboard')} className="flex flex-col items-center gap-1 px-4 py-2 rounded-full text-slate-400 dark:text-slate-500 transition-all hover:bg-slate-50">
-          <span className="text-2xl">📖</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider">Read</span>
-        </button>
-        <button className="flex flex-col items-center gap-1 px-6 py-2 rounded-full bg-[#59f20d] text-white shadow-lg shadow-[#59f20d]/40 scale-105 transition-all">
-          <span className="text-2xl">📊</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider">Rank</span>
-        </button>
-        <button onClick={() => router.push('/profile')} className="flex flex-col items-center gap-1 px-4 py-2 rounded-full text-slate-400 dark:text-slate-500 transition-all hover:bg-slate-50">
-          <span className="text-2xl">👤</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider">Me</span>
-        </button>
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
+        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
+          <button onClick={() => router.push('/dashboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">📖</span>
+            <span className="text-[10px] font-black uppercase mt-1">Reading</span>
+          </button>
+          <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
+            <span className="text-2xl">📊</span>
+            <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
+          </button>
+          <button onClick={() => router.push('/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">👤</span>
+            <span className="text-[10px] font-black uppercase mt-1">Profile</span>
+          </button>
+          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
+            <span className="text-2xl">❌</span>
+            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
+          </button>
+        </div>
       </nav>
 
       <div className="fixed top-20 -left-10 w-40 h-40 bg-[#59f20d]/5 rounded-full blur-3xl -z-10"></div>

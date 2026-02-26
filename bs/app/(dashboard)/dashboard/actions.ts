@@ -25,9 +25,13 @@ export async function getUserProfile() {
       success: true, 
       data: {
         name: user.name,
+        email: user.email,
         age: user.age,
         gender: user.gender,
-        points: 1250, // TODO: Calculate from completed readings
+        current_score: user.current_score || 0,
+        best_streak: user.best_streak || 0,
+        streak: user.streak || 0,
+        points: user.current_score || 0,
         level: 5,
         progress: 80,
         grade: user.enrollment?.[0]?.class?.grade,
