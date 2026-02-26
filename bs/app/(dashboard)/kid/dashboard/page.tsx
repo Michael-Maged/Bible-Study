@@ -3,12 +3,13 @@
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
-import { getTodayReading } from './actions'
+import { getTodayReading, markReadingComplete } from './actions'
 
 export default function DashboardPage() {
   const router = useRouter()
   const [reading, setReading] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [completing, setCompleting] = useState(false)
 
   useEffect(() => {
     loadReading()
@@ -23,6 +24,20 @@ export default function DashboardPage() {
       console.error('Failed to load reading:', result.error)
     }
     setLoading(false)
+  }
+
+  const handleMarkComplete = async () => {
+    if (!reading?.readingId || reading.isCompleted) return
+    
+    setCompleting(true)
+    const result = await markReadingComplete(reading.readingId)
+    
+    if (result.success) {
+      setReading({ ...reading, isCompleted: true })
+    } else {
+      alert(result.error || 'Failed to mark as complete')
+    }
+    setCompleting(false)
   }
 
   const handleLogout = async () => {
@@ -56,11 +71,11 @@ export default function DashboardPage() {
               <span className="text-2xl">📖</span>
               <span className="text-[10px] font-black uppercase mt-1">Reading</span>
             </button>
-            <button onClick={() => router.push('/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
               <span className="text-2xl">📊</span>
               <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
             </button>
-            <button onClick={() => router.push('/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
               <span className="text-2xl">👤</span>
               <span className="text-[10px] font-black uppercase mt-1">Profile</span>
             </button>
@@ -156,6 +171,25 @@ export default function DashboardPage() {
               })}
             </div>
           </div>
+          {!reading.isCompleted && (
+            <div className="p-6 border-t border-[#59f20d]/10">
+              <button 
+                onClick={handleMarkComplete}
+                disabled={completing}
+                className="w-full bg-[#59f20d] text-slate-900 py-4 rounded-xl font-black text-lg shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {completing ? 'Marking Complete...' : '✅ Mark as Complete'}
+              </button>
+            </div>
+          )}
+          {reading.isCompleted && (
+            <div className="p-6 border-t border-[#59f20d]/10 bg-green-50 dark:bg-green-900/20">
+              <div className="flex items-center justify-center gap-3 text-green-700 dark:text-green-400">
+                <span className="text-3xl">✅</span>
+                <span className="font-bold text-lg">Completed!</span>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -186,11 +220,11 @@ export default function DashboardPage() {
             <span className="text-2xl">📖</span>
             <span className="text-[10px] font-black uppercase mt-1">Reading</span>
           </button>
-          <button onClick={() => router.push('/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+          <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
             <span className="text-2xl">📊</span>
             <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
           </button>
-          <button onClick={() => router.push('/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+          <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
             <span className="text-2xl">👤</span>
             <span className="text-[10px] font-black uppercase mt-1">Profile</span>
           </button>

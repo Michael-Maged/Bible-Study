@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const publicPaths = ['/login', '/register', '/admin-register']
   const adminPaths = ['/admin']
-  const kidPaths = ['/dashboard', '/classes', '/profile']
+  const kidPaths = ['/kid']
   
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
   const isAdminPath = adminPaths.some(path => pathname.startsWith(path))
@@ -53,12 +53,39 @@ export async function middleware(request: NextRequest) {
   
   // Protect admin routes - only admin and superuser can access
   if (isAdminPath && (userRole !== 'admin' && userRole !== 'superuser')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/kid/dashboard', request.url))
   }
   
   // Protect kid routes - kids cannot access admin routes
   if (isKidPath && (userRole === 'admin' || userRole === 'superuser')) {
     return NextResponse.redirect(new URL('/admin', request.url))
+  }
+  
+  // Redirect admins from old routes to admin dashboard
+  if ((userRole === 'admin' || userRole === 'superuser') && (pathname === '/dashboard' || pathname === '/leaderboard' || pathname === '/profile')) {
+    return NextResponse.redirect(new URL('/admin', request.url))
+  }
+  
+  // Redirect kids from old routes to new kid routes
+  if (userRole === 'kid') {
+    if (pathname === '/dashboard') {
+      return NextResponse.redirect(new URL('/kid/dashboard', request.url))
+    }
+    if (pathname === '/leaderboard') {
+      return NextResponse.redirect(new URL('/kid/leaderboard', request.url))
+    }
+    if (pathname === '/profile') {
+      return NextResponse.redirect(new URL('/kid/profile', request.url))
+    }
+  }
+  
+  // Redirect root path based on role
+  if (pathname === '/') {
+    if (userRole === 'admin' || userRole === 'superuser') {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    } else {
+      return NextResponse.redirect(new URL('/kid/dashboard', request.url))
+    }
   }
 
   return response

@@ -151,7 +151,7 @@ export default function LeaderboardPage() {
 
       <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
         <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-          <button onClick={() => router.push('/dashboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+          <button onClick={() => router.push('/kid/dashboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
             <span className="text-2xl">📖</span>
             <span className="text-[10px] font-black uppercase mt-1">Reading</span>
           </button>
@@ -159,7 +159,7 @@ export default function LeaderboardPage() {
             <span className="text-2xl">📊</span>
             <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
           </button>
-          <button onClick={() => router.push('/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+          <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
             <span className="text-2xl">👤</span>
             <span className="text-[10px] font-black uppercase mt-1">Profile</span>
           </button>
