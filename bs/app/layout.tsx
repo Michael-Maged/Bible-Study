@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "Bible Study App",
   description: "Bible study platform for kids",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/bible.svg",
+  },
 };
 
 export const viewport = {
