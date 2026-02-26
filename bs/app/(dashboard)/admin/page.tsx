@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { getDashboardStats } from './actions'
-
-const CACHE_KEY = 'admin_dashboard_cache'
+import { cacheStats, getCachedStats, isOnline } from '@/utils/offlineCache'
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -29,45 +28,31 @@ export default function AdminDashboard() {
     }
     checkAuth()
     
-    // Online/offline detection
     const handleOnline = () => { setIsOffline(false); loadStats() }
     const handleOffline = () => setIsOffline(true)
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
-    setIsOffline(!navigator.onLine)
-    
-    const handleVisibilityChange = () => {
-      if (!document.hidden) loadStats()
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    setIsOffline(!isOnline())
     
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [router])
 
   const loadStats = async () => {
-    try {
-      // Load from cache first
-      const cached = localStorage.getItem(CACHE_KEY)
-      if (cached) {
-        setStats(JSON.parse(cached))
-      }
-      
-      // Try to fetch fresh data if online
-      if (navigator.onLine) {
-        const result = await getDashboardStats()
-        if (result.success && result.data) {
-          setStats(result.data)
-          localStorage.setItem(CACHE_KEY, JSON.stringify(result.data))
-        }
-      }
-    } catch (error) {
-      // Use cached data on error
-      const cached = localStorage.getItem(CACHE_KEY)
-      if (cached) setStats(JSON.parse(cached))
+    if (!isOnline()) {
+      const cached = getCachedStats()
+      if (cached) setStats(cached)
+      return
+    }
+    const result = await getDashboardStats()
+    if (result.success && result.data) {
+      setStats(result.data)
+      cacheStats(result.data)
+    } else {
+      const cached = getCachedStats()
+      if (cached) setStats(cached)
     }
   }
 
