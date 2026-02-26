@@ -71,6 +71,10 @@ export default function DashboardPage() {
               <span className="text-2xl">📖</span>
               <span className="text-[10px] font-black uppercase mt-1">Reading</span>
             </button>
+            <button onClick={() => router.push('/kid/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+              <span className="text-2xl">📈</span>
+              <span className="text-[10px] font-black uppercase mt-1">History</span>
+            </button>
             <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
               <span className="text-2xl">📊</span>
               <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
@@ -202,15 +206,15 @@ export default function DashboardPage() {
               <p className="text-3xl font-black">124</p>
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-[#59f20d]/10 flex items-center gap-6">
+          <button onClick={() => router.push('/kid/history')} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-[#59f20d]/10 flex items-center gap-6 hover:border-[#59f20d]/30 transition-colors">
             <div className="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center">
-              <span className="text-blue-500 text-3xl">🏆</span>
+              <span className="text-blue-500 text-3xl">📊</span>
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500 uppercase">Rank</p>
-              <p className="text-3xl font-black">#12</p>
+            <div className="text-left">
+              <p className="text-sm font-bold text-slate-500 uppercase">My Progress</p>
+              <p className="text-lg font-black">View History</p>
             </div>
-          </div>
+          </button>
         </section>
       </main>
 
@@ -219,6 +223,10 @@ export default function DashboardPage() {
           <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
             <span className="text-2xl">📖</span>
             <span className="text-[10px] font-black uppercase mt-1">Reading</span>
+          </button>
+          <button onClick={() => router.push('/kid/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">📈</span>
+            <span className="text-[10px] font-black uppercase mt-1">History</span>
           </button>
           <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
             <span className="text-2xl">📊</span>
