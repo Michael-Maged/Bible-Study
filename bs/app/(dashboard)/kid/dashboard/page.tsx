@@ -4,30 +4,63 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
 import { getTodayReading, markReadingComplete } from './actions'
+import { cacheReading, getCachedReading, isOnline } from '@/utils/offlineCache'
 
 export default function DashboardPage() {
   const router = useRouter()
   const [reading, setReading] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
+  const [offline, setOffline] = useState(false)
+  const [pendingCompletion, setPendingCompletion] = useState<string | null>(null)
 
   useEffect(() => {
     loadReading()
+    const handleOnline = () => { setOffline(false); syncPendingCompletion() }
+    const handleOffline = () => setOffline(true)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    setOffline(!isOnline())
+    const pending = localStorage.getItem('pending_completion')
+    if (pending) setPendingCompletion(pending)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
   }, [])
 
   const loadReading = async () => {
+    if (!isOnline()) {
+      const cached = getCachedReading()
+      if (cached) {
+        setReading(cached.data)
+        setOffline(true)
+      }
+      setLoading(false)
+      return
+    }
     const result = await getTodayReading()
     console.log('Reading result:', result)
     if (result.success) {
       setReading(result.data)
+      cacheReading(result.data)
     } else {
-      console.error('Failed to load reading:', result.error)
+      const cached = getCachedReading()
+      if (cached) setReading(cached.data)
+      else console.error('Failed to load reading:', result.error)
     }
     setLoading(false)
   }
 
   const handleMarkComplete = async () => {
     if (!reading?.readingId || reading.isCompleted) return
+    
+    if (!isOnline()) {
+      localStorage.setItem('pending_completion', reading.readingId)
+      setPendingCompletion(reading.readingId)
+      setReading({ ...reading, isCompleted: true })
+      return
+    }
     
     setCompleting(true)
     const result = await markReadingComplete(reading.readingId)
@@ -38,6 +71,17 @@ export default function DashboardPage() {
       alert(result.error || 'Failed to mark as complete')
     }
     setCompleting(false)
+  }
+
+  const syncPendingCompletion = async () => {
+    const pending = localStorage.getItem('pending_completion')
+    if (pending && isOnline()) {
+      const result = await markReadingComplete(pending)
+      if (result.success) {
+        localStorage.removeItem('pending_completion')
+        setPendingCompletion(null)
+      }
+    }
   }
 
   const handleLogout = async () => {
@@ -95,7 +139,13 @@ export default function DashboardPage() {
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen">
-      <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
+      {offline && (
+        <div className="sticky top-0 z-30 bg-orange-500 text-white text-xs py-2 px-4 text-center font-medium">
+          📡 Offline Mode - Viewing cached data
+        </div>
+      )}
+      <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 border-b border-[#59f20d]/10">
+        <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-[#59f20d] p-2 rounded-full flex items-center justify-center text-slate-900 shadow-lg shadow-[#59f20d]/20">
             <span className="text-2xl font-bold">📖</span>
@@ -112,6 +162,7 @@ export default function DashboardPage() {
           <div className="w-10 h-10 rounded-full border-2 border-[#59f20d] overflow-hidden bg-slate-200 flex items-center justify-center text-2xl">
             😊
           </div>
+        </div>
         </div>
       </header>
 
