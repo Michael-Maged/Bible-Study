@@ -155,6 +155,10 @@ export default function LeaderboardPage() {
             <span className="text-2xl">📖</span>
             <span className="text-[10px] font-black uppercase mt-1">Reading</span>
           </button>
+          <button onClick={() => router.push('/kid/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">📈</span>
+            <span className="text-[10px] font-black uppercase mt-1">History</span>
+          </button>
           <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
             <span className="text-2xl">📊</span>
             <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
