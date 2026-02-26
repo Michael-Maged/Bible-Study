@@ -55,7 +55,7 @@ export async function getTodayReading() {
 
     const { data: user } = await supabase
       .from('user')
-      .select('*, enrollment(*, class:classes(*, grade:grade(*)))')
+      .select('id, *, enrollment(*, class:classes(*, grade:grade(*)))')
       .eq('auth_id', authUser.id)
       .single()
 
@@ -80,7 +80,6 @@ export async function getTodayReading() {
 
     console.log('All readings:', readings)
 
-    // Prioritize: grade-specific first, then tenant-wide (only for today)
     let reading = readings?.find(r => r.day === today && r.grade === gradeNum)
     
     if (!reading) {
@@ -91,6 +90,13 @@ export async function getTodayReading() {
       return { success: false, error: 'No reading assigned' }
     }
 
+    const { data: completion } = await supabase
+      .from('readinghistory')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('reading', reading.id)
+      .single()
+
     const response = await fetch(
       `https://arabic-bible.onrender.com/api?book=${reading.book}&ch=${reading.chapter}&ver=${reading.from_verse}:${reading.to_verse}`
     )
@@ -99,17 +105,119 @@ export async function getTodayReading() {
     return {
       success: true,
       data: {
+        readingId: reading.id,
         book: reading.book,
         chapter: reading.chapter,
         fromVerse: reading.from_verse,
         toVerse: reading.to_verse,
         text: bibleData.arr || [bibleData.text],
         bookName: bibleData.book_name || 'Genesis',
-        reference: `${bibleData.book_name || 'Genesis'} ${reading.chapter}:${reading.from_verse}-${reading.to_verse}`
+        reference: `${bibleData.book_name || 'Genesis'} ${reading.chapter}:${reading.from_verse}-${reading.to_verse}`,
+        isCompleted: !!completion,
+        readingDate: reading.day
       }
     }
   } catch (error: any) {
     console.error('getTodayReading error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+export async function markReadingComplete(readingId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    
+    if (!authUser) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const { data: user } = await supabase
+      .from('user')
+      .select('id, streak, best_streak')
+      .eq('auth_id', authUser.id)
+      .single()
+
+    if (!user) {
+      return { success: false, error: 'User not found' }
+    }
+
+    const { data: reading } = await supabase
+      .from('reading')
+      .select('day')
+      .eq('id', readingId)
+      .single()
+
+    if (!reading) {
+      return { success: false, error: 'Reading not found' }
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+    if (reading.day > today) {
+      return { success: false, error: 'Cannot complete future readings' }
+    }
+
+    const { data: existingCompletion } = await supabase
+      .from('readinghistory')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('reading', readingId)
+      .single()
+
+    if (existingCompletion) {
+      return { success: false, error: 'Reading already completed' }
+    }
+
+    const { data: lastCompletion } = await supabase
+      .from('readinghistory')
+      .select('reading(day)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    let newStreak = 1
+    if (lastCompletion?.reading?.day) {
+      const lastDate = new Date(lastCompletion.reading.day)
+      const currentDate = new Date(reading.day)
+      const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 1) {
+        newStreak = (user.streak || 0) + 1
+      } else if (diffDays > 1) {
+        newStreak = 1
+      }
+    }
+
+    const newBestStreak = Math.max(user.best_streak || 0, newStreak)
+
+    const { error: insertError } = await supabase
+      .from('readinghistory')
+      .insert({
+        user_id: user.id,
+        reading: readingId
+      })
+
+    if (insertError) {
+      if (insertError.code === '23505') {
+        return { success: false, error: 'Reading already completed' }
+      }
+      throw insertError
+    }
+
+    const { error: updateError } = await supabase
+      .from('user')
+      .update({ 
+        streak: newStreak,
+        best_streak: newBestStreak
+      })
+      .eq('id', user.id)
+
+    if (updateError) throw updateError
+
+    return { success: true }
+  } catch (error: any) {
+    console.error('markReadingComplete error:', error)
     return { success: false, error: error.message }
   }
 }

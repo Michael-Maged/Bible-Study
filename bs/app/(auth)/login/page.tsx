@@ -29,7 +29,7 @@ export default function LoginPage() {
           return
         }
         
-        const redirectPath = result.user.role === 'admin' || result.user.role === 'superuser' ? '/admin' : '/dashboard'
+        const redirectPath = result.user.role === 'admin' || result.user.role === 'superuser' ? '/admin' : '/kid/dashboard'
         router.push(redirectPath)
       } else {
         setStatus('error')
