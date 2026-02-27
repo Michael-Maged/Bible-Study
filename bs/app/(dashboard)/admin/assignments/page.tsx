@@ -5,7 +5,14 @@ import { useState, useEffect } from 'react'
 
 export default function AssignmentsPage() {
   const router = useRouter()
-  const [selectedDate, setSelectedDate] = useState(5)
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (typeof window !== 'undefined') return new Date()
+    return new Date('2026-02-27')
+  })
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (typeof window !== 'undefined') return new Date()
+    return new Date('2026-02-27')
+  })
   const [bookId, setBookId] = useState('')
   const [chapter, setChapter] = useState('')
   const [verseFrom, setVerseFrom] = useState('')
@@ -96,6 +103,27 @@ export default function AssignmentsPage() {
     { id: 76, name: 'سفر رؤيا يوحنا اللاهوت' }
   ])
   const [isLoadingBooks] = useState(false)
+
+  const changeMonth = (direction: number) => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1))
+  }
+
+  const getDaysInMonth = () => {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const firstDay = new Date(year, month, 1).getDay()
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const prevMonthDays = new Date(year, month, 0).getDate()
+    
+    const days = []
+    for (let i = firstDay - 1; i >= 0; i--) {
+      days.push({ day: prevMonthDays - i, isCurrentMonth: false })
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push({ day: i, isCurrentMonth: true })
+    }
+    return days
+  }
 
   const handleLogout = async () => {
     const { createClient } = await import('@/utils/supabase/client')
@@ -222,6 +250,11 @@ export default function AssignmentsPage() {
       return
     }
 
+    const year = selectedDate.getFullYear()
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0')
+    const day = String(selectedDate.getDate()).padStart(2, '0')
+    const dateString = `${year}-${month}-${day}`
+
     try {
       const response = await fetch('/api/bible', {
         method: 'POST',
@@ -231,7 +264,7 @@ export default function AssignmentsPage() {
           chapter: parseInt(chapter),
           from_verse: parseInt(verseFrom),
           to_verse: parseInt(verseTo),
-          day: new Date(2023, 9, selectedDate).toISOString().split('T')[0],
+          day: dateString,
           grade: isWholeTenant ? null : userGrade,
           tenant: userTenant
         })
@@ -277,11 +310,11 @@ export default function AssignmentsPage() {
           </div>
           <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
             <div className="flex items-center justify-between mb-4">
-              <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full">
+              <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full">
                 <span className="text-xl">←</span>
               </button>
-              <p className="font-bold text-base">October 2023</p>
-              <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full">
+              <p className="font-bold text-base">{currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+              <button onClick={() => changeMonth(1)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full">
                 <span className="text-xl">→</span>
               </button>
             </div>
@@ -289,11 +322,24 @@ export default function AssignmentsPage() {
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
                 <span key={i} className="text-[10px] font-bold text-zinc-400 uppercase">{day}</span>
               ))}
-              {[28, 29, 30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((day, i) => (
-                <button key={i} onClick={() => setSelectedDate(day)} className={`h-8 w-8 mx-auto flex items-center justify-center text-sm font-medium rounded-full ${day === selectedDate ? 'bg-[#59f20d] text-black shadow-md font-bold' : day < 28 ? 'text-zinc-300' : 'hover:bg-[#59f20d]/20'}`}>
-                  {day}
-                </button>
-              ))}
+              {getDaysInMonth().map((item, i) => {
+                const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), item.day)
+                const isSelected = selectedDate.toDateString() === dateObj.toDateString()
+                return (
+                  <button 
+                    key={i} 
+                    onClick={() => item.isCurrentMonth && setSelectedDate(dateObj)} 
+                    disabled={!item.isCurrentMonth}
+                    className={`h-8 w-8 mx-auto flex items-center justify-center text-sm font-medium rounded-full ${
+                      isSelected ? 'bg-[#59f20d] text-black shadow-md font-bold' : 
+                      !item.isCurrentMonth ? 'text-zinc-300 cursor-not-allowed' : 
+                      'hover:bg-[#59f20d]/20'
+                    }`}
+                  >
+                    {item.day}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </section>

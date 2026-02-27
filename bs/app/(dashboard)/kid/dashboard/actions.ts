@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { getLocalDateString } from '@/utils/dateUtils'
 
 export async function getUserProfile() {
   try {
@@ -68,7 +69,7 @@ export async function getTodayReading() {
     const gradeData = user.enrollment[0].class.grade
     const gradeNum = gradeData.grade_num
     const tenant = gradeData.tenant
-    const today = new Date().toISOString().split('T')[0]
+    const today = getLocalDateString()
 
     console.log('Searching for reading:', { gradeNum, tenant, today })
 
@@ -152,7 +153,7 @@ export async function markReadingComplete(readingId: string) {
       return { success: false, error: 'Reading not found' }
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = getLocalDateString()
     if (reading.day > today) {
       return { success: false, error: 'Cannot complete future readings' }
     }
@@ -170,7 +171,7 @@ export async function markReadingComplete(readingId: string) {
 
     const { data: lastCompletion } = await supabase
       .from('readinghistory')
-      .select('reading(day)')
+      .select('reading')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)

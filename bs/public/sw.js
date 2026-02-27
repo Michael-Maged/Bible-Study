@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bible-study-v1'
+const CACHE_NAME = 'bible-study-v3'
 const urlsToCache = [
   '/',
   '/kid/dashboard',
@@ -8,19 +8,25 @@ const urlsToCache = [
 ]
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting()
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   )
 })
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension')) return
+  
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).then((fetchResponse) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, fetchResponse.clone())
-          return fetchResponse
-        })
+        if (fetchResponse.ok) {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, fetchResponse.clone())
+            return fetchResponse
+          })
+        }
+        return fetchResponse
       })
     }).catch(() => caches.match('/kid/dashboard'))
   )
@@ -36,6 +42,6 @@ self.addEventListener('activate', (event) => {
           }
         })
       )
-    })
+    }).then(() => self.clients.claim())
   )
 })

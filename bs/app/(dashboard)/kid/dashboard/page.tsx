@@ -45,9 +45,8 @@ export default function DashboardPage() {
       setReading(result.data)
       cacheReading(result.data)
     } else {
-      const cached = getCachedReading()
-      if (cached) setReading(cached.data)
-      else console.error('Failed to load reading:', result.error)
+      setReading(null)
+      console.error('Failed to load reading:', result.error)
     }
     setLoading(false)
   }
