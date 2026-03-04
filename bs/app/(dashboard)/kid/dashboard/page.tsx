@@ -114,6 +114,11 @@ export default function DashboardPage() {
     const supabase = createClient()
     await supabase.auth.signOut()
     document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    localStorage.clear()
+    if ('caches' in window) {
+      const cacheNames = await caches.keys()
+      await Promise.all(cacheNames.map(name => caches.delete(name)))
+    }
     window.location.href = '/login'
   }
 
