@@ -3,50 +3,71 @@
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
-import { getTodayReading, markReadingComplete } from './actions'
-import { cacheReading, getCachedReading, isOnline } from '@/utils/offlineCache'
+import { getTodayReading, markReadingComplete, getUserProfile } from './actions'
+import { cacheReading, getCachedReading, isOnline, preloadAllData } from '@/utils/offlineCache'
+import OfflineBanner from '@/components/OfflineBanner'
+import LoadingScreen from '@/components/LoadingScreen'
+import { getReadingHistory } from '../history/actions'
+import { getLeaderboard, getCurrentUserRank } from '../leaderboard/actions'
 
 export default function DashboardPage() {
   const router = useRouter()
   const [reading, setReading] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
-  const [offline, setOffline] = useState(false)
   const [pendingCompletion, setPendingCompletion] = useState<string | null>(null)
 
   useEffect(() => {
     loadReading()
-    const handleOnline = () => { setOffline(false); syncPendingCompletion() }
-    const handleOffline = () => setOffline(true)
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    setOffline(!isOnline())
     const pending = localStorage.getItem('pending_completion')
     if (pending) setPendingCompletion(pending)
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
+    
+    // Preload all data in background
+    if (navigator.onLine) {
+      preloadAllData({
+        getTodayReading,
+        getUserProfile,
+        getReadingHistory,
+        getLeaderboard,
+        getCurrentUserRank
+      })
     }
   }, [])
 
   const loadReading = async () => {
-    if (!isOnline()) {
+    let timeoutFired = false
+    const timeout = setTimeout(() => {
+      timeoutFired = true
       const cached = getCachedReading()
-      if (cached) {
-        setReading(cached.data)
-        setOffline(true)
-      }
+      setReading(cached?.data || null)
+      setLoading(false)
+    }, 3000)
+
+    if (!navigator.onLine) {
+      clearTimeout(timeout)
+      const cached = getCachedReading()
+      setReading(cached?.data || null)
       setLoading(false)
       return
     }
-    const result = await getTodayReading()
-    console.log('Reading result:', result)
-    if (result.success) {
-      setReading(result.data)
-      cacheReading(result.data)
-    } else {
-      setReading(null)
-      console.error('Failed to load reading:', result.error)
+
+    try {
+      const result = await getTodayReading()
+      if (timeoutFired) return
+      clearTimeout(timeout)
+      
+      if (result.success) {
+        setReading(result.data)
+        cacheReading(result.data)
+      } else {
+        setReading(null)
+        cacheReading(null)
+      }
+    } catch (error) {
+      if (timeoutFired) return
+      clearTimeout(timeout)
+      const cached = getCachedReading()
+      setReading(cached?.data || null)
     }
     setLoading(false)
   }
@@ -83,6 +104,12 @@ export default function DashboardPage() {
     }
   }
 
+  useEffect(() => {
+    if (isOnline()) {
+      syncPendingCompletion()
+    }
+  }, [])
+
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -91,16 +118,13 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return (
-      <div className="bg-[#f6f8f5] dark:bg-[#162210] min-h-screen flex items-center justify-center">
-        <div className="text-2xl font-bold text-[#59f20d]">Loading...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (!reading) {
     return (
       <div className="bg-[#f6f8f5] dark:bg-[#162210] min-h-screen flex flex-col">
+        <OfflineBanner />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="text-6xl mb-4">📖</div>
@@ -138,11 +162,7 @@ export default function DashboardPage() {
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen">
-      {offline && (
-        <div className="sticky top-0 z-30 bg-orange-500 text-white text-xs py-2 px-4 text-center font-medium">
-          📡 Offline Mode - Viewing cached data
-        </div>
-      )}
+      <OfflineBanner />
       <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 border-b border-[#59f20d]/10">
         <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

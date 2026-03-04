@@ -3,6 +3,9 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getReadingHistory } from './actions'
+import OfflineBanner from '@/components/OfflineBanner'
+import LoadingScreen from '@/components/LoadingScreen'
+import { cacheHistory, getCachedHistory, isOnline } from '@/utils/offlineCache'
 
 export default function HistoryPage() {
   const router = useRouter()
@@ -14,11 +17,40 @@ export default function HistoryPage() {
   }, [])
 
   const loadHistory = async () => {
-    const result = await getReadingHistory()
-    if (result.success) {
-      setHistory(result.data)
+    const offline = !navigator.onLine
+    if (offline) {
+      const cached = getCachedHistory()
+      if (cached) setHistory(cached)
+      setLoading(false)
+      return
     }
-    setLoading(false)
+    
+    let timeoutFired = false
+    const timeout = setTimeout(() => {
+      timeoutFired = true
+      const cached = getCachedHistory()
+      if (cached) setHistory(cached)
+      setLoading(false)
+    }, 3000)
+    
+    try {
+      const result = await getReadingHistory()
+      if (!timeoutFired) {
+        clearTimeout(timeout)
+        if (result.success) {
+          setHistory(result.data)
+          cacheHistory(result.data)
+        }
+        setLoading(false)
+      }
+    } catch (error) {
+      if (!timeoutFired) {
+        clearTimeout(timeout)
+        const cached = getCachedHistory()
+        if (cached) setHistory(cached)
+        setLoading(false)
+      }
+    }
   }
 
   const handleLogout = async () => {
@@ -45,11 +77,7 @@ export default function HistoryPage() {
   }
 
   if (loading) {
-    return (
-      <div className="bg-[#f6f8f5] dark:bg-[#162210] min-h-screen flex items-center justify-center">
-        <div className="text-2xl font-bold text-[#59f20d]">Loading...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   const calendarDays = getCalendarDays()
@@ -58,6 +86,7 @@ export default function HistoryPage() {
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+      <OfflineBanner />
       <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
         <button onClick={() => router.back()} className="text-2xl">←</button>
         <h1 className="text-xl font-extrabold">My Progress</h1>
