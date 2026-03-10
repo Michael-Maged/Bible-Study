@@ -11,7 +11,7 @@ export async function getFutureReadings() {
     
     const { data: userData } = await supabase
       .from('user')
-      .select('*, admin(tenant, grade)')
+      .select('*, admin(tenant, grade, user_id)')
       .eq('auth_id', user.id)
       .single()
     
@@ -29,7 +29,47 @@ export async function getFutureReadings() {
     
     if (error) throw error
     
-    return { success: true, data: readings }
+    return { success: true, data: readings, currentUserId: userData.id }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+export async function updateReading(readingId: string, updates: { day?: string, book?: number, chapter?: number, from_verse?: number, to_verse?: number }) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) return { success: false, error: 'Not authenticated' }
+    
+    const { error } = await supabase
+      .from('reading')
+      .update(updates)
+      .eq('id', readingId)
+    
+    if (error) throw error
+    
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+export async function deleteReading(readingId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) return { success: false, error: 'Not authenticated' }
+    
+    const { error } = await supabase
+      .from('reading')
+      .delete()
+      .eq('id', readingId)
+    
+    if (error) throw error
+    
+    return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
   }

@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('POST /api/bible error:', error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
