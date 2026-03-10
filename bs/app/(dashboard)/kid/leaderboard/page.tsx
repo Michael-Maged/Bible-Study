@@ -3,6 +3,9 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getLeaderboard, getCurrentUserRank } from './actions'
+import OfflineBanner from '@/components/OfflineBanner'
+import LoadingScreen from '@/components/LoadingScreen'
+import { cacheLeaderboard, getCachedLeaderboard, isOnline } from '@/utils/offlineCache'
 
 export default function LeaderboardPage() {
   const router = useRouter()
@@ -15,20 +18,59 @@ export default function LeaderboardPage() {
   }, [])
 
   const loadData = async () => {
-    const [leaderboardResult, userRankResult] = await Promise.all([
-      getLeaderboard(),
-      getCurrentUserRank()
-    ])
-    
-    if (leaderboardResult.success) {
-      setUsers(leaderboardResult.data)
+    const offline = !navigator.onLine
+    if (offline) {
+      const cached = getCachedLeaderboard()
+      if (cached) {
+        setUsers(cached.users || [])
+        setCurrentUser(cached.currentUser || null)
+      }
+      setLoading(false)
+      return
     }
     
-    if (userRankResult.success) {
-      setCurrentUser(userRankResult.data)
-    }
+    let timeoutFired = false
+    const timeout = setTimeout(() => {
+      timeoutFired = true
+      const cached = getCachedLeaderboard()
+      if (cached) {
+        setUsers(cached.users || [])
+        setCurrentUser(cached.currentUser || null)
+      }
+      setLoading(false)
+    }, 3000)
     
-    setLoading(false)
+    try {
+      const [leaderboardResult, userRankResult] = await Promise.all([
+        getLeaderboard(),
+        getCurrentUserRank()
+      ])
+      
+      if (!timeoutFired) {
+        clearTimeout(timeout)
+        
+        if (leaderboardResult.success) {
+          setUsers(leaderboardResult.data)
+        }
+        
+        if (userRankResult.success) {
+          setCurrentUser(userRankResult.data)
+        }
+        
+        cacheLeaderboard({ users: leaderboardResult.data, currentUser: userRankResult.data })
+        setLoading(false)
+      }
+    } catch (error) {
+      if (!timeoutFired) {
+        clearTimeout(timeout)
+        const cached = getCachedLeaderboard()
+        if (cached) {
+          setUsers(cached.users || [])
+          setCurrentUser(cached.currentUser || null)
+        }
+        setLoading(false)
+      }
+    }
   }
 
   const handleLogout = async () => {
@@ -36,15 +78,16 @@ export default function LeaderboardPage() {
     const supabase = createClient()
     await supabase.auth.signOut()
     document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    localStorage.clear()
+    if ('caches' in window) {
+      const cacheNames = await caches.keys()
+      await Promise.all(cacheNames.map(name => caches.delete(name)))
+    }
     window.location.href = '/login'
   }
 
   if (loading) {
-    return (
-      <div className="bg-[#f6f8f5] dark:bg-[#162210] min-h-screen flex items-center justify-center">
-        <div className="text-2xl font-bold text-[#59f20d]">Loading...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   const topThree = users.slice(0, 3)
@@ -52,6 +95,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+      <OfflineBanner />
       <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-[#59f20d] p-2 rounded-full shadow-lg shadow-[#59f20d]/20">

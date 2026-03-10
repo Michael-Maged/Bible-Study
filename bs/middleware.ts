@@ -37,17 +37,23 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  // Refresh session if it exists
-  if (session) {
-    await supabase.auth.getUser()
-  }
-  
   const userRole = request.cookies.get('user-role')?.value
+  let session = null
+  
+  try {
+    const { data: { session: authSession } } = await supabase.auth.getSession()
+    session = authSession
+    
+    // Refresh session if it exists
+    if (session) {
+      await supabase.auth.getUser()
+    }
+  } catch (error) {
+    // Supabase error - allow if user has role cookie (offline mode)
+  }
 
-  // Protect non-public routes - redirect to login if no session
-  if (!session) {
+  // Protect non-public routes - redirect to login only if no session AND no role cookie
+  if (!session && !userRole) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
   

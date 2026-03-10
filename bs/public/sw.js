@@ -1,47 +1,39 @@
-const CACHE_NAME = 'bible-study-v3'
-const urlsToCache = [
-  '/',
-  '/kid/dashboard',
-  '/admin',
-  '/manifest.json',
-  '/bible.svg'
-]
+const CACHE_NAME = 'bible-kids-v1'
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
-  )
-})
-
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension')) return
-  
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request).then((fetchResponse) => {
-        if (fetchResponse.ok) {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, fetchResponse.clone())
-            return fetchResponse
-          })
-        }
-        return fetchResponse
-      })
-    }).catch(() => caches.match('/kid/dashboard'))
-  )
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName)
+  event.waitUntil(self.clients.claim())
+})
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+  const url = new URL(request.url)
+  
+  // Only cache GET requests
+  if (request.method !== 'GET') return
+  
+  // Only cache same-origin requests
+  if (url.origin !== location.origin) return
+  
+  // Skip API calls and Supabase requests
+  if (url.pathname.includes('/api/') || url.hostname.includes('supabase')) return
+  
+  event.respondWith(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(request).then((cached) => {
+        const fetchPromise = fetch(request).then((response) => {
+          // Cache successful responses
+          if (response.ok) {
+            cache.put(request, response.clone())
           }
-        })
-      )
-    }).then(() => self.clients.claim())
+          return response
+        }).catch(() => cached) // Return cached on network error
+        
+        return cached || fetchPromise
+      })
+    })
   )
 })

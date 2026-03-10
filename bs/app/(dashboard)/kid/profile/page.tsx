@@ -3,6 +3,9 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getUserProfile } from '../dashboard/actions'
+import OfflineBanner from '@/components/OfflineBanner'
+import LoadingScreen from '@/components/LoadingScreen'
+import { cacheProfile, getCachedProfile, isOnline } from '@/utils/offlineCache'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -14,11 +17,40 @@ export default function ProfilePage() {
   }, [])
 
   const loadProfile = async () => {
-    const result = await getUserProfile()
-    if (result.success) {
-      setProfile(result.data)
+    const offline = !navigator.onLine
+    if (offline) {
+      const cached = getCachedProfile()
+      if (cached) setProfile(cached)
+      setLoading(false)
+      return
     }
-    setLoading(false)
+    
+    let timeoutFired = false
+    const timeout = setTimeout(() => {
+      timeoutFired = true
+      const cached = getCachedProfile()
+      if (cached) setProfile(cached)
+      setLoading(false)
+    }, 3000)
+    
+    try {
+      const result = await getUserProfile()
+      if (!timeoutFired) {
+        clearTimeout(timeout)
+        if (result.success) {
+          setProfile(result.data)
+          cacheProfile(result.data)
+        }
+        setLoading(false)
+      }
+    } catch (error) {
+      if (!timeoutFired) {
+        clearTimeout(timeout)
+        const cached = getCachedProfile()
+        if (cached) setProfile(cached)
+        setLoading(false)
+      }
+    }
   }
 
   const handleLogout = async () => {
@@ -26,15 +58,16 @@ export default function ProfilePage() {
     const supabase = createClient()
     await supabase.auth.signOut()
     document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    localStorage.clear()
+    if ('caches' in window) {
+      const cacheNames = await caches.keys()
+      await Promise.all(cacheNames.map(name => caches.delete(name)))
+    }
     window.location.href = '/login'
   }
 
   if (loading) {
-    return (
-      <div className="bg-[#f6f8f5] dark:bg-[#162210] min-h-screen flex items-center justify-center">
-        <div className="text-2xl font-bold text-[#59f20d]">Loading...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (!profile) {
@@ -49,6 +82,7 @@ export default function ProfilePage() {
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen">
+      <OfflineBanner />
       <div className="max-w-md mx-auto min-h-screen flex flex-col relative pb-24">
         <header className="flex items-center justify-between px-6 py-6">
           <div className="flex items-center gap-2">

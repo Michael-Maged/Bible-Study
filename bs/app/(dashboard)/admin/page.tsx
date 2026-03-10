@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { getDashboardStats } from './actions'
 import { cacheStats, getCachedStats, isOnline } from '@/utils/offlineCache'
+import OfflineBanner from '@/components/OfflineBanner'
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [userRole, setUserRole] = useState<string>('')
   const [stats, setStats] = useState({ totalUsers: 0, pendingCount: 0, lastUpdated: '' })
-  const [isOffline, setIsOffline] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -27,17 +27,6 @@ export default function AdminDashboard() {
       }
     }
     checkAuth()
-    
-    const handleOnline = () => { setIsOffline(false); loadStats() }
-    const handleOffline = () => setIsOffline(true)
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    setIsOffline(!isOnline())
-    
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
   }, [router])
 
   const loadStats = async () => {
@@ -65,11 +54,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-white min-h-screen pb-24">
-      {isOffline && (
-        <div className="sticky top-0 z-30 bg-orange-500 text-white text-xs py-2 px-4 text-center font-medium">
-          📡 Offline Mode - Viewing cached data
-        </div>
-      )}
+      <OfflineBanner />
       <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-700">
@@ -106,7 +91,7 @@ export default function AdminDashboard() {
             <h2 className="text-lg font-bold">Quick Actions</h2>
           </div>
           <div className="space-y-3">
-            <button onClick={() => router.push('/admin/kids')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all" disabled={isOffline}>
+            <button onClick={() => router.push('/admin/kids')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center">
                   <span className="text-2xl">⏳</span>
@@ -119,7 +104,7 @@ export default function AdminDashboard() {
               <span className="text-zinc-400">→</span>
             </button>
 
-            <button onClick={() => router.push('/admin/assignments')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all" disabled={isOffline}>
+            <button onClick={() => router.push('/admin/assignments')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                   <span className="text-2xl">📚</span>
@@ -132,7 +117,7 @@ export default function AdminDashboard() {
               <span className="text-zinc-400">→</span>
             </button>
 
-<button onClick={() => router.push('/admin/leaderboard')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all" disabled={isOffline}>
+<button onClick={() => router.push('/admin/leaderboard')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
                   <span className="text-2xl">🏆</span>
@@ -140,6 +125,19 @@ export default function AdminDashboard() {
                 <div className="text-left">
                   <p className="font-bold">Leaderboard</p>
                   <p className="text-xs text-zinc-500">View kids progress</p>
+                </div>
+              </div>
+              <span className="text-zinc-400">→</span>
+            </button>
+
+            <button onClick={() => router.push('/admin/history')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">📚</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-bold">Reading History</p>
+                  <p className="text-xs text-zinc-500">View future assignments</p>
                 </div>
               </div>
               <span className="text-zinc-400">→</span>
@@ -157,6 +155,10 @@ export default function AdminDashboard() {
           <button onClick={() => router.push('/admin/assignments')} className={`flex-1 flex flex-col items-center justify-center py-2 ${activeTab === 'content' ? 'bg-[#59f20d] rounded-full text-slate-900' : 'text-white hover:text-[#59f20d]'} transition-colors`}>
             <span className="text-2xl">📖</span>
             <span className="text-[10px] font-black uppercase mt-1">Content</span>
+          </button>
+          <button onClick={() => router.push('/admin/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">📚</span>
+            <span className="text-[10px] font-black uppercase mt-1">History</span>
           </button>
           <button onClick={() => router.push('/admin/kids')} className={`flex-1 flex flex-col items-center justify-center py-2 ${activeTab === 'kids' ? 'bg-[#59f20d] rounded-full text-slate-900' : 'text-white hover:text-[#59f20d]'} transition-colors`}>
             <span className="text-2xl">👥</span>
