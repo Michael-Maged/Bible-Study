@@ -1,6 +1,7 @@
 const CACHE_KEY = 'today_reading_cache'
 const STATS_CACHE_KEY = 'admin_stats_cache'
 const HISTORY_CACHE_KEY = 'user_history_cache'
+const ADMIN_HISTORY_CACHE_KEY = 'admin_history_cache'
 const LEADERBOARD_CACHE_KEY = 'leaderboard_cache'
 const PROFILE_CACHE_KEY = 'user_profile_cache'
 
@@ -49,6 +50,15 @@ export function getCachedProfile() {
   return cached ? JSON.parse(cached).data : null
 }
 
+export function cacheAdminHistory(history: any) {
+  localStorage.setItem(ADMIN_HISTORY_CACHE_KEY, JSON.stringify({ data: history, timestamp: Date.now() }))
+}
+
+export function getCachedAdminHistory() {
+  const cached = localStorage.getItem(ADMIN_HISTORY_CACHE_KEY)
+  return cached ? JSON.parse(cached).data : null
+}
+
 export async function preloadAllData(actions: {
   getTodayReading: () => Promise<any>,
   getUserProfile: () => Promise<any>,
@@ -80,6 +90,7 @@ export function clearCache() {
   localStorage.removeItem(CACHE_KEY)
   localStorage.removeItem(STATS_CACHE_KEY)
   localStorage.removeItem(HISTORY_CACHE_KEY)
+  localStorage.removeItem(ADMIN_HISTORY_CACHE_KEY)
   localStorage.removeItem(LEADERBOARD_CACHE_KEY)
   localStorage.removeItem(PROFILE_CACHE_KEY)
 }

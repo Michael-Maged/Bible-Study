@@ -129,6 +129,19 @@ export default function AdminDashboard() {
               </div>
               <span className="text-zinc-400">→</span>
             </button>
+
+            <button onClick={() => router.push('/admin/history')} className="w-full bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex items-center justify-between hover:border-[#59f20d] transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">📚</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-bold">Reading History</p>
+                  <p className="text-xs text-zinc-500">View future assignments</p>
+                </div>
+              </div>
+              <span className="text-zinc-400">→</span>
+            </button>
           </div>
         </section>
       </main>
@@ -142,6 +155,10 @@ export default function AdminDashboard() {
           <button onClick={() => router.push('/admin/assignments')} className={`flex-1 flex flex-col items-center justify-center py-2 ${activeTab === 'content' ? 'bg-[#59f20d] rounded-full text-slate-900' : 'text-white hover:text-[#59f20d]'} transition-colors`}>
             <span className="text-2xl">📖</span>
             <span className="text-[10px] font-black uppercase mt-1">Content</span>
+          </button>
+          <button onClick={() => router.push('/admin/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
+            <span className="text-2xl">📚</span>
+            <span className="text-[10px] font-black uppercase mt-1">History</span>
           </button>
           <button onClick={() => router.push('/admin/kids')} className={`flex-1 flex flex-col items-center justify-center py-2 ${activeTab === 'kids' ? 'bg-[#59f20d] rounded-full text-slate-900' : 'text-white hover:text-[#59f20d]'} transition-colors`}>
             <span className="text-2xl">👥</span>
