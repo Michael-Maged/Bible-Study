@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       correctByQuestion[ca.question].push(ca.correct_option)
     })
 
-    let totalScore = 0
+    let totalScore = 5 // Base score for completing the quiz
     const results = answers.map((answer: any) => {
       const isCorrect = correctAnswers?.some(
         ca => ca.question === answer.questionId && ca.correct_option === answer.optionId
