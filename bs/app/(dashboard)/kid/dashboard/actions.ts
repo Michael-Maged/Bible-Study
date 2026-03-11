@@ -60,31 +60,24 @@ export async function getTodayReading() {
       .eq('auth_id', authUser.id)
       .single()
 
-    console.log('User with grade data:', JSON.stringify(user, null, 2))
-
     if (!user || !user.enrollment?.[0]?.class?.grade) {
-      return { success: false, error: 'User enrollment or grade not found' }
+      return { success: false, error: 'User enrollment not found' }
     }
 
-    const gradeData = user.enrollment[0].class.grade
-    const gradeNum = gradeData.grade_num
-    const tenant = gradeData.tenant
+    const gradeNum = user.enrollment[0].class.grade.grade_num
+    const tenant = user.enrollment[0].class.grade.tenant
     const today = getLocalDateString()
 
-    console.log('Searching for reading:', { gradeNum, tenant, today })
-
-    const { data: readings, error: readingError } = await supabase
+    const { data: readings } = await supabase
       .from('reading')
       .select('*')
       .eq('tenant', tenant)
-      .or(`grade.eq.${gradeNum},grade.is.null`)
+      .eq('day', today)
 
-    console.log('All readings:', readings)
-
-    let reading = readings?.find(r => r.day === today && r.grade === gradeNum)
+    let reading = readings?.find(r => r.grade === gradeNum)
     
     if (!reading) {
-      reading = readings?.find(r => r.day === today && r.grade === null)
+      reading = readings?.find(r => r.grade === null)
     }
 
     if (!reading) {
@@ -98,6 +91,17 @@ export async function getTodayReading() {
       .eq('reading', reading.id)
       .single()
 
+    const { data: questions } = await supabase
+      .from('question')
+      .select('*, options!options_question_fkey(*)')
+      .eq('reading', reading.id)
+
+    const { data: attempts } = await supabase
+      .from('attempts')
+      .select('question')
+      .eq('user_id', user.id)
+      .in('question', questions?.map(q => q.id) || [])
+
     const response = await fetch(
       `https://arabic-bible.onrender.com/api?book=${reading.book}&ch=${reading.chapter}&ver=${reading.from_verse}:${reading.to_verse}`
     )
@@ -106,6 +110,7 @@ export async function getTodayReading() {
     return {
       success: true,
       data: {
+        userId: user.id,
         readingId: reading.id,
         book: reading.book,
         chapter: reading.chapter,
@@ -115,7 +120,9 @@ export async function getTodayReading() {
         bookName: bibleData.book_name || 'Genesis',
         reference: `${bibleData.book_name || 'Genesis'} ${reading.chapter}:${reading.from_verse}-${reading.to_verse}`,
         isCompleted: !!completion,
-        readingDate: reading.day
+        readingDate: reading.day,
+        questions: questions || [],
+        hasAttempted: attempts && attempts.length > 0
       }
     }
   } catch (error: any) {
@@ -124,19 +131,14 @@ export async function getTodayReading() {
   }
 }
 
-export async function markReadingComplete(readingId: string) {
+export async function markReadingComplete(readingId: string, userId: string) {
   try {
     const supabase = await createClient()
-    const { data: { user: authUser } } = await supabase.auth.getUser()
-    
-    if (!authUser) {
-      return { success: false, error: 'Not authenticated' }
-    }
 
     const { data: user } = await supabase
       .from('user')
       .select('id, streak, best_streak')
-      .eq('auth_id', authUser.id)
+      .eq('id', userId)
       .single()
 
     if (!user) {
