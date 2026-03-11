@@ -7,8 +7,7 @@ import { getTodayReading, markReadingComplete, getUserProfile } from './actions'
 import { cacheReading, getCachedReading, isOnline, preloadAllData } from '@/utils/offlineCache'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
-import { getReadingHistory } from '../history/actions'
-import { getLeaderboard, getCurrentUserRank } from '../leaderboard/actions'
+
 
 export default function DashboardPage() {
   console.log('DashboardPage component rendering')
@@ -59,6 +58,64 @@ export default function DashboardPage() {
               })
             )
             result.data.questions = questionsWithCounts
+          }
+
+          // If user has attempted, populate selectedAnswers and quizResults
+          if (result.data.hasAttempted && result.data.attempts && result.data.attempts.length > 0) {
+            const answersMap: Record<string, string[]> = {}
+            result.data.attempts.forEach((attempt: any) => {
+              if (!answersMap[attempt.question]) {
+                answersMap[attempt.question] = []
+              }
+              answersMap[attempt.question].push(attempt.option)
+            })
+            setSelectedAnswers(answersMap)
+
+            // Create results array for feedback
+            const results = result.data.attempts.map((attempt: any) => {
+              const isCorrect = result.data.correctAnswers?.some(
+                (ca: any) => ca.question === attempt.question && ca.correct_option === attempt.option
+              )
+              return { questionId: attempt.question, optionId: attempt.option, isCorrect }
+            })
+
+            // Calculate score (only if all answers for a question are correct)
+            let totalScore = 0
+            const answersByQuestion: Record<string, string[]> = {}
+            result.data.attempts.forEach((attempt: any) => {
+              if (!answersByQuestion[attempt.question]) {
+                answersByQuestion[attempt.question] = []
+              }
+              answersByQuestion[attempt.question].push(attempt.option)
+            })
+
+            const correctByQuestion: Record<string, string[]> = {}
+            result.data.correctAnswers?.forEach((ca: any) => {
+              if (!correctByQuestion[ca.question]) {
+                correctByQuestion[ca.question] = []
+              }
+              correctByQuestion[ca.question].push(ca.correct_option)
+            })
+
+            Object.keys(answersByQuestion).forEach(questionId => {
+              const studentAnswers = answersByQuestion[questionId].sort()
+              const correctAnswersForQ = (correctByQuestion[questionId] || []).sort()
+              
+              const isFullyCorrect = studentAnswers.length === correctAnswersForQ.length &&
+                studentAnswers.every((ans, idx) => ans === correctAnswersForQ[idx])
+              
+              if (isFullyCorrect) {
+                const question = result.data.questions?.find((q: any) => q.id === questionId)
+                totalScore += question?.score || 0
+              }
+            })
+
+            setQuizResults({
+              success: true,
+              results,
+              totalScore,
+              correctAnswers: result.data.correctAnswers
+            })
           }
         }
         
@@ -245,10 +302,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-[#59f20d]/20 shadow-sm">
             <span className="text-orange-500 text-xl mr-1">🔥</span>
-            <span className="font-bold text-sm">5 Day Streak!</span>
-          </div>
-          <div className="w-10 h-10 rounded-full border-2 border-[#59f20d] overflow-hidden bg-slate-200 flex items-center justify-center text-2xl">
-            😊
+            <span className="font-bold text-sm">{} Day Streak!</span>
           </div>
         </div>
         </div>
@@ -336,7 +390,7 @@ export default function DashboardPage() {
         </section>
 
         {reading.questions && reading.questions.length > 0 && (
-          <section className="space-y-6">
+          <section className="space-y-6 padding-6 md:p-12 bg-white dark:bg-slate-800 rounded-xl border border-[#59f20d]/10 shadow-xl mb-10">
             <div className="flex items-center gap-2 px-1">
               <span className="text-[#59f20d] text-xl">❓</span>
               <h2 className="text-2xl font-black">Quiz Time!</h2>
@@ -359,7 +413,7 @@ export default function DashboardPage() {
                   <div className="space-y-2">
                     {q.options.map((opt: any) => {
                       const isSelected = selectedAnswers[q.id]?.includes(opt.id)
-                      const isCorrectOption = quizResults?.results.some((r: any) => r.optionId === opt.id && r.isCorrect)
+                      const isCorrectOption = quizResults?.correctAnswers?.some((ca: any) => ca.question === q.id && ca.correct_option === opt.id)
                       const isWrongSelection = quizResults && isSelected && !isCorrectOption
                       
                       return (
@@ -368,7 +422,7 @@ export default function DashboardPage() {
                           onClick={() => toggleAnswer(q.id, opt.id, isMultiple)}
                           disabled={!!quizResults}
                           className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                            isCorrectOption ? 'bg-green-100 dark:bg-green-900/30 border-green-500' :
+                            quizResults && isCorrectOption ? 'bg-green-100 dark:bg-green-900/30 border-green-500' :
                             isWrongSelection ? 'bg-red-100 dark:bg-red-900/30 border-red-500' :
                             isSelected ? 'bg-[#59f20d]/20 border-[#59f20d]' :
                             'border-zinc-200 dark:border-zinc-700 hover:border-[#59f20d]/50'
@@ -389,8 +443,8 @@ export default function DashboardPage() {
                               </div>
                             )}
                             <span className="flex-1">{opt.option}</span>
-                            {isCorrectOption && <span className="text-green-600 text-xl">✓</span>}
-                            {isWrongSelection && <span className="text-red-600 text-xl">✗</span>}
+                            {quizResults && isCorrectOption && <span className="text-green-600 text-xl font-bold">✓ Correct</span>}
+                            {isWrongSelection && <span className="text-red-600 text-xl font-bold">✗ Wrong</span>}
                           </div>
                         </button>
                       )
@@ -420,26 +474,6 @@ export default function DashboardPage() {
           </section>
         )}
 
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-[#59f20d]/10 flex items-center gap-6">
-            <div className="bg-yellow-100 dark:bg-yellow-900/30 w-16 h-16 rounded-full flex items-center justify-center">
-              <span className="text-yellow-500 text-3xl">⭐</span>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500 uppercase">Stars Collected</p>
-              <p className="text-3xl font-black">124</p>
-            </div>
-          </div>
-          <button onClick={() => router.push('/kid/history')} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-[#59f20d]/10 flex items-center gap-6 hover:border-[#59f20d]/30 transition-colors">
-            <div className="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center">
-              <span className="text-blue-500 text-3xl">📊</span>
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-bold text-slate-500 uppercase">My Progress</p>
-              <p className="text-lg font-black">View History</p>
-            </div>
-          </button>
-        </section>
       </main>
 
       <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">

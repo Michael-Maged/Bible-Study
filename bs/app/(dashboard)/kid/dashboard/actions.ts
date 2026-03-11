@@ -98,9 +98,19 @@ export async function getTodayReading() {
 
     const { data: attempts } = await supabase
       .from('attempts')
-      .select('question')
+      .select('question, option')
       .eq('user_id', user.id)
       .in('question', questions?.map(q => q.id) || [])
+
+    // Get correct answers if user has attempted
+    let correctAnswers = null
+    if (attempts && attempts.length > 0) {
+      const { data: correctAnswersData } = await supabase
+        .from('correctanswers')
+        .select('question, correct_option')
+        .in('question', questions?.map(q => q.id) || [])
+      correctAnswers = correctAnswersData
+    }
 
     const response = await fetch(
       `https://arabic-bible.onrender.com/api?book=${reading.book}&ch=${reading.chapter}&ver=${reading.from_verse}:${reading.to_verse}`
@@ -122,7 +132,9 @@ export async function getTodayReading() {
         isCompleted: !!completion,
         readingDate: reading.day,
         questions: questions || [],
-        hasAttempted: attempts && attempts.length > 0
+        hasAttempted: attempts && attempts.length > 0,
+        attempts: attempts || [],
+        correctAnswers: correctAnswers || []
       }
     }
   } catch (error: any) {

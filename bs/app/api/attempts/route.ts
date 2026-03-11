@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       .update({ current_score: (user?.current_score || 0) + totalScore })
       .eq('id', userId)
 
-    return NextResponse.json({ success: true, results, totalScore })
+    return NextResponse.json({ success: true, results, totalScore, correctAnswers })
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
