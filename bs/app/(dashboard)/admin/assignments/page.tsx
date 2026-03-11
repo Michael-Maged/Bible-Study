@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { saveReadingAction, saveQuestionsAction } from './actions'
 
 export default function AssignmentsPage() {
   const router = useRouter()
@@ -24,6 +25,8 @@ export default function AssignmentsPage() {
   const [userGrade, setUserGrade] = useState<number | null>(null)
   const [userTenant, setUserTenant] = useState<string | null>(null)
   const [isWholeTenant, setIsWholeTenant] = useState(false)
+  const [questions, setQuestions] = useState<any[]>([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
+  const [savedReadingId, setSavedReadingId] = useState<string | null>(null)
   const [bibleBooks] = useState([
     { id: 1, name: 'سفر التكوين' },
     { id: 2, name: 'سفر الخروج' },
@@ -272,7 +275,32 @@ export default function AssignmentsPage() {
 
       const result = await response.json()
       if (result.success) {
-        alert('Reading saved successfully!')
+        const readingId = result.data[0].id
+        
+        for (const q of questions) {
+          if (!q.question.trim() || q.options.length < 2) continue
+          
+          const hasCorrect = q.options.some((opt: any) => opt.isCorrect)
+          if (!hasCorrect) continue
+          
+          const hasEmptyOption = q.options.some((opt: any) => !opt.text.trim())
+          if (hasEmptyOption) continue
+          
+          await fetch('/api/questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reading: readingId,
+              question: q.question,
+              score: q.score,
+              options: q.options
+            })
+          })
+        }
+        
+        alert('Reading and questions saved successfully!')
+        setQuestions([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
+        setSavedReadingId(null)
         clearSelection()
         setBookId('')
         setChapter('')
@@ -282,6 +310,92 @@ export default function AssignmentsPage() {
     } catch (error) {
       console.error('Error saving reading:', error)
       alert('Error saving reading')
+    }
+  }
+
+  const addQuestion = () => {
+    setQuestions([...questions, { question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
+  }
+
+  const removeQuestion = (index: number) => {
+    setQuestions(questions.filter((_, i) => i !== index))
+  }
+
+  const updateQuestion = (index: number, field: string, value: any) => {
+    const updated = [...questions]
+    updated[index][field] = value
+    setQuestions(updated)
+  }
+
+  const addOption = (qIndex: number) => {
+    const updated = [...questions]
+    updated[qIndex].options.push({ text: '', isCorrect: false })
+    setQuestions(updated)
+  }
+
+  const updateOption = (qIndex: number, oIndex: number, field: string, value: any) => {
+    const updated = [...questions]
+    updated[qIndex].options[oIndex][field] = value
+    setQuestions(updated)
+  }
+
+  const setCorrectAnswer = (qIndex: number, oIndex: number) => {
+    const updated = [...questions]
+    updated[qIndex].options[oIndex].isCorrect = !updated[qIndex].options[oIndex].isCorrect
+    setQuestions(updated)
+  }
+
+  const saveQuestions = async () => {
+    if (!savedReadingId) {
+      alert('Please save reading first')
+      return
+    }
+
+    try {
+      for (const q of questions) {
+        if (!q.question.trim() || q.options.length < 2) {
+          alert('Each question must have text and at least 2 options')
+          return
+        }
+        
+        const hasCorrect = q.options.some((opt: any) => opt.isCorrect)
+        if (!hasCorrect) {
+          alert('Each question must have at least one correct answer marked')
+          return
+        }
+        
+        const hasEmptyOption = q.options.some((opt: any) => !opt.text.trim())
+        if (hasEmptyOption) {
+          alert('All options must have text')
+          return
+        }
+        
+        const response = await fetch('/api/questions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reading: savedReadingId,
+            question: q.question,
+            score: q.score,
+            options: q.options
+          })
+        })
+        
+        const result = await response.json()
+        if (!result.success) {
+          throw new Error(result.error)
+        }
+      }
+      
+      alert('Questions saved successfully!')
+      setQuestions([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
+      setSavedReadingId(null)
+      clearSelection()
+      setBookId('')
+      setChapter('')
+    } catch (error: any) {
+      console.error('Error saving questions:', error)
+      alert('Error saving questions: ' + error.message)
     }
   }
 
@@ -439,34 +553,48 @@ export default function AssignmentsPage() {
               <span className="text-[#59f20d] text-xl">❓</span>
               <h2 className="text-lg font-bold">Daily Quiz</h2>
             </div>
-            <button className="text-[#59f20d] text-sm font-bold flex items-center gap-1">
+            <button onClick={addQuestion} className="text-[#59f20d] text-sm font-bold flex items-center gap-1">
               <span className="text-base">➕</span> New Question
             </button>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border-l-4 border-[#59f20d] border-y border-r border-zinc-100 dark:border-zinc-800 space-y-4">
-            <div className="flex justify-between items-start">
-              <span className="bg-[#59f20d]/10 text-[#659c49] text-[10px] font-bold px-2 py-1 rounded-full uppercase">Question 1</span>
-              <button className="text-zinc-400 hover:text-red-500">🗑️</button>
-            </div>
-            <textarea className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#59f20d] placeholder:text-zinc-400" placeholder="Type the question here..." rows={2}></textarea>
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase block ml-1">Answer Choices</label>
-              {['The Sermon on the Mount', 'Walking on Water', 'Healing the Blind'].map((choice, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="flex-1 flex items-center bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full px-4 py-2">
-                    <input className="bg-transparent border-none p-0 w-full text-sm focus:ring-0" type="text" defaultValue={choice}/>
+          {questions.map((q, qIndex) => (
+            <div key={qIndex} className="bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border-l-4 border-[#59f20d] border-y border-r border-zinc-100 dark:border-zinc-800 space-y-4">
+              <div className="flex justify-between items-start">
+                <span className="bg-[#59f20d]/10 text-[#659c49] text-[10px] font-bold px-2 py-1 rounded-full uppercase">Question {qIndex + 1}</span>
+                <button onClick={() => removeQuestion(qIndex)} className="text-zinc-400 hover:text-red-500">🗑️</button>
+              </div>
+              <textarea value={q.question} onChange={(e) => updateQuestion(qIndex, 'question', e.target.value)} className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#59f20d] placeholder:text-zinc-400" placeholder="Type the question here..." rows={2}></textarea>
+              <div>
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Score</label>
+                <input type="number" value={q.score} onChange={(e) => updateQuestion(qIndex, 'score', parseInt(e.target.value))} className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#59f20d]" min="1" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase block ml-1">Answer Choices (Click ○ to mark correct)</label>
+                {q.options.map((opt: any, oIndex: number) => (
+                  <div key={oIndex} className="flex items-center gap-2">
+                    <div className="flex-1 flex items-center bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full px-4 py-2">
+                      <input value={opt.text} onChange={(e) => updateOption(qIndex, oIndex, 'text', e.target.value)} className="bg-transparent border-none p-0 w-full text-sm focus:ring-0" type="text" placeholder={`Option ${oIndex + 1}`} />
+                    </div>
+                    <button onClick={() => setCorrectAnswer(qIndex, oIndex)} className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${opt.isCorrect ? 'border-[#59f20d] bg-[#59f20d] text-[#121c0d] scale-110' : 'border-zinc-300 dark:border-zinc-600 text-zinc-400 hover:border-[#59f20d]'}`}>
+                      {opt.isCorrect ? '✓' : '○'}
+                    </button>
                   </div>
-                  <button className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${i === 0 ? 'border-[#59f20d] bg-[#59f20d] text-[#121c0d]' : 'border-zinc-200 dark:border-zinc-700 text-zinc-300'}`}>
-                    {i === 0 ? '✓' : '○'}
+                ))}
+                {q.options.length < 4 && (
+                  <button onClick={() => addOption(qIndex)} className="w-full py-2 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-full text-zinc-400 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    + Add Choice
                   </button>
-                </div>
-              ))}
-              <button className="w-full py-2 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-full text-zinc-400 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-                + Add Choice
-              </button>
+                )}
+              </div>
             </div>
-          </div>
+          ))}
+          
+          {savedReadingId && (
+            <button onClick={saveQuestions} className="w-full bg-[#59f20d] text-black px-4 py-3 rounded-lg font-bold hover:scale-105 transition-transform">
+              Save All Questions
+            </button>
+          )}
         </section>
       </main>
 
