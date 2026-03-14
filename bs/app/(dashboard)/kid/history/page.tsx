@@ -1,59 +1,21 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import { getReadingHistory } from './actions'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
-import { cacheHistory, getCachedHistory, isOnline } from '@/utils/offlineCache'
+import { cacheHistory, getCachedHistory } from '@/utils/offlineCache'
 import type { ReadingHistory } from '@/types'
 import KidNav from '@/components/KidNav'
+import { useOfflineData } from '@/hooks/useOfflineData'
 
 export default function HistoryPage() {
   const router = useRouter()
-  const [history, setHistory] = useState<ReadingHistory | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadHistory()
-  }, [])
-
-  const loadHistory = async () => {
-    const offline = !navigator.onLine
-    if (offline) {
-      const cached = getCachedHistory()
-      if (cached) setHistory(cached)
-      setLoading(false)
-      return
-    }
-    
-    let timeoutFired = false
-    const timeout = setTimeout(() => {
-      timeoutFired = true
-      const cached = getCachedHistory()
-      if (cached) setHistory(cached)
-      setLoading(false)
-    }, 3000)
-    
-    try {
-      const result = await getReadingHistory()
-      if (!timeoutFired) {
-        clearTimeout(timeout)
-        if (result.success) {
-          setHistory(result.data ?? null)
-          if (result.data) cacheHistory(result.data)
-        }
-        setLoading(false)
-      }
-    } catch (error) {
-      if (!timeoutFired) {
-        clearTimeout(timeout)
-        const cached = getCachedHistory()
-        if (cached) setHistory(cached)
-        setLoading(false)
-      }
-    }
-  }
+  const { data: history, loading } = useOfflineData(
+    getReadingHistory,
+    getCachedHistory,
+    cacheHistory
+  )
 
   const getCalendarDays = () => {
     const today = new Date()

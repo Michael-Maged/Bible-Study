@@ -1,59 +1,21 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import { getUserProfile } from '../dashboard/actions'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
-import { cacheProfile, getCachedProfile, isOnline } from '@/utils/offlineCache'
+import { cacheProfile, getCachedProfile } from '@/utils/offlineCache'
 import type { UserProfile } from '@/types'
 import KidNav from '@/components/KidNav'
+import { useOfflineData } from '@/hooks/useOfflineData'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadProfile()
-  }, [])
-
-  const loadProfile = async () => {
-    const offline = !navigator.onLine
-    if (offline) {
-      const cached = getCachedProfile()
-      if (cached) setProfile(cached)
-      setLoading(false)
-      return
-    }
-    
-    let timeoutFired = false
-    const timeout = setTimeout(() => {
-      timeoutFired = true
-      const cached = getCachedProfile()
-      if (cached) setProfile(cached)
-      setLoading(false)
-    }, 3000)
-    
-    try {
-      const result = await getUserProfile()
-      if (!timeoutFired) {
-        clearTimeout(timeout)
-        if (result.success) {
-          setProfile(result.data ?? null)
-          if (result.data) cacheProfile(result.data)
-        }
-        setLoading(false)
-      }
-    } catch (error) {
-      if (!timeoutFired) {
-        clearTimeout(timeout)
-        const cached = getCachedProfile()
-        if (cached) setProfile(cached)
-        setLoading(false)
-      }
-    }
-  }
+  const { data: profile, loading } = useOfflineData(
+    getUserProfile,
+    getCachedProfile,
+    cacheProfile
+  )
 
   if (loading) {
     return <LoadingScreen />
