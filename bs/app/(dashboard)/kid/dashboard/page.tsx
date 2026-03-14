@@ -7,69 +7,180 @@ import { getTodayReading, markReadingComplete, getUserProfile } from './actions'
 import { cacheReading, getCachedReading, isOnline, preloadAllData } from '@/utils/offlineCache'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
-import { getReadingHistory } from '../history/actions'
-import { getLeaderboard, getCurrentUserRank } from '../leaderboard/actions'
+
 
 export default function DashboardPage() {
+  console.log('DashboardPage component rendering')
   const router = useRouter()
   const [reading, setReading] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
   const [pendingCompletion, setPendingCompletion] = useState<string | null>(null)
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [quizResults, setQuizResults] = useState<any>(null)
 
   useEffect(() => {
     loadReading()
     const pending = localStorage.getItem('pending_completion')
     if (pending) setPendingCompletion(pending)
-    
-    // Preload all data in background
-    if (navigator.onLine) {
-      preloadAllData({
-        getTodayReading,
-        getUserProfile,
-        getReadingHistory,
-        getLeaderboard,
-        getCurrentUserRank
-      })
-    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadReading = async () => {
-    let timeoutFired = false
-    const timeout = setTimeout(() => {
-      timeoutFired = true
-      const cached = getCachedReading()
-      setReading(cached?.data || null)
-      setLoading(false)
-    }, 3000)
+    console.log('loadReading called')
+    setLoading(true)
 
     if (!navigator.onLine) {
-      clearTimeout(timeout)
       const cached = getCachedReading()
+      console.log('Offline, using cache')
       setReading(cached?.data || null)
       setLoading(false)
       return
     }
 
     try {
+      console.log('Calling getTodayReading...')
       const result = await getTodayReading()
-      if (timeoutFired) return
-      clearTimeout(timeout)
+      console.log('getTodayReading result:', result)
       
       if (result.success) {
+        console.log('Full reading data:', result.data)
+        
+        // Fetch correct answer counts for each question
+        if (result.data){
+          if (result.data.questions && result.data.questions.length > 0) {
+            const questionsWithCounts = await Promise.all(
+              result.data.questions.map(async (q: any) => {
+                const countRes = await fetch(`/api/questions/correct-count?questionId=${q.id}`)
+                const countData = await countRes.json()
+                return { ...q, correctCount: countData.count || 1 }
+              })
+            )
+            result.data.questions = questionsWithCounts
+          }
+
+          // If user has attempted, populate selectedAnswers and quizResults
+          if (result.data.hasAttempted && result.data.attempts && result.data.attempts.length > 0) {
+            const answersMap: Record<string, string[]> = {}
+            result.data.attempts.forEach((attempt: any) => {
+              if (!answersMap[attempt.question]) {
+                answersMap[attempt.question] = []
+              }
+              answersMap[attempt.question].push(attempt.option)
+            })
+            setSelectedAnswers(answersMap)
+
+            // Create results array for feedback
+            const results = result.data.attempts.map((attempt: any) => {
+              const isCorrect = result.data.correctAnswers?.some(
+                (ca: any) => ca.question === attempt.question && ca.correct_option === attempt.option
+              )
+              return { questionId: attempt.question, optionId: attempt.option, isCorrect }
+            })
+
+            // Calculate score (only if all answers for a question are correct)
+            let totalScore = 0
+            const answersByQuestion: Record<string, string[]> = {}
+            result.data.attempts.forEach((attempt: any) => {
+              if (!answersByQuestion[attempt.question]) {
+                answersByQuestion[attempt.question] = []
+              }
+              answersByQuestion[attempt.question].push(attempt.option)
+            })
+
+            const correctByQuestion: Record<string, string[]> = {}
+            result.data.correctAnswers?.forEach((ca: any) => {
+              if (!correctByQuestion[ca.question]) {
+                correctByQuestion[ca.question] = []
+              }
+              correctByQuestion[ca.question].push(ca.correct_option)
+            })
+
+            Object.keys(answersByQuestion).forEach(questionId => {
+              const studentAnswers = answersByQuestion[questionId].sort()
+              const correctAnswersForQ = (correctByQuestion[questionId] || []).sort()
+              
+              const isFullyCorrect = studentAnswers.length === correctAnswersForQ.length &&
+                studentAnswers.every((ans, idx) => ans === correctAnswersForQ[idx])
+              
+              if (isFullyCorrect) {
+                const question = result.data.questions?.find((q: any) => q.id === questionId)
+                totalScore += question?.score || 0
+              }
+            })
+
+            setQuizResults({
+              success: true,
+              results,
+              totalScore,
+              correctAnswers: result.data.correctAnswers
+            })
+          }
+        }
+        
         setReading(result.data)
         cacheReading(result.data)
       } else {
+        console.log('Result not successful:', result.error)
         setReading(null)
         cacheReading(null)
       }
     } catch (error) {
-      if (timeoutFired) return
-      clearTimeout(timeout)
+      console.error('Error in loadReading:', error)
       const cached = getCachedReading()
       setReading(cached?.data || null)
     }
     setLoading(false)
+    console.log('loadReading completed')
+  }
+
+  const handleSubmitQuiz = async () => {
+    if (!reading?.questions || reading.questions.length === 0) return
+    
+    const answers = Object.entries(selectedAnswers).flatMap(([questionId, optionIds]) => 
+      optionIds.map(optionId => ({
+        questionId,
+        optionId
+      }))
+    )
+
+    const allQuestionsAnswered = reading.questions.every((q: any) => 
+      selectedAnswers[q.id] && selectedAnswers[q.id].length > 0
+    )
+
+    if (!allQuestionsAnswered) {
+      alert('Please answer all questions')
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const response = await fetch('/api/attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: reading.userId,
+          readingId: reading.readingId,
+          answers
+        })
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        setQuizResults(result)
+        const markResult = await markReadingComplete(reading.readingId, reading.userId)
+        if (markResult.success) {
+          setReading({ ...reading, isCompleted: true, hasAttempted: true })
+        }
+      } else {
+        alert('Error submitting quiz')
+      }
+    } catch (error) {
+      console.error('Error submitting quiz:', error)
+      alert('Error submitting quiz')
+    }
+    setSubmitting(false)
   }
 
   const handleMarkComplete = async () => {
@@ -83,7 +194,7 @@ export default function DashboardPage() {
     }
     
     setCompleting(true)
-    const result = await markReadingComplete(reading.readingId)
+    const result = await markReadingComplete(reading.readingId, reading.userId)
     
     if (result.success) {
       setReading({ ...reading, isCompleted: true })
@@ -93,22 +204,32 @@ export default function DashboardPage() {
     setCompleting(false)
   }
 
-  const syncPendingCompletion = async () => {
-    const pending = localStorage.getItem('pending_completion')
-    if (pending && isOnline()) {
-      const result = await markReadingComplete(pending)
-      if (result.success) {
-        localStorage.removeItem('pending_completion')
-        setPendingCompletion(null)
-      }
-    }
+  const getCorrectAnswersCount = (question: any) => {
+    return fetch('/api/questions/correct-count?questionId=' + question.id)
+      .then(res => res.json())
+      .then(data => data.count || 0)
+      .catch(() => 0)
   }
 
-  useEffect(() => {
-    if (isOnline()) {
-      syncPendingCompletion()
-    }
-  }, [])
+  const toggleAnswer = (questionId: string, optionId: string, isMultiple: boolean) => {
+    if (quizResults) return
+    
+    setSelectedAnswers(prev => {
+      const current = prev[questionId] || []
+      
+      if (isMultiple) {
+        if (current.includes(optionId)) {
+          return { ...prev, [questionId]: current.filter(id => id !== optionId) }
+        } else {
+          return { ...prev, [questionId]: [...current, optionId] }
+        }
+      } else {
+        return { ...prev, [questionId]: [optionId] }
+      }
+    })
+  }
+
+
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -181,10 +302,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-white dark:bg-slate-800 px-4 py-2 rounded-full border border-[#59f20d]/20 shadow-sm">
             <span className="text-orange-500 text-xl mr-1">🔥</span>
-            <span className="font-bold text-sm">5 Day Streak!</span>
-          </div>
-          <div className="w-10 h-10 rounded-full border-2 border-[#59f20d] overflow-hidden bg-slate-200 flex items-center justify-center text-2xl">
-            😊
+            <span className="font-bold text-sm">{} Day Streak!</span>
           </div>
         </div>
         </div>
@@ -250,7 +368,7 @@ export default function DashboardPage() {
               })}
             </div>
           </div>
-          {!reading.isCompleted && (
+          {!reading.isCompleted && !reading.hasAttempted && (!reading.questions || reading.questions.length === 0) && (
             <div className="p-6 border-t border-[#59f20d]/10">
               <button 
                 onClick={handleMarkComplete}
@@ -271,26 +389,91 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-[#59f20d]/10 flex items-center gap-6">
-            <div className="bg-yellow-100 dark:bg-yellow-900/30 w-16 h-16 rounded-full flex items-center justify-center">
-              <span className="text-yellow-500 text-3xl">⭐</span>
+        {reading.questions && reading.questions.length > 0 && (
+          <section className="space-y-6 padding-6 md:p-12 bg-white dark:bg-slate-800 rounded-xl border border-[#59f20d]/10 shadow-xl mb-10">
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-[#59f20d] text-xl">❓</span>
+              <h2 className="text-2xl font-black">Quiz Time!</h2>
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500 uppercase">Stars Collected</p>
-              <p className="text-3xl font-black">124</p>
-            </div>
-          </div>
-          <button onClick={() => router.push('/kid/history')} className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-[#59f20d]/10 flex items-center gap-6 hover:border-[#59f20d]/30 transition-colors">
-            <div className="bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center">
-              <span className="text-blue-500 text-3xl">📊</span>
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-bold text-slate-500 uppercase">My Progress</p>
-              <p className="text-lg font-black">View History</p>
-            </div>
-          </button>
-        </section>
+            {reading.questions.map((q: any, idx: number) => {
+              const correctCount = q.correctCount || 1
+              const isMultiple = correctCount > 1
+              console.log(`Question ${q.id}: correctCount=${correctCount}, isMultiple=${isMultiple}`)
+              
+              return (
+                <div key={q.id} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-[#59f20d]/10">
+                  <div className="flex items-start gap-3 mb-4">
+                    <span className="bg-[#59f20d] text-slate-900 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0">{idx + 1}</span>
+                    <p className="text-lg font-bold flex-1">{q.question}</p>
+                    <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-3 py-1 rounded-full text-xs font-bold">{q.score} pts</span>
+                  </div>
+                  {isMultiple && (
+                    <p className="text-sm text-blue-600 dark:text-blue-400 mb-3 font-medium">ℹ️ Select all correct answers</p>
+                  )}
+                  <div className="space-y-2">
+                    {q.options.map((opt: any) => {
+                      const isSelected = selectedAnswers[q.id]?.includes(opt.id)
+                      const isCorrectOption = quizResults?.correctAnswers?.some((ca: any) => ca.question === q.id && ca.correct_option === opt.id)
+                      const isWrongSelection = quizResults && isSelected && !isCorrectOption
+                      
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() => toggleAnswer(q.id, opt.id, isMultiple)}
+                          disabled={!!quizResults}
+                          className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                            quizResults && isCorrectOption ? 'bg-green-100 dark:bg-green-900/30 border-green-500' :
+                            isWrongSelection ? 'bg-red-100 dark:bg-red-900/30 border-red-500' :
+                            isSelected ? 'bg-[#59f20d]/20 border-[#59f20d]' :
+                            'border-zinc-200 dark:border-zinc-700 hover:border-[#59f20d]/50'
+                          } disabled:cursor-not-allowed`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {isMultiple ? (
+                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                isSelected ? 'border-[#59f20d] bg-[#59f20d]' : 'border-zinc-300 dark:border-zinc-600'
+                              }`}>
+                                {isSelected && <span className="text-slate-900 text-sm">✓</span>}
+                              </div>
+                            ) : (
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                isSelected ? 'border-[#59f20d] bg-[#59f20d]' : 'border-zinc-300 dark:border-zinc-600'
+                              }`}>
+                                {isSelected && <div className="w-2 h-2 bg-slate-900 rounded-full"></div>}
+                              </div>
+                            )}
+                            <span className="flex-1">{opt.option}</span>
+                            {quizResults && isCorrectOption && <span className="text-green-600 text-xl font-bold">✓ Correct</span>}
+                            {isWrongSelection && <span className="text-red-600 text-xl font-bold">✗ Wrong</span>}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+            {!quizResults && (
+              <button
+                onClick={handleSubmitQuiz}
+                disabled={submitting || !reading.questions.every((q: any) => selectedAnswers[q.id]?.length > 0)}
+                className="w-full bg-[#59f20d] text-slate-900 py-4 rounded-xl font-black text-lg shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Submitting...' : '🎯 Submit Answers'}
+              </button>
+            )}
+            {quizResults && (
+              <div className="bg-gradient-to-br from-[#59f20d]/20 to-[#59f20d]/10 rounded-xl p-6 border border-[#59f20d]/30">
+                <div className="text-center">
+                  <div className="text-5xl mb-3">🎉</div>
+                  <h3 className="text-2xl font-black mb-2">Reading Complete!</h3>
+                  <p className="text-lg font-bold text-[#59f20d]">You earned {quizResults.totalScore} points!</p>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
       </main>
 
       <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
