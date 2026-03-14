@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { getFutureReadings, updateReading, deleteReading } from './actions'
 import { cacheAdminHistory, getCachedAdminHistory, isOnline } from '@/utils/offlineCache'
 import type { AdminReading, BibleBookInfo, BibleChapterInfo } from '@/types'
+import AdminNav from '@/components/AdminNav'
 
 const bibleBooks = [
   { id: 1, name: 'سفر التكوين' }, { id: 2, name: 'سفر الخروج' }, { id: 3, name: 'سفر اللاويين' },
@@ -121,14 +122,6 @@ export default function HistoryPage() {
       month: 'short', 
       day: 'numeric' 
     })
-  }
-
-  const handleLogout = async () => {
-    const { createClient } = await import('@/utils/supabase/client')
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    window.location.href = '/login'
   }
 
   return (
@@ -278,30 +271,7 @@ export default function HistoryPage() {
         )}
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-          <button onClick={() => router.push('/admin')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">🏠</span>
-            <span className="text-[10px] font-black uppercase mt-1">Dashboard</span>
-          </button>
-          <button onClick={() => router.push('/admin/assignments')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📖</span>
-            <span className="text-[10px] font-black uppercase mt-1">Content</span>
-          </button>
-          <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-            <span className="text-2xl">📚</span>
-            <span className="text-[10px] font-black uppercase mt-1">History</span>
-          </button>
-          <button onClick={() => router.push('/admin/kids')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">👥</span>
-            <span className="text-[10px] font-black uppercase mt-1">Kids</span>
-          </button>
-          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-            <span className="text-2xl">❌</span>
-            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-          </button>
-        </div>
-      </nav>
+      <AdminNav active="history" />
     </div>
   )
 }

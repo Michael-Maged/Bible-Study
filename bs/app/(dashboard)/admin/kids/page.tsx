@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { fetchAssignedKids, handleApproveRequest } from './actions'
 import type { RequestDetail } from '@/types'
+import AdminNav from '@/components/AdminNav'
 
 type Kid = {
   id: string
@@ -22,20 +23,7 @@ export default function AssignedKidsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [userRole, setUserRole] = useState<string>('')
 
-  const handleLogout = async () => {
-    const { createClient } = await import('@/utils/supabase/client')
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    window.location.href = '/login'
-  }
-
-  useEffect(() => {
-    const role = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
-    setUserRole(role || '')
-    loadKids()
-  }, [])
-
+  
   async function loadKids() {
     setLoading(true)
     const result = await fetchAssignedKids()
@@ -48,6 +36,13 @@ export default function AssignedKidsPage() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    const role = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
+    setUserRole(role || '')
+    loadKids()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleAction(id: string, type: 'admin' | 'kid', approved: boolean) {
     const result = await handleApproveRequest(type, id, approved)
@@ -123,15 +118,15 @@ export default function AssignedKidsPage() {
 
           <label className="relative flex items-center w-full">
             <span className="absolute left-4 text-[#59f20d]/70 text-xl">🔍</span>
-            <input 
-              className="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base placeholder:text-gray-400 dark:placeholder:text-gray-500" 
-              placeholder="Search by name..." 
+            <input
+              className="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              placeholder="Search by name..."
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </label>
-          
+
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -156,7 +151,7 @@ export default function AssignedKidsPage() {
           <div className="space-y-3">
             {filteredKids.map((kid) => (
               <div key={`${kid.type}-${kid.id}`} className="bg-white dark:bg-[#1f2e18] rounded-xl overflow-hidden shadow-sm border border-[#59f20d]/5">
-                <button 
+                <button
                   onClick={() => router.push(`/admin/kids/${kid.type}/${kid.id}`)}
                   className="w-full p-4 text-left hover:bg-[#59f20d]/5 transition-colors"
                 >
@@ -182,13 +177,13 @@ export default function AssignedKidsPage() {
                 </button>
                 {kid.status === 'pending' && (
                   <div className="flex gap-3 p-4 pt-0">
-                    <button 
+                    <button
                       onClick={() => handleAction(kid.id, kid.type, false)}
                       className="flex-1 h-12 rounded-full bg-[#59f20d]/10 text-[#121c0d] dark:text-[#59f20d] font-bold text-sm hover:bg-[#59f20d]/20 transition-colors border border-[#59f20d]/20"
                     >
                       Reject
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleAction(kid.id, kid.type, true)}
                       className="flex-[2] h-12 rounded-full bg-[#59f20d] text-black font-bold text-sm shadow-md active:scale-95 transition-all"
                     >
@@ -202,30 +197,7 @@ export default function AssignedKidsPage() {
         )}
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-          <button onClick={() => router.push('/admin')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">🏠</span>
-            <span className="text-[10px] font-black uppercase mt-1">Dashboard</span>
-          </button>
-          <button onClick={() => router.push('/admin/assignments')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📖</span>
-            <span className="text-[10px] font-black uppercase mt-1">Content</span>
-          </button>
-          <button onClick={() => router.push('/admin/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📚</span>
-            <span className="text-[10px] font-black uppercase mt-1">History</span>
-          </button>
-          <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-            <span className="text-2xl">👥</span>
-            <span className="text-[10px] font-black uppercase mt-1">Kids</span>
-          </button>
-          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-            <span className="text-2xl">❌</span>
-            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-          </button>
-        </div>
-      </nav>
+      <AdminNav active="kids" />
     </div>
   )
 }

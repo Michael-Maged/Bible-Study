@@ -6,9 +6,9 @@ import { createClient } from '@/utils/supabase/client'
 import { getDashboardStats } from './actions'
 import { cacheStats, getCachedStats, isOnline } from '@/utils/offlineCache'
 import OfflineBanner from '@/components/OfflineBanner'
+import AdminNav from '@/components/AdminNav'
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard')
   const [userRole, setUserRole] = useState<string>('')
   const [stats, setStats] = useState({ totalUsers: 0, pendingCount: 0, lastUpdated: '' })
   const router = useRouter()
@@ -45,13 +45,6 @@ export default function AdminDashboard() {
     checkAuth()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router])
-
-  const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    router.push('/login')
-  }
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-white min-h-screen pb-24">
@@ -147,30 +140,7 @@ export default function AdminDashboard() {
         </section>
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-          <button onClick={() => setActiveTab('dashboard')} className={`flex-1 flex flex-col items-center justify-center py-2 ${activeTab === 'dashboard' ? 'bg-[#59f20d] rounded-full text-slate-900' : 'text-white hover:text-[#59f20d]'} transition-colors`}>
-            <span className="text-2xl">🏠</span>
-            <span className="text-[10px] font-black uppercase mt-1">Dashboard</span>
-          </button>
-          <button onClick={() => router.push('/admin/assignments')} className={`flex-1 flex flex-col items-center justify-center py-2 ${activeTab === 'content' ? 'bg-[#59f20d] rounded-full text-slate-900' : 'text-white hover:text-[#59f20d]'} transition-colors`}>
-            <span className="text-2xl">📖</span>
-            <span className="text-[10px] font-black uppercase mt-1">Content</span>
-          </button>
-          <button onClick={() => router.push('/admin/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📚</span>
-            <span className="text-[10px] font-black uppercase mt-1">History</span>
-          </button>
-          <button onClick={() => router.push('/admin/kids')} className={`flex-1 flex flex-col items-center justify-center py-2 ${activeTab === 'kids' ? 'bg-[#59f20d] rounded-full text-slate-900' : 'text-white hover:text-[#59f20d]'} transition-colors`}>
-            <span className="text-2xl">👥</span>
-            <span className="text-[10px] font-black uppercase mt-1">Kids</span>
-          </button>
-          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-            <span className="text-2xl">❌</span>
-            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-          </button>
-        </div>
-      </nav>
+      <AdminNav active="dashboard" />
     </div>
   )
 }
