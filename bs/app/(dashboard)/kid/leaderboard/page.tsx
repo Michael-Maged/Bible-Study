@@ -6,11 +6,12 @@ import { getLeaderboard, getCurrentUserRank } from './actions'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import { cacheLeaderboard, getCachedLeaderboard, isOnline } from '@/utils/offlineCache'
+import type { LeaderboardUser, CurrentUserRank } from '@/types'
 
 export default function LeaderboardPage() {
   const router = useRouter()
-  const [users, setUsers] = useState<any[]>([])
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [users, setUsers] = useState<LeaderboardUser[]>([])
+  const [currentUser, setCurrentUser] = useState<CurrentUserRank | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -54,10 +55,10 @@ export default function LeaderboardPage() {
         }
         
         if (userRankResult.success) {
-          setCurrentUser(userRankResult.data)
+          setCurrentUser(userRankResult.data ?? null)
         }
         
-        cacheLeaderboard({ users: leaderboardResult.data, currentUser: userRankResult.data })
+        cacheLeaderboard({ users: leaderboardResult.data, currentUser: userRankResult.data ?? null })
         setLoading(false)
       }
     } catch (error) {

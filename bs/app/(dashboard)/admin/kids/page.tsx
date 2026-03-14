@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { fetchAssignedKids, handleApproveRequest } from './actions'
+import type { RequestDetail } from '@/types'
 
 type Kid = {
   id: string
@@ -40,8 +41,8 @@ export default function AssignedKidsPage() {
     const result = await fetchAssignedKids()
     if (result.success && result.data) {
       const allKids: Kid[] = [
-        ...result.data.superusers.map((s: any) => ({ ...s, type: 'admin' as const })),
-        ...result.data.kids.map((k: any) => ({ ...k, type: 'kid' as const }))
+        ...result.data.superusers.map((s: RequestDetail) => ({ ...s, type: 'admin' as const })),
+        ...result.data.kids.map((k: RequestDetail) => ({ ...k, type: 'kid' as const }))
       ]
       setKids(allKids)
     }

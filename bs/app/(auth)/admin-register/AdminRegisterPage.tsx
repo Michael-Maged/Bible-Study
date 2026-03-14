@@ -6,28 +6,30 @@ import { registerAdminWithEmail } from '../register/emailActions'
 import { fetchTenants, fetchGradesByTenant } from '../register/tenantActions'
 import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
+import type { Tenant, Grade } from '@/types'
 
 export default function AdminRegisterPage() {
   const router = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
-  const [tenants, setTenants] = useState<any[]>([])
-  const [grades, setGrades] = useState<any[]>([])
+  const [tenants, setTenants] = useState<Tenant[]>([])
+  const [grades, setGrades] = useState<Grade[]>([])
   const [selectedTenant, setSelectedTenant] = useState('')
   const [selectedRole, setSelectedRole] = useState('')
   const [selectedGrade, setSelectedGrade] = useState('')
   const [selectedGender, setSelectedGender] = useState('')
 
-  useEffect(() => {
-    loadTenants()
-  }, [])
-
-  async function loadTenants() {
+  const loadTenants = async () => {
     const result = await fetchTenants()
     if (result.success) {
       setTenants(result.data || [])
     }
   }
+
+  useEffect(() => {
+    loadTenants()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleTenantChange(tenantId: string) {
     setSelectedTenant(tenantId)

@@ -13,22 +13,6 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ totalUsers: 0, pendingCount: 0, lastUpdated: '' })
   const router = useRouter()
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      const role = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
-      
-      if (!session || (role !== 'admin' && role !== 'superuser')) {
-        router.push('/login')
-      } else {
-        setUserRole(role || '')
-        loadStats()
-      }
-    }
-    checkAuth()
-  }, [router])
-
   const loadStats = async () => {
     if (!isOnline()) {
       const cached = getCachedStats()
@@ -44,6 +28,23 @@ export default function AdminDashboard() {
       if (cached) setStats(cached)
     }
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const role = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
+      
+      if (!session || (role !== 'admin' && role !== 'superuser')) {
+        router.push('/login')
+      } else {
+        setUserRole(role || '')
+        loadStats()
+      }
+    }
+    checkAuth()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router])
 
   const handleLogout = async () => {
     const supabase = createClient()

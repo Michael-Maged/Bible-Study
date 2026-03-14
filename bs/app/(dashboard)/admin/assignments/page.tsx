@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { saveReadingAction, saveQuestionsAction } from './actions'
+import type { QuestionBuilder, QuestionOptionBuilder, BibleBookInfo, BibleChapterInfo } from '@/types'
 
 export default function AssignmentsPage() {
   const router = useRouter()
@@ -20,12 +21,12 @@ export default function AssignmentsPage() {
   const [verseTo, setVerseTo] = useState('')
   const [versePreview, setVersePreview] = useState<string[]>([])
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
-  const [chapterInfo, setChapterInfo] = useState<any>(null)
-  const [bookInfo, setBookInfo] = useState<any>(null)
+  const [chapterInfo, setChapterInfo] = useState<BibleChapterInfo | null>(null)
+  const [bookInfo, setBookInfo] = useState<BibleBookInfo | null>(null)
   const [userGrade, setUserGrade] = useState<number | null>(null)
   const [userTenant, setUserTenant] = useState<string | null>(null)
   const [isWholeTenant, setIsWholeTenant] = useState(false)
-  const [questions, setQuestions] = useState<any[]>([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
+  const [questions, setQuestions] = useState<QuestionBuilder[]>([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
   const [savedReadingId, setSavedReadingId] = useState<string | null>(null)
   const [bibleBooks] = useState([
     { id: 1, name: 'سفر التكوين' },
@@ -280,10 +281,10 @@ export default function AssignmentsPage() {
         for (const q of questions) {
           if (!q.question.trim() || q.options.length < 2) continue
           
-          const hasCorrect = q.options.some((opt: any) => opt.isCorrect)
+          const hasCorrect = q.options.some((opt: QuestionOptionBuilder) => opt.isCorrect)
           if (!hasCorrect) continue
           
-          const hasEmptyOption = q.options.some((opt: any) => !opt.text.trim())
+          const hasEmptyOption = q.options.some((opt: QuestionOptionBuilder) => !opt.text.trim())
           if (hasEmptyOption) continue
           
           await fetch('/api/questions', {
@@ -321,9 +322,9 @@ export default function AssignmentsPage() {
     setQuestions(questions.filter((_, i) => i !== index))
   }
 
-  const updateQuestion = (index: number, field: string, value: any) => {
-    const updated = [...questions]
-    updated[index][field] = value
+  const updateQuestion = (index: number, field: string, value: string | number) => {
+    const updated = [...questions] as QuestionBuilder[]
+    ;(updated[index] as Record<string, string | number | QuestionOptionBuilder[]>)[field] = value
     setQuestions(updated)
   }
 
@@ -333,9 +334,9 @@ export default function AssignmentsPage() {
     setQuestions(updated)
   }
 
-  const updateOption = (qIndex: number, oIndex: number, field: string, value: any) => {
-    const updated = [...questions]
-    updated[qIndex].options[oIndex][field] = value
+  const updateOption = (qIndex: number, oIndex: number, field: string, value: string | boolean) => {
+    const updated = [...questions] as QuestionBuilder[]
+    ;(updated[qIndex].options[oIndex] as Record<string, string | boolean>)[field] = value
     setQuestions(updated)
   }
 
@@ -358,13 +359,13 @@ export default function AssignmentsPage() {
           return
         }
         
-        const hasCorrect = q.options.some((opt: any) => opt.isCorrect)
+        const hasCorrect = q.options.some((opt: QuestionOptionBuilder) => opt.isCorrect)
         if (!hasCorrect) {
           alert('Each question must have at least one correct answer marked')
           return
         }
         
-        const hasEmptyOption = q.options.some((opt: any) => !opt.text.trim())
+        const hasEmptyOption = q.options.some((opt: QuestionOptionBuilder) => !opt.text.trim())
         if (hasEmptyOption) {
           alert('All options must have text')
           return
@@ -393,9 +394,9 @@ export default function AssignmentsPage() {
       clearSelection()
       setBookId('')
       setChapter('')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving questions:', error)
-      alert('Error saving questions: ' + error.message)
+      alert('Error saving questions: ' + (error instanceof Error ? error.message : String(error)))
     }
   }
 
@@ -571,7 +572,7 @@ export default function AssignmentsPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase block ml-1">Answer Choices (Click ○ to mark correct)</label>
-                {q.options.map((opt: any, oIndex: number) => (
+                {q.options.map((opt: QuestionOptionBuilder, oIndex: number) => (
                   <div key={oIndex} className="flex items-center gap-2">
                     <div className="flex-1 flex items-center bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full px-4 py-2">
                       <input value={opt.text} onChange={(e) => updateOption(qIndex, oIndex, 'text', e.target.value)} className="bg-transparent border-none p-0 w-full text-sm focus:ring-0" type="text" placeholder={`Option ${oIndex + 1}`} />

@@ -68,7 +68,7 @@ export async function registerKid(formData: FormData) {
     
     // Return user data to be stored temporarily
     return { success: true, phone: formattedPhone, pendingData: { ...userData, phone: formattedPhone, email: uniqueEmail } }
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Registration failed' }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Registration failed' }
   }
 }

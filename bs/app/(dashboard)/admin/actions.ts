@@ -2,8 +2,9 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
+import type { AdminStats } from '@/types'
 
-export async function getDashboardStats(cacheData?: any) {
+export async function getDashboardStats(cacheData?: AdminStats) {
   // If offline and cache provided, return cached data
   if (cacheData) {
     return { success: true, data: cacheData, fromCache: true }
@@ -100,7 +101,7 @@ export async function getDashboardStats(cacheData?: any) {
       }
       return { success: true, data: result }
     }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }

@@ -30,8 +30,8 @@ export async function getFutureReadings() {
     if (error) throw error
     
     return { success: true, data: readings, currentUserId: userData.id }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -50,8 +50,8 @@ export async function updateReading(readingId: string, updates: { day?: string, 
     if (error) throw error
     
     return { success: true }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -70,7 +70,7 @@ export async function deleteReading(readingId: string) {
     if (error) throw error
     
     return { success: true }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }

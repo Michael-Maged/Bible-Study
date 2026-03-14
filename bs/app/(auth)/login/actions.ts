@@ -41,8 +41,8 @@ export async function sendLoginOtp(name: string, phone: string) {
     }
     
     return { success: true, role: userRole, userName: user.name }
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to send code' }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send code' }
   }
 }
 
@@ -106,7 +106,7 @@ export async function verifyLoginOtp(phone: string, code: string, userName: stri
       },
       isPending
     }
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Verification failed' }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Verification failed' }
   }
 }

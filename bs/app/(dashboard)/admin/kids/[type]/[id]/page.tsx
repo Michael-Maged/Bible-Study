@@ -3,18 +3,15 @@
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getRequestDetails, handleApproveRequest } from '../../actions'
+import type { RequestDetail } from '@/types'
 
 export default function RequestDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const [request, setRequest] = useState<any>(null)
+  const [request, setRequest] = useState<RequestDetail | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadRequest()
-  }, [])
-
-  async function loadRequest() {
+  const loadRequest = async () => {
     const type = params.type as 'admin' | 'kid'
     const id = params.id as string
     const result = await getRequestDetails(type, id)
@@ -23,6 +20,11 @@ export default function RequestDetailPage() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadRequest()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleAction(approved: boolean) {
     const type = params.type as 'admin' | 'kid'

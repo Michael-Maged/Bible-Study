@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { getFutureReadings, updateReading, deleteReading } from './actions'
 import { cacheAdminHistory, getCachedAdminHistory, isOnline } from '@/utils/offlineCache'
+import type { AdminReading, BibleBookInfo, BibleChapterInfo } from '@/types'
 
 const bibleBooks = [
   { id: 1, name: 'سفر التكوين' }, { id: 2, name: 'سفر الخروج' }, { id: 3, name: 'سفر اللاويين' },
@@ -38,13 +39,13 @@ const bibleBooks = [
 
 export default function HistoryPage() {
   const router = useRouter()
-  const [readings, setReadings] = useState<any[]>([])
+  const [readings, setReadings] = useState<AdminReading[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ day: '', book: 0, chapter: 0, from_verse: 0, to_verse: 0 })
-  const [bookInfo, setBookInfo] = useState<any>(null)
-  const [chapterInfo, setChapterInfo] = useState<any>(null)
+  const [bookInfo, setBookInfo] = useState<BibleBookInfo | null>(null)
+  const [chapterInfo, setChapterInfo] = useState<BibleChapterInfo | null>(null)
 
   useEffect(() => {
     loadReadings()
@@ -71,7 +72,7 @@ export default function HistoryPage() {
     setLoading(false)
   }
 
-  const handleEdit = async (reading: any) => {
+  const handleEdit = async (reading: AdminReading) => {
     setEditingId(reading.id)
     setEditForm({
       day: reading.day,

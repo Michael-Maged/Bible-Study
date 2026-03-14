@@ -6,10 +6,11 @@ import { getReadingHistory } from './actions'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import { cacheHistory, getCachedHistory, isOnline } from '@/utils/offlineCache'
+import type { ReadingHistory } from '@/types'
 
 export default function HistoryPage() {
   const router = useRouter()
-  const [history, setHistory] = useState<any>(null)
+  const [history, setHistory] = useState<ReadingHistory | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -38,8 +39,8 @@ export default function HistoryPage() {
       if (!timeoutFired) {
         clearTimeout(timeout)
         if (result.success) {
-          setHistory(result.data)
-          cacheHistory(result.data)
+          setHistory(result.data ?? null)
+          if (result.data) cacheHistory(result.data)
         }
         setLoading(false)
       }

@@ -6,10 +6,11 @@ import { getUserProfile } from '../dashboard/actions'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import { cacheProfile, getCachedProfile, isOnline } from '@/utils/offlineCache'
+import type { UserProfile } from '@/types'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -38,8 +39,8 @@ export default function ProfilePage() {
       if (!timeoutFired) {
         clearTimeout(timeout)
         if (result.success) {
-          setProfile(result.data)
-          cacheProfile(result.data)
+          setProfile(result.data ?? null)
+          if (result.data) cacheProfile(result.data)
         }
         setLoading(false)
       }

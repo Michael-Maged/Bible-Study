@@ -7,8 +7,8 @@ export async function fetchTenants() {
     const { data, error } = await getTenants()
     if (error) throw error
     return { success: true, data }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -23,9 +23,9 @@ export async function fetchGradesByTenant(tenantId: string) {
     }
     console.log('Grades fetched:', data)
     return { success: true, data }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Grade fetch exception:', error)
-    return { success: false, error: error.message, data: null }
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error', data: null }
   }
 }
 
@@ -34,7 +34,7 @@ export async function fetchClassesByGrade(gradeId: string) {
     const { data, error } = await getClassesByGrade(gradeId)
     if (error) throw error
     return { success: true, data }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error', data: null }
   }
 }

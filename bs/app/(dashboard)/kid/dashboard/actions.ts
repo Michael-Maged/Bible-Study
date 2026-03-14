@@ -40,8 +40,8 @@ export async function getUserProfile() {
         className: user.enrollment?.[0]?.class?.name
       }
     }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -137,9 +137,9 @@ export async function getTodayReading() {
         correctAnswers: correctAnswers || []
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('getTodayReading error:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -231,8 +231,8 @@ export async function markReadingComplete(readingId: string, userId: string) {
     if (updateError) throw updateError
 
     return { success: true }
-  } catch (error: any) {
+  } catch (error) {
     console.error('markReadingComplete error:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }

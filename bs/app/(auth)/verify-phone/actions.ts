@@ -4,8 +4,9 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { createUser, createAdminUser } from '@/api/userApi'
 import { handleAdminRegistration } from '@/routes/adminRoutes'
 import { fetchGradesByTenant } from '../register/tenantActions'
+import type { PendingData, Grade } from '@/types'
 
-export async function verifyAndCreateUser(phone: string, code: string, type: 'kid' | 'admin', pendingData: any) {
+export async function verifyAndCreateUser(phone: string, code: string, type: 'kid' | 'admin', pendingData: PendingData) {
   try {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.verifyOtp({
@@ -65,15 +66,15 @@ export async function verifyAndCreateUser(phone: string, code: string, type: 'ki
       }
       if (!user) throw new Error('Failed to create admin user')
 
-      const { data: gradeData } = await fetchGradesByTenant(pendingData.tenant)
-      const selectedGrade = gradeData?.find((g: any) => g.id === pendingData.grade)
+      const { data: gradeData } = await fetchGradesByTenant(pendingData.tenant ?? '')
+      const selectedGrade = gradeData?.find((g: Grade) => g.id === pendingData.grade)
       if (!selectedGrade) throw new Error('Grade not found')
 
       const adminData = {
         user_id: user.id,
         grade: selectedGrade.grade_num,
         role: pendingData.role as 'admin' | 'superuser',
-        tenant: pendingData.tenant
+        tenant: pendingData.tenant ?? ''
       }
 
       console.log('Creating admin record with data:', adminData)
@@ -81,8 +82,8 @@ export async function verifyAndCreateUser(phone: string, code: string, type: 'ki
     }
 
     return { success: true }
-  } catch (error: any) {
+  } catch (error) {
     console.error('verifyAndCreateUser error:', error)
-    return { success: false, error: error.message || 'Verification failed' }
+    return { success: false, error: error instanceof Error ? error.message : 'Verification failed' }
   }
 }

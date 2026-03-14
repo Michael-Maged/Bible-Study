@@ -55,8 +55,8 @@ export async function registerKidWithEmail(formData: FormData) {
     }
     
     return { success: true }
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Registration failed' }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Registration failed' }
   }
 }
 
@@ -140,7 +140,7 @@ export async function registerAdminWithEmail(formData: FormData) {
     }
     
     return { success: true }
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Registration failed' }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Registration failed' }
   }
 }
