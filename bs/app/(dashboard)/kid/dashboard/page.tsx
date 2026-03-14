@@ -9,6 +9,7 @@ import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import type { TodayReading, QuizResults, Question, QuestionOption, CorrectAnswer, Attempt } from '@/types'
 import KidNav from '@/components/KidNav'
+import MessageBox from '@/components/MessageBox'
 
 
 export default function DashboardPage() {
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({})
   const [submitting, setSubmitting] = useState(false)
   const [quizResults, setQuizResults] = useState<QuizResults | null>(null)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const loadReading = async () => {
     console.log('loadReading called')
@@ -152,7 +154,7 @@ export default function DashboardPage() {
     )
 
     if (!allQuestionsAnswered) {
-      alert('Please answer all questions')
+      setFeedback({ type: 'error', message: 'Please answer all questions' })
       return
     }
 
@@ -176,11 +178,11 @@ export default function DashboardPage() {
           setReading({ ...reading, isCompleted: true, hasAttempted: true })
         }
       } else {
-        alert('Error submitting quiz')
+        setFeedback({ type: 'error', message: 'Error submitting quiz' })
       }
     } catch (error) {
       console.error('Error submitting quiz:', error)
-      alert('Error submitting quiz')
+      setFeedback({ type: 'error', message: 'Error submitting quiz' })
     }
     setSubmitting(false)
   }
@@ -201,7 +203,7 @@ export default function DashboardPage() {
     if (result.success) {
       setReading({ ...reading, isCompleted: true })
     } else {
-      alert(result.error || 'Failed to mark as complete')
+      setFeedback({ type: 'error', message: result.error || 'Failed to mark as complete' })
     }
     setCompleting(false)
   }
@@ -442,6 +444,12 @@ export default function DashboardPage() {
         )}
 
       </main>
+
+      {feedback && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-40">
+          <MessageBox type={feedback.type} message={feedback.message} />
+        </div>
+      )}
 
       <KidNav active="dashboard" />
     </div>

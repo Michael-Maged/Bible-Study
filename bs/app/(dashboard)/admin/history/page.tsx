@@ -7,6 +7,7 @@ import { cacheAdminHistory, getCachedAdminHistory, isOnline } from '@/utils/offl
 import type { AdminReading, BibleBookInfo, BibleChapterInfo } from '@/types'
 import AdminNav from '@/components/AdminNav'
 import { bibleBooks } from '@/constants/bibleBooks'
+import MessageBox from '@/components/MessageBox'
 
 export default function HistoryPage() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function HistoryPage() {
   const [editForm, setEditForm] = useState({ day: '', book: 0, chapter: 0, from_verse: 0, to_verse: 0 })
   const [bookInfo, setBookInfo] = useState<BibleBookInfo | null>(null)
   const [chapterInfo, setChapterInfo] = useState<BibleChapterInfo | null>(null)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   useEffect(() => {
     loadReadings()
@@ -67,7 +69,7 @@ export default function HistoryPage() {
       setEditingId(null)
       loadReadings()
     } else {
-      alert(result.error || 'Failed to update')
+      setFeedback({ type: 'error', message: result.error || 'Failed to update' })
     }
   }
 
@@ -77,7 +79,7 @@ export default function HistoryPage() {
     if (result.success) {
       loadReadings()
     } else {
-      alert(result.error || 'Failed to delete')
+      setFeedback({ type: 'error', message: result.error || 'Failed to delete' })
     }
   }
 
@@ -240,6 +242,12 @@ export default function HistoryPage() {
           ))
         )}
       </main>
+
+      {feedback && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-40">
+          <MessageBox type={feedback.type} message={feedback.message} />
+        </div>
+      )}
 
       <AdminNav active="history" />
     </div>

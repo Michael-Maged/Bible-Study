@@ -6,6 +6,7 @@ import { saveReadingAction, saveQuestionsAction } from './actions'
 import AdminNav from '@/components/AdminNav'
 import type { QuestionBuilder, QuestionOptionBuilder, BibleBookInfo, BibleChapterInfo } from '@/types'
 import { bibleBooks } from '@/constants/bibleBooks'
+import MessageBox from '@/components/MessageBox'
 
 export default function AssignmentsPage() {
   const router = useRouter()
@@ -30,6 +31,7 @@ export default function AssignmentsPage() {
   const [isWholeTenant, setIsWholeTenant] = useState(false)
   const [questions, setQuestions] = useState<QuestionBuilder[]>([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
   const [savedReadingId, setSavedReadingId] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isLoadingBooks] = useState(false)
 
   const changeMonth = (direction: number) => {
@@ -161,12 +163,12 @@ export default function AssignmentsPage() {
 
   const saveReading = async () => {
     if (!bookId || !chapter || !verseFrom || !verseTo || !selectedDate) {
-      alert('Please fill all fields')
+      setFeedback({ type: 'error', message: 'Please fill all fields' })
       return
     }
 
     if (!userGrade || !userTenant) {
-      alert('User data not loaded')
+      setFeedback({ type: 'error', message: 'User data not loaded' })
       return
     }
 
@@ -215,18 +217,14 @@ export default function AssignmentsPage() {
           })
         }
         
-        alert('Reading and questions saved successfully!')
+        setFeedback({ type: 'success', message: 'Reading and questions saved successfully!' })
         setQuestions([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
         setSavedReadingId(null)
         clearSelection()
         setBookId('')
         setChapter('')
       } else {
-        alert('Error saving reading')
-      }
-    } catch (error) {
-      console.error('Error saving reading:', error)
-      alert('Error saving reading')
+        setFeedback({ type: 'error', message: 'Error saving reading' })
     }
   }
 
@@ -264,26 +262,26 @@ export default function AssignmentsPage() {
 
   const saveQuestions = async () => {
     if (!savedReadingId) {
-      alert('Please save reading first')
+      setFeedback({ type: 'error', message: 'Please save reading first' })
       return
     }
 
     try {
       for (const q of questions) {
         if (!q.question.trim() || q.options.length < 2) {
-          alert('Each question must have text and at least 2 options')
+          setFeedback({ type: 'error', message: 'Each question must have text and at least 2 options' })
           return
         }
         
         const hasCorrect = q.options.some((opt: QuestionOptionBuilder) => opt.isCorrect)
         if (!hasCorrect) {
-          alert('Each question must have at least one correct answer marked')
+          setFeedback({ type: 'error', message: 'Each question must have at least one correct answer marked' })
           return
         }
         
         const hasEmptyOption = q.options.some((opt: QuestionOptionBuilder) => !opt.text.trim())
         if (hasEmptyOption) {
-          alert('All options must have text')
+          setFeedback({ type: 'error', message: 'All options must have text' })
           return
         }
         
@@ -304,7 +302,7 @@ export default function AssignmentsPage() {
         }
       }
       
-      alert('Questions saved successfully!')
+      setFeedback({ type: 'success', message: 'Questions saved successfully!' })
       setQuestions([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
       setSavedReadingId(null)
       clearSelection()
@@ -312,7 +310,7 @@ export default function AssignmentsPage() {
       setChapter('')
     } catch (error) {
       console.error('Error saving questions:', error)
-      alert('Error saving questions: ' + (error instanceof Error ? error.message : String(error)))
+      setFeedback({ type: 'error', message: 'Error saving questions: ' + (error instanceof Error ? error.message : String(error)) })
     }
   }
 
@@ -507,6 +505,8 @@ export default function AssignmentsPage() {
             </div>
           ))}
           
+          {feedback && <MessageBox type={feedback.type} message={feedback.message} />}
+
           {savedReadingId && (
             <button onClick={saveQuestions} className="w-full bg-[#59f20d] text-black px-4 py-3 rounded-lg font-bold hover:scale-105 transition-transform">
               Save All Questions
