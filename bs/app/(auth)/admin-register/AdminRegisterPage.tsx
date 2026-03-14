@@ -7,6 +7,7 @@ import { fetchTenants, fetchGradesByTenant } from '../register/tenantActions'
 import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
 import type { Tenant, Grade } from '@/types'
+import Image from "next/image";
 
 export default function AdminRegisterPage() {
   const router = useRouter()
@@ -88,7 +89,7 @@ export default function AdminRegisterPage() {
           <div className="relative h-40 w-full overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
             <div className="absolute inset-0 bg-[#6ef516]/20 mix-blend-multiply z-0"></div>
-            <img
+            <Image
               alt="Admin registration"
               className="w-full h-full object-cover"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnHDFDB0uyxKNP9dCdREDdgxqud5Jz9b0WU1BC68iv-cy4IjPzopaHqfeV7soYIPNWadSdL3TCgsMk0nxtMMTKMhab7tdeuw2pIkAqSzaO-YQtKRGfYTySBddZWJ8sDZSr1LVfPlJPJG2-1H9Z8yoX9anAslpvyj8lNBFwgGeOb28y0WwSOsJWKDQJSSC8wxuzm0saeio6i4MdamBysCAn2WovRuk2Ogn6duEmIH1foStxWi1cvJXUIXI_C1tWhet3RYYiEIHlIG7G"

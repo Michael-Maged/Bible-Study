@@ -75,9 +75,8 @@ export default function HistoryPage() {
     const days = []
     
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day)
-      const isoDate = date.toISOString().split('T')[0]
-      days.push(isoDate)
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      days.push(dateStr)
     }
     return days
   }
@@ -88,7 +87,7 @@ export default function HistoryPage() {
 
   const calendarDays = getCalendarDays()
   const completedSet = new Set(history?.completedDays || [])
-  const today = new Date().toISOString().split('T')[0]
+  const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen pb-24">
