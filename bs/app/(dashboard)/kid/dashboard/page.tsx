@@ -8,6 +8,7 @@ import { cacheReading, getCachedReading, isOnline } from '@/utils/offlineCache'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import type { TodayReading, QuizResults, Question, QuestionOption, CorrectAnswer, Attempt } from '@/types'
+import KidNav from '@/components/KidNav'
 
 
 export default function DashboardPage() {
@@ -20,13 +21,6 @@ export default function DashboardPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({})
   const [submitting, setSubmitting] = useState(false)
   const [quizResults, setQuizResults] = useState<QuizResults | null>(null)
-
-  useEffect(() => {
-    loadReading()
-    const pending = localStorage.getItem('pending_completion')
-    if (pending) setPendingCompletion(pending)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const loadReading = async () => {
     console.log('loadReading called')
@@ -136,6 +130,13 @@ export default function DashboardPage() {
     console.log('loadReading completed')
   }
 
+  useEffect(() => {
+    loadReading()
+    const pending = localStorage.getItem('pending_completion')
+    if (pending) setPendingCompletion(pending)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleSubmitQuiz = async () => {
     if (!reading?.questions || reading.questions.length === 0) return
     
@@ -232,18 +233,6 @@ export default function DashboardPage() {
 
 
 
-  const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    localStorage.clear()
-    if ('caches' in window) {
-      const cacheNames = await caches.keys()
-      await Promise.all(cacheNames.map(name => caches.delete(name)))
-    }
-    window.location.href = '/login'
-  }
-
   if (loading) {
     return <LoadingScreen />
   }
@@ -259,30 +248,7 @@ export default function DashboardPage() {
             <p className="text-slate-600 dark:text-slate-400">Check back later for today&apos;s assignment! </p>
           </div>
         </div>
-        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-          <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-            <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-              <span className="text-2xl">📖</span>
-              <span className="text-[10px] font-black uppercase mt-1">Reading</span>
-            </button>
-            <button onClick={() => router.push('/kid/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">📈</span>
-              <span className="text-[10px] font-black uppercase mt-1">History</span>
-            </button>
-            <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">📊</span>
-              <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
-            </button>
-            <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">👤</span>
-              <span className="text-[10px] font-black uppercase mt-1">Profile</span>
-            </button>
-            <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-              <span className="text-2xl">❌</span>
-              <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-            </button>
-          </div>
-        </nav>
+        <KidNav active="dashboard" />
       </div>
     )
   }
@@ -477,30 +443,7 @@ export default function DashboardPage() {
 
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-          <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-            <span className="text-2xl">📖</span>
-            <span className="text-[10px] font-black uppercase mt-1">Reading</span>
-          </button>
-          <button onClick={() => router.push('/kid/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📈</span>
-            <span className="text-[10px] font-black uppercase mt-1">History</span>
-          </button>
-          <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📊</span>
-            <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
-          </button>
-          <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">👤</span>
-            <span className="text-[10px] font-black uppercase mt-1">Profile</span>
-          </button>
-          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-            <span className="text-2xl">❌</span>
-            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-          </button>
-        </div>
-      </nav>
+      <KidNav active="dashboard" />
     </div>
   )
 }

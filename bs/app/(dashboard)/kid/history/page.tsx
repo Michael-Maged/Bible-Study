@@ -7,6 +7,7 @@ import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import { cacheHistory, getCachedHistory, isOnline } from '@/utils/offlineCache'
 import type { ReadingHistory } from '@/types'
+import KidNav from '@/components/KidNav'
 
 export default function HistoryPage() {
   const router = useRouter()
@@ -52,19 +53,6 @@ export default function HistoryPage() {
         setLoading(false)
       }
     }
-  }
-
-  const handleLogout = async () => {
-    const { createClient } = await import('@/utils/supabase/client')
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    localStorage.clear()
-    if ('caches' in window) {
-      const cacheNames = await caches.keys()
-      await Promise.all(cacheNames.map(name => caches.delete(name)))
-    }
-    window.location.href = '/login'
   }
 
   const getCalendarDays = () => {
@@ -145,30 +133,7 @@ export default function HistoryPage() {
         </section>
       </main>
 
-        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-          <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-            <button onClick={() => router.push('/kid/dashboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">📖</span>
-              <span className="text-[10px] font-black uppercase mt-1">Reading</span>
-            </button>
-            <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-              <span className="text-2xl">📈</span>
-              <span className="text-[10px] font-black uppercase mt-1">History</span>
-            </button>
-            <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">📊</span>
-              <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
-            </button>
-            <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">👤</span>
-              <span className="text-[10px] font-black uppercase mt-1">Profile</span>
-            </button>
-            <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-              <span className="text-2xl">❌</span>
-              <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-            </button>
-          </div>
-        </nav>
+        <KidNav active="history" />
     </div>
   )
 }
