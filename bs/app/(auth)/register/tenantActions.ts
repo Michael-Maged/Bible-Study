@@ -13,18 +13,11 @@ export async function fetchTenants() {
 }
 
 export async function fetchGradesByTenant(tenantId: string) {
-  console.log('Server: Fetching grades for tenant:', tenantId)
   try {
     const { data, error } = await getGradesByTenant(tenantId)
-    console.log('Server: Raw response:', { data, error })
-    if (error) {
-      console.error('Grade fetch error:', error)
-      return { success: false, error: error.message, data: null }
-    }
-    console.log('Grades fetched:', data)
+    if (error) return { success: false, error: error.message, data: null }
     return { success: true, data }
   } catch (error) {
-    console.error('Grade fetch exception:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error', data: null }
   }
 }

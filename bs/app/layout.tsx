@@ -17,7 +17,8 @@ export const metadata: Metadata = {
   description: "Bible study platform for kids",
   manifest: "/manifest.json",
   icons: {
-    icon: "/bible.svg",
+    icon: "/icon-192.png",
+    apple: "/apple-icon.png",
   },
 };
 
@@ -37,7 +38,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{
-          __html: `if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js')})}`
+          __html: `
+            if('serviceWorker' in navigator){
+              navigator.serviceWorker.register('/sw.js').then(function(r){
+                console.log('[SW] registered scope:', r.scope)
+              }).catch(function(e){
+                console.error('[SW] registration failed:', e)
+              })
+            } else {
+              console.warn('[SW] not supported')
+            }
+          `
         }} />
       </head>
       <body
