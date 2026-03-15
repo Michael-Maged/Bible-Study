@@ -1,7 +1,6 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
 import { getTodayReading, markReadingComplete } from './actions'
 import { cacheReading, getCachedReading, isOnline } from '@/utils/offlineCache'
@@ -14,7 +13,6 @@ import PushSubscriber from '@/components/PushSubscriber'
 
 
 export default function DashboardPage() {
-  console.log('DashboardPage component rendering')
   const router = useRouter()
   const [reading, setReading] = useState<TodayReading | null>(null)
   const [loading, setLoading] = useState(true)
@@ -26,24 +24,18 @@ export default function DashboardPage() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const loadReading = async () => {
-    console.log('loadReading called')
     setLoading(true)
 
     if (!navigator.onLine) {
       const cached = getCachedReading()
-      console.log('Offline, using cache')
       setReading(cached?.data || null)
       setLoading(false)
       return
     }
 
     try {
-      console.log('Calling getTodayReading...')
       const result = await getTodayReading()
-      console.log('getTodayReading result:', result)
-      
       if (result.success) {
-        console.log('Full reading data:', result.data)
         
         // Fetch correct answer counts for each question
         if (result.data){
@@ -57,6 +49,7 @@ export default function DashboardPage() {
             )
             result.data.questions = questionsWithCounts
           }
+
 
           // If user has attempted, populate selectedAnswers and quizResults
           if (result.data.hasAttempted && result.data.attempts && result.data.attempts.length > 0) {
@@ -120,17 +113,14 @@ export default function DashboardPage() {
         setReading(result.data ?? null)
         cacheReading(result.data ?? null)
       } else {
-        console.log('Result not successful:', result.error)
         setReading(null)
         cacheReading(null)
       }
-    } catch (error) {
-      console.error('Error in loadReading:', error)
+    } catch {
       const cached = getCachedReading()
       setReading(cached?.data || null)
     }
     setLoading(false)
-    console.log('loadReading completed')
   }
 
   useEffect(() => {
@@ -181,8 +171,7 @@ export default function DashboardPage() {
       } else {
         setFeedback({ type: 'error', message: 'Error submitting quiz' })
       }
-    } catch (error) {
-      console.error('Error submitting quiz:', error)
+    } catch {
       setFeedback({ type: 'error', message: 'Error submitting quiz' })
     }
     setSubmitting(false)
@@ -207,13 +196,6 @@ export default function DashboardPage() {
       setFeedback({ type: 'error', message: result.error || 'Failed to mark as complete' })
     }
     setCompleting(false)
-  }
-
-  const getCorrectAnswersCount = (question: Question) => {
-    return fetch('/api/questions/correct-count?questionId=' + question.id)
-      .then(res => res.json())
-      .then(data => data.count || 0)
-      .catch(() => 0)
   }
 
   const toggleAnswer = (questionId: string, optionId: string, isMultiple: boolean) => {
@@ -369,7 +351,6 @@ export default function DashboardPage() {
             {reading.questions.map((q: Question, idx: number) => {
               const correctCount = q.correctCount || 1
               const isMultiple = correctCount > 1
-              console.log(`Question ${q.id}: correctCount=${correctCount}, isMultiple=${isMultiple}`)
               
               return (
                 <div key={q.id} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-[#59f20d]/10">
