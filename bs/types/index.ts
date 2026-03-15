@@ -47,6 +47,14 @@ export type LeaderboardUser = {
   gender: string
 }
 
+export type AdminLeaderboardUser = {
+  id: string
+  name: string
+  current_score: number
+  gender: string
+  grade?: number
+}
+
 export type CurrentUserRank = {
   name: string
   score: number

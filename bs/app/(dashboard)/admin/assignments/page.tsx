@@ -225,6 +225,10 @@ export default function AssignmentsPage() {
         setChapter('')
       } else {
         setFeedback({ type: 'error', message: 'Error saving reading' })
+      }
+    } catch (error) {
+      console.error('Error saving reading:', error)
+      setFeedback({ type: 'error', message: 'Error saving reading' })
     }
   }
 

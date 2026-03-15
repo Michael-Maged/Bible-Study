@@ -97,7 +97,7 @@ export default function LeaderboardPage() {
       </header>
 
       <main className="flex-1 pb-40">
-        <div className="px-6 pt-4 pb-8 flex items-end justify-center gap-2 sm:gap-6">
+        <div className="px-6 pt-12 pb-8 flex items-end justify-center gap-2 sm:gap-6">
           {topThree[1] && (
             <div className="flex flex-col items-center group">
               <div className="relative mb-2">
@@ -147,7 +147,7 @@ export default function LeaderboardPage() {
               <div className="flex items-center gap-4">
                 <span className="text-slate-400 font-bold w-4 text-center">{idx + 4}</span>
                 <div className="w-10 h-10 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center text-2xl">
-                  {idx % 2 === 0 ? '👧' : '👦'}
+                  {user.gender === 'female' ? '👧' : '👦'}
                 </div>
                 <div>
                   <p className="font-bold text-slate-800 dark:text-slate-100">{user.name}</p>
