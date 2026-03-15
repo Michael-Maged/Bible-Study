@@ -65,8 +65,8 @@ export async function getLeaderboard() {
     if (error) throw error
 
     return { success: true, data: users || [] }
-  } catch (error: any) {
-    return { success: false, error: error.message, data: [] }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error', data: [] }
   }
 }
 
@@ -136,7 +136,7 @@ export async function getCurrentUserRank() {
         rank 
       } 
     }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }

@@ -3,29 +3,26 @@
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
-import { getTodayReading, markReadingComplete, getUserProfile } from './actions'
-import { cacheReading, getCachedReading, isOnline, preloadAllData } from '@/utils/offlineCache'
+import { getTodayReading, markReadingComplete } from './actions'
+import { cacheReading, getCachedReading, isOnline } from '@/utils/offlineCache'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
+import type { TodayReading, QuizResults, Question, QuestionOption, CorrectAnswer, Attempt } from '@/types'
+import KidNav from '@/components/KidNav'
+import MessageBox from '@/components/MessageBox'
 
 
 export default function DashboardPage() {
   console.log('DashboardPage component rendering')
   const router = useRouter()
-  const [reading, setReading] = useState<any>(null)
+  const [reading, setReading] = useState<TodayReading | null>(null)
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
   const [pendingCompletion, setPendingCompletion] = useState<string | null>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({})
   const [submitting, setSubmitting] = useState(false)
-  const [quizResults, setQuizResults] = useState<any>(null)
-
-  useEffect(() => {
-    loadReading()
-    const pending = localStorage.getItem('pending_completion')
-    if (pending) setPendingCompletion(pending)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const [quizResults, setQuizResults] = useState<QuizResults | null>(null)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const loadReading = async () => {
     console.log('loadReading called')
@@ -51,7 +48,7 @@ export default function DashboardPage() {
         if (result.data){
           if (result.data.questions && result.data.questions.length > 0) {
             const questionsWithCounts = await Promise.all(
-              result.data.questions.map(async (q: any) => {
+              result.data.questions.map(async (q: Question) => {
                 const countRes = await fetch(`/api/questions/correct-count?questionId=${q.id}`)
                 const countData = await countRes.json()
                 return { ...q, correctCount: countData.count || 1 }
@@ -63,7 +60,7 @@ export default function DashboardPage() {
           // If user has attempted, populate selectedAnswers and quizResults
           if (result.data.hasAttempted && result.data.attempts && result.data.attempts.length > 0) {
             const answersMap: Record<string, string[]> = {}
-            result.data.attempts.forEach((attempt: any) => {
+            result.data.attempts.forEach((attempt: Attempt) => {
               if (!answersMap[attempt.question]) {
                 answersMap[attempt.question] = []
               }
@@ -72,9 +69,9 @@ export default function DashboardPage() {
             setSelectedAnswers(answersMap)
 
             // Create results array for feedback
-            const results = result.data.attempts.map((attempt: any) => {
+            const results = result.data.attempts.map((attempt: Attempt) => {
               const isCorrect = result.data.correctAnswers?.some(
-                (ca: any) => ca.question === attempt.question && ca.correct_option === attempt.option
+                (ca: CorrectAnswer) => ca.question === attempt.question && ca.correct_option === attempt.option
               )
               return { questionId: attempt.question, optionId: attempt.option, isCorrect }
             })
@@ -82,7 +79,7 @@ export default function DashboardPage() {
             // Calculate score (only if all answers for a question are correct)
             let totalScore = 0
             const answersByQuestion: Record<string, string[]> = {}
-            result.data.attempts.forEach((attempt: any) => {
+            result.data.attempts.forEach((attempt: Attempt) => {
               if (!answersByQuestion[attempt.question]) {
                 answersByQuestion[attempt.question] = []
               }
@@ -90,7 +87,7 @@ export default function DashboardPage() {
             })
 
             const correctByQuestion: Record<string, string[]> = {}
-            result.data.correctAnswers?.forEach((ca: any) => {
+            result.data.correctAnswers?.forEach((ca: CorrectAnswer) => {
               if (!correctByQuestion[ca.question]) {
                 correctByQuestion[ca.question] = []
               }
@@ -105,7 +102,7 @@ export default function DashboardPage() {
                 studentAnswers.every((ans, idx) => ans === correctAnswersForQ[idx])
               
               if (isFullyCorrect) {
-                const question = result.data.questions?.find((q: any) => q.id === questionId)
+                const question = result.data.questions?.find((q: Question) => q.id === questionId)
                 totalScore += question?.score || 0
               }
             })
@@ -119,8 +116,8 @@ export default function DashboardPage() {
           }
         }
         
-        setReading(result.data)
-        cacheReading(result.data)
+        setReading(result.data ?? null)
+        cacheReading(result.data ?? null)
       } else {
         console.log('Result not successful:', result.error)
         setReading(null)
@@ -135,6 +132,13 @@ export default function DashboardPage() {
     console.log('loadReading completed')
   }
 
+  useEffect(() => {
+    loadReading()
+    const pending = localStorage.getItem('pending_completion')
+    if (pending) setPendingCompletion(pending)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleSubmitQuiz = async () => {
     if (!reading?.questions || reading.questions.length === 0) return
     
@@ -145,12 +149,12 @@ export default function DashboardPage() {
       }))
     )
 
-    const allQuestionsAnswered = reading.questions.every((q: any) => 
+    const allQuestionsAnswered = reading.questions.every((q: Question) => 
       selectedAnswers[q.id] && selectedAnswers[q.id].length > 0
     )
 
     if (!allQuestionsAnswered) {
-      alert('Please answer all questions')
+      setFeedback({ type: 'error', message: 'Please answer all questions' })
       return
     }
 
@@ -174,11 +178,11 @@ export default function DashboardPage() {
           setReading({ ...reading, isCompleted: true, hasAttempted: true })
         }
       } else {
-        alert('Error submitting quiz')
+        setFeedback({ type: 'error', message: 'Error submitting quiz' })
       }
     } catch (error) {
       console.error('Error submitting quiz:', error)
-      alert('Error submitting quiz')
+      setFeedback({ type: 'error', message: 'Error submitting quiz' })
     }
     setSubmitting(false)
   }
@@ -199,12 +203,12 @@ export default function DashboardPage() {
     if (result.success) {
       setReading({ ...reading, isCompleted: true })
     } else {
-      alert(result.error || 'Failed to mark as complete')
+      setFeedback({ type: 'error', message: result.error || 'Failed to mark as complete' })
     }
     setCompleting(false)
   }
 
-  const getCorrectAnswersCount = (question: any) => {
+  const getCorrectAnswersCount = (question: Question) => {
     return fetch('/api/questions/correct-count?questionId=' + question.id)
       .then(res => res.json())
       .then(data => data.count || 0)
@@ -231,18 +235,6 @@ export default function DashboardPage() {
 
 
 
-  const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    localStorage.clear()
-    if ('caches' in window) {
-      const cacheNames = await caches.keys()
-      await Promise.all(cacheNames.map(name => caches.delete(name)))
-    }
-    window.location.href = '/login'
-  }
-
   if (loading) {
     return <LoadingScreen />
   }
@@ -255,33 +247,10 @@ export default function DashboardPage() {
           <div className="text-center">
             <div className="text-6xl mb-4">📖</div>
             <h2 className="text-2xl font-bold mb-2">No Reading Today</h2>
-            <p className="text-slate-600 dark:text-slate-400">Check back later for today's assignment!</p>
+            <p className="text-slate-600 dark:text-slate-400">Check back later for today&apos;s assignment! </p>
           </div>
         </div>
-        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-          <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-            <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-              <span className="text-2xl">📖</span>
-              <span className="text-[10px] font-black uppercase mt-1">Reading</span>
-            </button>
-            <button onClick={() => router.push('/kid/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">📈</span>
-              <span className="text-[10px] font-black uppercase mt-1">History</span>
-            </button>
-            <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">📊</span>
-              <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
-            </button>
-            <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-              <span className="text-2xl">👤</span>
-              <span className="text-[10px] font-black uppercase mt-1">Profile</span>
-            </button>
-            <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-              <span className="text-2xl">❌</span>
-              <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-            </button>
-          </div>
-        </nav>
+        <KidNav active="dashboard" />
       </div>
     )
   }
@@ -311,14 +280,14 @@ export default function DashboardPage() {
       <main className="max-w-4xl mx-auto px-6 pt-8 pb-32">
         <section className="mb-10 text-center md:text-left">
           <h2 className="text-4xl md:text-5xl font-black mb-2">Hi! 👋</h2>
-          <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">Ready for today's adventure with God?</p>
+          <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">Ready for today&apos;s adventure with God?</p>
         </section>
 
         <section className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-[#59f20d]/10 shadow-xl mb-10">
           <div className="relative h-64 md:h-80 w-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
             <div className="text-8xl">📖</div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-end p-8 flex-col justify-end">
-              <span className="bg-[#59f20d] text-slate-900 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-2 w-fit">Today's Reading</span>
+              <span className="bg-[#59f20d] text-slate-900 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-2 w-fit">Today&apos;s Reading</span>
               <h3 className="text-3xl md:text-4xl font-black text-white leading-tight">{reading.bookName}</h3>
             </div>
           </div>
@@ -332,7 +301,7 @@ export default function DashboardPage() {
               {reading.text.map((verse: string, idx: number) => {
                 const parts = verse.split(/(\d+)\s/)
                 let currentVerse: Array<{type: string, text: string}> = []
-                let verses: Array<Array<{type: string, text: string}>> = []
+                const verses: Array<Array<{type: string, text: string}>> = []
                 
                 parts.forEach((part) => {
                   if (!part.trim()) return
@@ -395,7 +364,7 @@ export default function DashboardPage() {
               <span className="text-[#59f20d] text-xl">❓</span>
               <h2 className="text-2xl font-black">Quiz Time!</h2>
             </div>
-            {reading.questions.map((q: any, idx: number) => {
+            {reading.questions.map((q: Question, idx: number) => {
               const correctCount = q.correctCount || 1
               const isMultiple = correctCount > 1
               console.log(`Question ${q.id}: correctCount=${correctCount}, isMultiple=${isMultiple}`)
@@ -411,9 +380,9 @@ export default function DashboardPage() {
                     <p className="text-sm text-blue-600 dark:text-blue-400 mb-3 font-medium">ℹ️ Select all correct answers</p>
                   )}
                   <div className="space-y-2">
-                    {q.options.map((opt: any) => {
+                    {q.options.map((opt: QuestionOption) => {
                       const isSelected = selectedAnswers[q.id]?.includes(opt.id)
-                      const isCorrectOption = quizResults?.correctAnswers?.some((ca: any) => ca.question === q.id && ca.correct_option === opt.id)
+                      const isCorrectOption = quizResults?.correctAnswers?.some((ca: CorrectAnswer) => ca.question === q.id && ca.correct_option === opt.id)
                       const isWrongSelection = quizResults && isSelected && !isCorrectOption
                       
                       return (
@@ -456,7 +425,7 @@ export default function DashboardPage() {
             {!quizResults && (
               <button
                 onClick={handleSubmitQuiz}
-                disabled={submitting || !reading.questions.every((q: any) => selectedAnswers[q.id]?.length > 0)}
+                disabled={submitting || !reading.questions.every((q: Question) => selectedAnswers[q.id]?.length > 0)}
                 className="w-full bg-[#59f20d] text-slate-900 py-4 rounded-xl font-black text-lg shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? 'Submitting...' : '🎯 Submit Answers'}
@@ -476,30 +445,13 @@ export default function DashboardPage() {
 
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-          <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-            <span className="text-2xl">📖</span>
-            <span className="text-[10px] font-black uppercase mt-1">Reading</span>
-          </button>
-          <button onClick={() => router.push('/kid/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📈</span>
-            <span className="text-[10px] font-black uppercase mt-1">History</span>
-          </button>
-          <button onClick={() => router.push('/kid/leaderboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📊</span>
-            <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
-          </button>
-          <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">👤</span>
-            <span className="text-[10px] font-black uppercase mt-1">Profile</span>
-          </button>
-          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-            <span className="text-2xl">❌</span>
-            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-          </button>
+      {feedback && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-40">
+          <MessageBox type={feedback.type} message={feedback.message} />
         </div>
-      </nav>
+      )}
+
+      <KidNav active="dashboard" />
     </div>
   )
 }

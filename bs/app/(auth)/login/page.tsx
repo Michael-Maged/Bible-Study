@@ -49,7 +49,7 @@ export default function LoginPage() {
             <div className="bg-[#59f20d] p-2 rounded-lg flex items-center justify-center">
               <span className="text-[#162210] text-2xl">📖</span>
             </div>
-            <h1 className="text-xl font-bold text-[#162210] dark:text-white tracking-tight">Kids' Bible App</h1>
+            <h1 className="text-xl font-bold text-[#162210] dark:text-white tracking-tight">Kids&apos; Bible App</h1>
           </div>
         </header>
 
@@ -68,7 +68,7 @@ export default function LoginPage() {
             </div>
 
             <h2 className="text-3xl md:text-5xl font-black text-[#162210] dark:text-white mb-4 tracking-tight leading-tight">
-              Hold tight! <br/><span className="text-[#59f20d]">We're making things safe.</span>
+              Hold tight! <br/><span className="text-[#59f20d]">We&apos;re making things safe.</span>
             </h2>
             <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-10 max-w-md leading-relaxed">
               Our team is currently reviewing your account to ensure the best and safest experience. This usually takes just a few minutes.
@@ -84,7 +84,7 @@ export default function LoginPage() {
         </main>
 
         <footer className="p-8 text-center">
-          <p className="mt-12 text-zinc-400 text-xs tracking-widest uppercase">© 2024 Kids' Bible App • All Rights Reserved</p>
+          <p className="mt-12 text-zinc-400 text-xs tracking-widest uppercase">© 2024 Kids&apos; Bible App • All Rights Reserved</p>
         </footer>
 
         <div className="fixed bottom-6 right-6">

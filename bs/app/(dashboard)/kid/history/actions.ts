@@ -26,7 +26,7 @@ export async function getReadingHistory() {
       .select('reading!inner(day)')
       .eq('user_id', user.id)
 
-    const completedDays = history?.map(h => h.reading?.day).filter(Boolean).sort((a, b) => new Date(b).getTime() - new Date(a).getTime()) || []
+    const completedDays = history?.map(h => ((h.reading as unknown) as { day: string } | null)?.day).filter(Boolean).sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime()) as string[] || []
     const totalDays = completedDays.length
 
     return {
@@ -38,7 +38,7 @@ export async function getReadingHistory() {
         completedDays
       }
     }
-  } catch (error: any) {
-    return { success: false, error: error.message }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }

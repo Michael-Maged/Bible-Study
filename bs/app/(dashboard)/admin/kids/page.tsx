@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { fetchAssignedKids, handleApproveRequest } from './actions'
+import type { RequestDetail } from '@/types'
+import AdminNav from '@/components/AdminNav'
 
 type Kid = {
   id: string
@@ -19,34 +21,29 @@ export default function AssignedKidsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [classFilter, setClassFilter] = useState<string>('all')
   const [userRole, setUserRole] = useState<string>('')
 
-  const handleLogout = async () => {
-    const { createClient } = await import('@/utils/supabase/client')
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    window.location.href = '/login'
+  
+  async function loadKids() {
+    setLoading(true)
+    const result = await fetchAssignedKids()
+    if (result.success && result.data) {
+      const allKids: Kid[] = [
+        ...result.data.superusers.map((s: RequestDetail) => ({ ...s, type: 'admin' as const })),
+        ...result.data.kids.map((k: RequestDetail) => ({ ...k, type: 'kid' as const }))
+      ]
+      setKids(allKids)
+    }
+    setLoading(false)
   }
 
   useEffect(() => {
     const role = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
     setUserRole(role || '')
     loadKids()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  async function loadKids() {
-    setLoading(true)
-    const result = await fetchAssignedKids()
-    if (result.success && result.data) {
-      const allKids: Kid[] = [
-        ...result.data.superusers.map((s: any) => ({ ...s, type: 'admin' as const })),
-        ...result.data.kids.map((k: any) => ({ ...k, type: 'kid' as const }))
-      ]
-      setKids(allKids)
-    }
-    setLoading(false)
-  }
 
   async function handleAction(id: string, type: 'admin' | 'kid', approved: boolean) {
     const result = await handleApproveRequest(type, id, approved)
@@ -55,11 +52,14 @@ export default function AssignedKidsPage() {
     }
   }
 
+  const classNames = Array.from(new Set(kids.filter(k => k.type === 'kid' && k.class?.name).map(k => k.class!.name))).sort()
+
   const filteredKids = kids.filter(k => {
     const matchesSearch = k.user.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === 'all' || k.status === statusFilter
+    const matchesClass = classFilter === 'all' || (k.type === 'kid' && k.class?.name === classFilter)
     const matchesType = userRole === 'superuser' ? k.type === 'kid' : true
-    return matchesSearch && matchesStatus && matchesType
+    return matchesSearch && matchesStatus && matchesClass && matchesType
   })
 
   const displayKids = userRole === 'superuser' ? kids.filter(k => k.type === 'kid') : kids
@@ -73,12 +73,8 @@ export default function AssignedKidsPage() {
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-[#f6f8f5] min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md border-b border-[#59f20d]/10">
-        <div className="flex items-center p-4 justify-between max-w-md mx-auto w-full">
-          <button onClick={() => router.push('/admin')} className="flex size-10 items-center justify-center rounded-full hover:bg-[#59f20d]/10 transition-colors">
-            <span className="text-2xl">←</span>
-          </button>
-          <h1 className="text-lg font-bold tracking-tight flex-1 text-center">My Kids</h1>
-          <div className="w-10" />
+        <div className="flex items-center p-4 justify-center max-w-md mx-auto w-full">
+          <h1 className="text-lg font-bold tracking-tight">My Kids</h1>
         </div>
       </header>
 
@@ -122,24 +118,36 @@ export default function AssignedKidsPage() {
 
           <label className="relative flex items-center w-full">
             <span className="absolute left-4 text-[#59f20d]/70 text-xl">🔍</span>
-            <input 
-              className="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base placeholder:text-gray-400 dark:placeholder:text-gray-500" 
-              placeholder="Search by name..." 
+            <input
+              className="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              placeholder="Search by name..."
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </label>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full h-12 px-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base text-gray-700 dark:text-gray-300"
-          >
-            <option value="all">All Status</option>
-            <option value="accepted">Approved</option>
-            <option value="pending">Pending</option>
-          </select>
+
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-12 px-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base text-gray-700 dark:text-gray-300"
+            >
+              <option value="all">All Status</option>
+              <option value="accepted">Approved</option>
+              <option value="pending">Pending</option>
+            </select>
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="h-12 px-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base text-gray-700 dark:text-gray-300"
+            >
+              <option value="all">All Classes</option>
+              {classNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {loading ? (
@@ -155,7 +163,7 @@ export default function AssignedKidsPage() {
           <div className="space-y-3">
             {filteredKids.map((kid) => (
               <div key={`${kid.type}-${kid.id}`} className="bg-white dark:bg-[#1f2e18] rounded-xl overflow-hidden shadow-sm border border-[#59f20d]/5">
-                <button 
+                <button
                   onClick={() => router.push(`/admin/kids/${kid.type}/${kid.id}`)}
                   className="w-full p-4 text-left hover:bg-[#59f20d]/5 transition-colors"
                 >
@@ -181,13 +189,13 @@ export default function AssignedKidsPage() {
                 </button>
                 {kid.status === 'pending' && (
                   <div className="flex gap-3 p-4 pt-0">
-                    <button 
+                    <button
                       onClick={() => handleAction(kid.id, kid.type, false)}
                       className="flex-1 h-12 rounded-full bg-[#59f20d]/10 text-[#121c0d] dark:text-[#59f20d] font-bold text-sm hover:bg-[#59f20d]/20 transition-colors border border-[#59f20d]/20"
                     >
                       Reject
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleAction(kid.id, kid.type, true)}
                       className="flex-[2] h-12 rounded-full bg-[#59f20d] text-black font-bold text-sm shadow-md active:scale-95 transition-all"
                     >
@@ -201,30 +209,7 @@ export default function AssignedKidsPage() {
         )}
       </main>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-          <button onClick={() => router.push('/admin')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">🏠</span>
-            <span className="text-[10px] font-black uppercase mt-1">Dashboard</span>
-          </button>
-          <button onClick={() => router.push('/admin/assignments')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📖</span>
-            <span className="text-[10px] font-black uppercase mt-1">Content</span>
-          </button>
-          <button onClick={() => router.push('/admin/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📚</span>
-            <span className="text-[10px] font-black uppercase mt-1">History</span>
-          </button>
-          <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-            <span className="text-2xl">👥</span>
-            <span className="text-[10px] font-black uppercase mt-1">Kids</span>
-          </button>
-          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-            <span className="text-2xl">❌</span>
-            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-          </button>
-        </div>
-      </nav>
+      <AdminNav active="kids" />
     </div>
   )
 }

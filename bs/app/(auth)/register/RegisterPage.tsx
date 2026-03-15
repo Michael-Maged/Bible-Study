@@ -6,15 +6,16 @@ import { registerKidWithEmail } from './emailActions'
 import { fetchTenants, fetchGradesByTenant, fetchClassesByGrade } from './tenantActions'
 import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
+import type { Tenant, Grade, Class } from '@/types'
 
 export default function RegisterPage() {
   const router = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
   
-  const [tenants, setTenants] = useState<any[]>([])
-  const [grades, setGrades] = useState<any[]>([])
-  const [classes, setClasses] = useState<any[]>([])
+  const [tenants, setTenants] = useState<Tenant[]>([])
+  const [grades, setGrades] = useState<Grade[]>([])
+  const [classes, setClasses] = useState<Class[]>([])
   
   const [selectedTenant, setSelectedTenant] = useState('')
   const [selectedGrade, setSelectedGrade] = useState('')
@@ -22,16 +23,17 @@ export default function RegisterPage() {
 
   const [selectedClass, setSelectedClass] = useState('')
 
-  useEffect(() => {
-    loadTenants()
-  }, [])
-
-  async function loadTenants() {
+  const loadTenants = async () => {
     const result = await fetchTenants()
     if (result.success) {
       setTenants(result.data || [])
     }
   }
+
+  useEffect(() => {
+    loadTenants()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleTenantChange(tenantId: string) {
     setSelectedTenant(tenantId)

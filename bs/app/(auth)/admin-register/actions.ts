@@ -45,7 +45,7 @@ export async function registerAdmin(formData: FormData) {
       phone: formattedPhone,
       pendingData: { name, phone: formattedPhone, age, gender, role, tenant, grade, email: uniqueEmail }
     }
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to send verification code' }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send verification code' }
   }
 }

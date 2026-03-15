@@ -61,7 +61,7 @@ export async function loginWithEmail(email: string, password: string) {
       },
       isPending
     }
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Login failed' }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Login failed' }
   }
 }

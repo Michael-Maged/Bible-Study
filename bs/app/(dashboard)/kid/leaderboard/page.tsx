@@ -1,21 +1,17 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getLeaderboard, getCurrentUserRank } from './actions'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import { cacheLeaderboard, getCachedLeaderboard, isOnline } from '@/utils/offlineCache'
+import type { LeaderboardUser, CurrentUserRank } from '@/types'
+import KidNav from '@/components/KidNav'
 
 export default function LeaderboardPage() {
-  const router = useRouter()
-  const [users, setUsers] = useState<any[]>([])
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [users, setUsers] = useState<LeaderboardUser[]>([])
+  const [currentUser, setCurrentUser] = useState<CurrentUserRank | null>(null)
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadData()
-  }, [])
 
   const loadData = async () => {
     const offline = !navigator.onLine
@@ -54,10 +50,10 @@ export default function LeaderboardPage() {
         }
         
         if (userRankResult.success) {
-          setCurrentUser(userRankResult.data)
+          setCurrentUser(userRankResult.data ?? null)
         }
         
-        cacheLeaderboard({ users: leaderboardResult.data, currentUser: userRankResult.data })
+        cacheLeaderboard({ users: leaderboardResult.data, currentUser: userRankResult.data ?? null })
         setLoading(false)
       }
     } catch (error) {
@@ -73,18 +69,10 @@ export default function LeaderboardPage() {
     }
   }
 
-  const handleLogout = async () => {
-    const { createClient } = await import('@/utils/supabase/client')
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    document.cookie = 'user-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    localStorage.clear()
-    if ('caches' in window) {
-      const cacheNames = await caches.keys()
-      await Promise.all(cacheNames.map(name => caches.delete(name)))
-    }
-    window.location.href = '/login'
-  }
+  useEffect(() => {
+    loadData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (loading) {
     return <LoadingScreen />
@@ -109,7 +97,7 @@ export default function LeaderboardPage() {
       </header>
 
       <main className="flex-1 pb-40">
-        <div className="px-6 pt-4 pb-8 flex items-end justify-center gap-2 sm:gap-6">
+        <div className="px-6 pt-12 pb-8 flex items-end justify-center gap-2 sm:gap-6">
           {topThree[1] && (
             <div className="flex flex-col items-center group">
               <div className="relative mb-2">
@@ -159,7 +147,7 @@ export default function LeaderboardPage() {
               <div className="flex items-center gap-4">
                 <span className="text-slate-400 font-bold w-4 text-center">{idx + 4}</span>
                 <div className="w-10 h-10 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center text-2xl">
-                  {idx % 2 === 0 ? '👧' : '👦'}
+                  {user.gender === 'female' ? '👧' : '👦'}
                 </div>
                 <div>
                   <p className="font-bold text-slate-800 dark:text-slate-100">{user.name}</p>
@@ -193,30 +181,7 @@ export default function LeaderboardPage() {
         </div>
       )}
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
-        <div className="bg-slate-900 dark:bg-slate-800 rounded-full p-2 flex items-center justify-between shadow-2xl border border-white/10">
-          <button onClick={() => router.push('/kid/dashboard')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📖</span>
-            <span className="text-[10px] font-black uppercase mt-1">Reading</span>
-          </button>
-          <button onClick={() => router.push('/kid/history')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">📈</span>
-            <span className="text-[10px] font-black uppercase mt-1">History</span>
-          </button>
-          <button className="flex-1 flex flex-col items-center justify-center py-2 bg-[#59f20d] rounded-full text-slate-900">
-            <span className="text-2xl">📊</span>
-            <span className="text-[10px] font-black uppercase mt-1">Leaders</span>
-          </button>
-          <button onClick={() => router.push('/kid/profile')} className="flex-1 flex flex-col items-center justify-center py-2 text-white hover:text-[#59f20d] transition-colors">
-            <span className="text-2xl">👤</span>
-            <span className="text-[10px] font-black uppercase mt-1">Profile</span>
-          </button>
-          <button onClick={handleLogout} className="flex-1 flex flex-col items-center justify-center py-2 text-red-500 hover:text-red-400 transition-colors">
-            <span className="text-2xl">❌</span>
-            <span className="text-[10px] font-black uppercase mt-1">Logout</span>
-          </button>
-        </div>
-      </nav>
+      <KidNav active="leaderboard" />
 
       <div className="fixed top-20 -left-10 w-40 h-40 bg-[#59f20d]/5 rounded-full blur-3xl -z-10"></div>
       <div className="fixed bottom-40 -right-10 w-60 h-60 bg-[#59f20d]/10 rounded-full blur-3xl -z-10"></div>
