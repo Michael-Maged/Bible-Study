@@ -21,6 +21,7 @@ export default function AssignedKidsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [classFilter, setClassFilter] = useState<string>('all')
   const [userRole, setUserRole] = useState<string>('')
 
   
@@ -51,11 +52,14 @@ export default function AssignedKidsPage() {
     }
   }
 
+  const classNames = Array.from(new Set(kids.filter(k => k.type === 'kid' && k.class?.name).map(k => k.class!.name))).sort()
+
   const filteredKids = kids.filter(k => {
     const matchesSearch = k.user.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === 'all' || k.status === statusFilter
+    const matchesClass = classFilter === 'all' || (k.type === 'kid' && k.class?.name === classFilter)
     const matchesType = userRole === 'superuser' ? k.type === 'kid' : true
-    return matchesSearch && matchesStatus && matchesType
+    return matchesSearch && matchesStatus && matchesClass && matchesType
   })
 
   const displayKids = userRole === 'superuser' ? kids.filter(k => k.type === 'kid') : kids
@@ -69,12 +73,8 @@ export default function AssignedKidsPage() {
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-[#f6f8f5] min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md border-b border-[#59f20d]/10">
-        <div className="flex items-center p-4 justify-between max-w-md mx-auto w-full">
-          <button onClick={() => router.push('/admin')} className="flex size-10 items-center justify-center rounded-full hover:bg-[#59f20d]/10 transition-colors">
-            <span className="text-2xl">←</span>
-          </button>
-          <h1 className="text-lg font-bold tracking-tight flex-1 text-center">My Kids</h1>
-          <div className="w-10" />
+        <div className="flex items-center p-4 justify-center max-w-md mx-auto w-full">
+          <h1 className="text-lg font-bold tracking-tight">My Kids</h1>
         </div>
       </header>
 
@@ -127,15 +127,27 @@ export default function AssignedKidsPage() {
             />
           </label>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full h-12 px-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base text-gray-700 dark:text-gray-300"
-          >
-            <option value="all">All Status</option>
-            <option value="accepted">Approved</option>
-            <option value="pending">Pending</option>
-          </select>
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-12 px-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base text-gray-700 dark:text-gray-300"
+            >
+              <option value="all">All Status</option>
+              <option value="accepted">Approved</option>
+              <option value="pending">Pending</option>
+            </select>
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="h-12 px-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base text-gray-700 dark:text-gray-300"
+            >
+              <option value="all">All Classes</option>
+              {classNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {loading ? (

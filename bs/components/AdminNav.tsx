@@ -2,13 +2,14 @@
 
 import { useRouter } from 'next/navigation'
 
-type AdminNavTab = 'dashboard' | 'content' | 'history' | 'kids'
+type AdminNavTab = 'dashboard' | 'content' | 'history' | 'kids' | 'leaderboard'
 
 const tabs = [
-  { key: 'dashboard', icon: '🏠', label: 'Dashboard', path: '/admin' },
-  { key: 'content', icon: '📖', label: 'Content', path: '/admin/assignments' },
+  { key: 'dashboard', icon: '🏠', label: 'Home', path: '/admin' },
+  { key: 'content', icon: '📖', label: 'Reading', path: '/admin/assignments' },
   { key: 'history', icon: '📚', label: 'History', path: '/admin/history' },
   { key: 'kids', icon: '👥', label: 'Kids', path: '/admin/kids' },
+  { key: 'leaderboard', icon: '🏆', label: 'Ranks', path: '/admin/leaderboard' },
 ] as const
 
 export default function AdminNav({ active }: { active: AdminNavTab }) {

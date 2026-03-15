@@ -6,8 +6,8 @@ type KidNavTab = 'dashboard' | 'history' | 'leaderboard' | 'profile'
 
 const tabs = [
   { key: 'dashboard', icon: '📖', label: 'Reading', path: '/kid/dashboard' },
-  { key: 'history', icon: '📈', label: 'History', path: '/kid/history' },
-  { key: 'leaderboard', icon: '📊', label: 'Leaders', path: '/kid/leaderboard' },
+  { key: 'history', icon: '📚', label: 'History', path: '/kid/history' },
+  { key: 'leaderboard', icon: '🏆', label: 'Ranks', path: '/kid/leaderboard' },
   { key: 'profile', icon: '👤', label: 'Profile', path: '/kid/profile' },
 ] as const
 

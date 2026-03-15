@@ -322,9 +322,6 @@ export default function AssignmentsPage() {
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-white min-h-screen pb-24">
       <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-700">
-            <span className="text-xl">←</span>
-          </button>
           <div>
             <h1 className="text-lg font-bold leading-none">Bible Reading</h1>
             <p className="text-xs text-zinc-500 font-medium mt-1">Daily Configuration</p>

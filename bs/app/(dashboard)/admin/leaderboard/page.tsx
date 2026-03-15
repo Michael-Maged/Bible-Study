@@ -103,7 +103,7 @@ export default function AdminLeaderboardPage() {
         )}
       </main>
 
-      <AdminNav active="dashboard" />
+      <AdminNav active="leaderboard" />
 
       <div className="fixed top-20 -left-10 w-40 h-40 bg-[#59f20d]/5 rounded-full blur-3xl -z-10"></div>
       <div className="fixed bottom-40 -right-10 w-60 h-60 bg-[#59f20d]/10 rounded-full blur-3xl -z-10"></div>

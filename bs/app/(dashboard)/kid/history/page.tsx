@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { getReadingHistory } from './actions'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
@@ -10,7 +9,6 @@ import KidNav from '@/components/KidNav'
 import { useOfflineData } from '@/hooks/useOfflineData'
 
 export default function HistoryPage() {
-  const router = useRouter()
   const { data: history, loading } = useOfflineData(
     getReadingHistory,
     getCachedHistory,
@@ -42,10 +40,8 @@ export default function HistoryPage() {
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen pb-24">
       <OfflineBanner />
-      <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
-        <button onClick={() => router.back()} className="text-2xl">←</button>
+      <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 flex items-center justify-center border-b border-[#59f20d]/10">
         <h1 className="text-xl font-extrabold">My Progress</h1>
-        <div className="w-8"></div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 pt-6">
