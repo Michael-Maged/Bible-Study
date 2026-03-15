@@ -15,14 +15,14 @@ self.addEventListener('push', (event) => {
       body: data.body,
       icon: '/bible.svg',
       badge: '/bible.svg',
-      data: { url: data.url ?? '/admin/pending' },
+      data: { url: data.url ?? '/kid/dashboard' },
     })
   )
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url ?? '/admin/pending'
+  const url = event.notification.data?.url ?? '/kid/dashboard'
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const existing = clients.find((c) => c.url.includes(url))
