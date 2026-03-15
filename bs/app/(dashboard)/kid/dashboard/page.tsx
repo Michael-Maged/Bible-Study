@@ -10,6 +10,7 @@ import LoadingScreen from '@/components/LoadingScreen'
 import type { TodayReading, QuizResults, Question, QuestionOption, CorrectAnswer, Attempt } from '@/types'
 import KidNav from '@/components/KidNav'
 import MessageBox from '@/components/MessageBox'
+import PushSubscriber from '@/components/PushSubscriber'
 
 
 export default function DashboardPage() {
@@ -258,6 +259,7 @@ export default function DashboardPage() {
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen">
       <OfflineBanner />
+      <PushSubscriber />
       <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 border-b border-[#59f20d]/10">
         <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

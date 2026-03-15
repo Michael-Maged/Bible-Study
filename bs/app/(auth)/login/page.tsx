@@ -30,7 +30,7 @@ export default function LoginPage() {
         }
         
         const redirectPath = result.user.role === 'admin' || result.user.role === 'superuser' ? '/admin' : '/kid/dashboard'
-        router.push(redirectPath)
+        window.location.href = redirectPath
       } else {
         setStatus('error')
         setMessage(result.error || 'Login failed')

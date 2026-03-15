@@ -61,14 +61,16 @@ export default function PushSubscriber() {
   const [detail, setDetail] = useState('')
 
   useEffect(() => {
+    if (localStorage.getItem('push_opted_out') === 'true') return
     if (!('Notification' in window)) { setState('unsupported'); setDetail('Notifications not supported'); return }
-    if (Notification.permission === 'granted') {
+    if (Notification.permission === 'granted' || Notification.permission === 'default') {
       setState('loading')
       doSubscribe().then(r => { setState(r.status as typeof state); setDetail(r.detail ?? '') })
     }
   }, [])
 
   if (state === 'ok') return null
+  if (typeof window !== 'undefined' && localStorage.getItem('push_opted_out') === 'true') return null
 
   if (state === 'loading') return (
     <div className="mx-4 mt-3 px-4 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-sm text-zinc-500 text-center">
@@ -103,11 +105,20 @@ export default function PushSubscriber() {
   )
 
   return (
-    <button
-      onClick={() => { setState('loading'); doSubscribe().then(r => { setState(r.status as typeof state); setDetail(r.detail ?? '') }) }}
-      className="mx-4 mt-3 w-[calc(100%-2rem)] py-3 rounded-xl bg-[#59f20d]/10 border border-[#59f20d]/30 text-[#59f20d] text-sm font-semibold flex items-center justify-center gap-2"
-    >
-      🔔 Enable push notifications
-    </button>
+    <div className="mx-4 mt-3 flex gap-2">
+      <button
+        onClick={() => { setState('loading'); doSubscribe().then(r => { setState(r.status as typeof state); setDetail(r.detail ?? '') }) }}
+        className="flex-1 py-3 rounded-xl bg-[#59f20d]/10 border border-[#59f20d]/30 text-[#59f20d] text-sm font-semibold flex items-center justify-center gap-2"
+      >
+        🔔 Enable push notifications
+      </button>
+      <button
+        onClick={() => { localStorage.setItem('push_opted_out', 'true'); setState('ok') }}
+        className="px-4 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 text-sm"
+        title="Don't show again"
+      >
+        ✕
+      </button>
+    </div>
   )
 }

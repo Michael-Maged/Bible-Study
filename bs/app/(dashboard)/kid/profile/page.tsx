@@ -8,6 +8,7 @@ import { cacheProfile, getCachedProfile } from '@/utils/offlineCache'
 import type { UserProfile } from '@/types'
 import KidNav from '@/components/KidNav'
 import { useOfflineData } from '@/hooks/useOfflineData'
+import { useState } from 'react'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -16,6 +17,15 @@ export default function ProfilePage() {
     getCachedProfile,
     cacheProfile
   )
+  const [notifEnabled, setNotifEnabled] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem('push_opted_out') !== 'true'
+  )
+
+  const toggleNotifications = () => {
+    const next = !notifEnabled
+    setNotifEnabled(next)
+    localStorage.setItem('push_opted_out', next ? 'false' : 'true')
+  }
 
   if (loading) {
     return <LoadingScreen />
@@ -122,6 +132,30 @@ export default function ProfilePage() {
                 <span className="font-black text-slate-900 dark:text-slate-100">{profile.tenant}</span>
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="px-6 mb-6">
+          <h3 className="text-lg font-black mb-3 text-slate-700 dark:text-slate-300">Notifications</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+            <div className="p-4 flex justify-between items-center">
+              <div>
+                <p className="font-bold text-slate-900 dark:text-slate-100">Daily Reading Reminder</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Get notified when it&apos;s time to read</p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={notifEnabled}
+                onClick={toggleNotifications}
+                className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 overflow-hidden ${
+                  notifEnabled ? 'bg-[#59f20d]' : 'bg-zinc-300 dark:bg-zinc-600'
+                }`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  notifEnabled ? 'left-[26px]' : 'left-0.5'
+                }`} />
+              </button>
+            </div>
           </div>
         </section>
 
