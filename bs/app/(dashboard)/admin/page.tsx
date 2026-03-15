@@ -9,6 +9,7 @@ import { bibleBooks } from '@/constants/bibleBooks'
 import { cacheStats, getCachedStats, isOnline } from '@/utils/offlineCache'
 import OfflineBanner from '@/components/OfflineBanner'
 import AdminNav from '@/components/AdminNav'
+import PushSubscriber from '@/components/PushSubscriber'
 
 export default function AdminDashboard() {
   const [userRole, setUserRole] = useState<string>('')
@@ -50,11 +51,12 @@ export default function AdminDashboard() {
     }
     checkAuth()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router])
+  }, [])
 
   return (
     <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-white min-h-screen pb-24">
       <OfflineBanner />
+      <PushSubscriber />
       <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-700">

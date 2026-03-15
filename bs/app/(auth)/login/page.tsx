@@ -119,7 +119,7 @@ export default function LoginPage() {
           <p className="text-zinc-500 dark:text-zinc-400 text-base mt-2 text-center">Sign in to continue your journey</p>
         </div>
         
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleLogin} method="post" className="space-y-6">
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 ml-2">Email</label>
             <div className="relative flex items-center">
