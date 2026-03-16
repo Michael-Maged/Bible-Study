@@ -111,7 +111,7 @@ export async function getTodayAdminReading() {
 
     const { data: readings } = await supabase
       .from('reading')
-      .select('book, chapter, from_verse, to_verse')
+      .select('grade, book, chapter, from_verse, to_verse')
       .eq('tenant', adminData.tenant)
       .eq('day', today)
 
@@ -186,11 +186,12 @@ export async function getAnalytics(): Promise<{ success: boolean; data?: Analyti
       .in('class', classes.map(c => c.id))
       .eq('status', 'accepted')
 
+    type Enrollment = { user_id: string; class: string; user: { gender: string }[] }
     const filteredEnrollments = isMixed
-      ? (enrollments || [])
-      : (enrollments || []).filter((e: any) => e.user?.gender === adminGender)
+      ? (enrollments || []) as unknown as Enrollment[]
+      : (enrollments as unknown as Enrollment[] || []).filter(e => e.user?.[0]?.gender === adminGender)
 
-    const allUserIds = filteredEnrollments.map((e: any) => e.user_id)
+    const allUserIds = filteredEnrollments.map(e => (e as Enrollment).user_id)
     if (!allUserIds.length) return { success: true, data: { overallReadingPct: 0, overallCorrectPct: 0, byClass: [] } }
 
     // Get all readings for this grade (all history)
@@ -231,8 +232,8 @@ export async function getAnalytics(): Promise<{ success: boolean; data?: Analyti
     const correctSet = new Set((correctAnswers || []).map(ca => `${ca.question}:${ca.correct_option}`))
 
     const byClass: ClassAnalytics[] = classes.map(cls => {
-      const classEnrollments = filteredEnrollments.filter((e: any) => e.class === cls.id)
-      const classUserIds = new Set(classEnrollments.map((e: any) => e.user_id))
+      const classEnrollments = filteredEnrollments.filter(e => (e as { class: string }).class === cls.id)
+      const classUserIds = new Set(classEnrollments.map(e => (e as { user_id: string }).user_id))
       const totalKids = classUserIds.size
 
       if (totalKids === 0) return { className: cls.name, totalKids: 0, readingPct: 0, correctPct: 0 }
