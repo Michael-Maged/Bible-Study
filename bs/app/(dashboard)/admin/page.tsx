@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const [userRole, setUserRole] = useState<string>('')
   const [stats, setStats] = useState({ totalUsers: 0, pendingCount: 0, lastUpdated: '' })
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
-  const [todayReading, setTodayReading] = useState<{ book: number; chapter: number; fromVerse: number; toVerse: number; verseCount: number } | null | undefined>(undefined)
+  const [todayReading, setTodayReading] = useState<{ book: string; chapter: number; fromVerse: number; toVerse: number; verseCount: number } | null | undefined>(undefined)
   const router = useRouter()
 
   const loadStats = async () => {
