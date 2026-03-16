@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { verifyAndCreateUser } from './actions'
 import MessageBox from '@/components/MessageBox'
 import { createClient } from '@/utils/supabase/client'
 
-export default function VerifyPhonePage() {
+function VerifyPhoneContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const phone = searchParams.get('phone') || ''
@@ -157,5 +157,13 @@ export default function VerifyPhonePage() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function VerifyPhonePage() {
+  return (
+    <Suspense>
+      <VerifyPhoneContent />
+    </Suspense>
   )
 }
