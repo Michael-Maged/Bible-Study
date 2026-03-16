@@ -107,7 +107,7 @@ export default function AdminDashboard() {
                   <span className="text-2xl">📖</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-base truncate">{bibleBooks.find(b => b.id === todayReading.book)?.name ?? `Book ${todayReading.book}`}</p>
+                  <p className="font-black text-base truncate">{bibleBooks.find(b => b.id === Number(todayReading.book))?.name ?? `Book ${todayReading.book}`}</p>
                   <p className="text-sm text-zinc-500 font-medium">Chapter {todayReading.chapter} · Verses {todayReading.fromVerse}–{todayReading.toVerse}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
