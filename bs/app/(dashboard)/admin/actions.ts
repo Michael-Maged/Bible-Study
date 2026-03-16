@@ -113,7 +113,7 @@ export async function getTodayAdminReading() {
       .from('reading')
       .select('grade, book, chapter, from_verse, to_verse')
       .eq('tenant', adminData.tenant)
-      .eq('day', today)
+      .eq('day', today) as { data: { grade: number | null; book: string; chapter: number; from_verse: number; to_verse: number }[] | null }
 
     const reading = readings?.find(r => r.grade === adminData.grade) ?? readings?.find(r => r.grade === null) ?? null
 
