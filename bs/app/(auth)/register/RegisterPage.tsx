@@ -12,252 +12,114 @@ export default function RegisterPage() {
   const router = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
-  
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [grades, setGrades] = useState<Grade[]>([])
   const [classes, setClasses] = useState<Class[]>([])
-  
   const [selectedTenant, setSelectedTenant] = useState('')
   const [selectedGrade, setSelectedGrade] = useState('')
   const [selectedGender, setSelectedGender] = useState('')
-
   const [selectedClass, setSelectedClass] = useState('')
 
-  const loadTenants = async () => {
-    const result = await fetchTenants()
-    if (result.success) {
-      setTenants(result.data || [])
-    }
-  }
-
   useEffect(() => {
-    loadTenants()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchTenants().then(r => { if (r.success) setTenants(r.data || []) })
   }, [])
 
-  async function handleTenantChange(tenantId: string) {
-    setSelectedTenant(tenantId)
-    setSelectedGrade('')
-    setGrades([])
-    setClasses([])
-    
-    if (tenantId) {
-      const result = await fetchGradesByTenant(tenantId)
-      if (result.success) {
-        setGrades(result.data || [])
-      }
-    }
+  async function handleTenantChange(id: string) {
+    setSelectedTenant(id); setSelectedGrade(''); setGrades([]); setClasses([])
+    if (id) { const r = await fetchGradesByTenant(id); if (r.success) setGrades(r.data || []) }
   }
 
-  async function handleGradeChange(gradeId: string) {
-    setSelectedGrade(gradeId)
-    setClasses([])
-    
-    if (gradeId) {
-      const selectedGradeObj = grades.find(g => g.id === gradeId)
-      if (selectedGradeObj) {
-        const result = await fetchClassesByGrade(selectedGradeObj.grade_num.toString())
-        if (result.success) {
-          setClasses(result.data || [])
-        }
-      }
+  async function handleGradeChange(id: string) {
+    setSelectedGrade(id); setClasses([])
+    if (id) {
+      const g = grades.find(g => g.id === id)
+      if (g) { const r = await fetchClassesByGrade(g.grade_num.toString()); if (r.success) setClasses(r.data || []) }
     }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setStatus('loading')
-    
-    const form = e.currentTarget
-    const formData = new FormData(form)
+    e.preventDefault(); setStatus('loading')
     try {
-      const result = await registerKidWithEmail(formData)
-      
+      const result = await registerKidWithEmail(new FormData(e.currentTarget))
       if (result.success) {
-        setStatus('success')
-        setMessage('Registration successful! Waiting for admin approval...')
+        setStatus('success'); setMessage('Registration successful! Waiting for admin approval...')
         setTimeout(() => router.push('/login'), 2000)
-      } else {
-        setStatus('error')
-        setMessage(result.error || 'Registration failed')
-      }
-    } catch (err) {
-      setStatus('error')
-      setMessage(err instanceof Error ? err.message : 'An error occurred')
-    }
+      } else { setStatus('error'); setMessage(result.error || 'Registration failed') }
+    } catch (err) { setStatus('error'); setMessage(err instanceof Error ? err.message : 'An error occurred') }
   }
 
   return (
-    <div className="bg-[#f0fde4] dark:bg-[#1a2c14] min-h-screen flex flex-col">
-      {/* Top Navigation Bar */}
-      <header className="w-full px-6 lg:px-40 py-5 bg-[#f0fde4] dark:bg-[#1a2c14] border-b border-[#6ef516]/20">
-        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#6ef516] p-2 rounded-lg flex items-center justify-center">
-              <span className="text-white text-2xl">📖</span>
-            </div>
-            <h2 className="text-[#0d1a08] dark:text-white text-xl font-bold tracking-tight">BibleApp</h2>
-          </div>
-          <a className="text-sm font-semibold text-[#0d1a08] dark:text-white hover:text-[#6ef516] transition-colors" href="#">
-            Need help?
-          </a>
+    <div className="bg-[#0d1a08] min-h-screen flex flex-col items-center justify-center px-5 py-10 text-slate-100">
+      {/* Logo */}
+      <div className="mb-8 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-[#59f20d] flex items-center justify-center mx-auto mb-4 shadow-xl shadow-[#59f20d]/30">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0d1a08" strokeWidth={2} className="w-8 h-8">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
         </div>
-      </header>
+        <h1 className="text-3xl font-black tracking-tight">Join Bible Kids</h1>
+        <p className="text-slate-500 text-sm mt-1">Create your account to get started</p>
+      </div>
 
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-[500px] bg-white dark:bg-[#243d1c] rounded-xl shadow-xl shadow-[#6ef516]/10 overflow-hidden">
-          {/* Hero Image/Section */}
-          <div className="relative h-40 w-full overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-            <div className="absolute inset-0 bg-[#6ef516]/20 mix-blend-multiply z-0"></div>
-            <img
-              alt="Peaceful morning with an open Bible"
-              className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnHDFDB0uyxKNP9dCdREDdgxqud5Jz9b0WU1BC68iv-cy4IjPzopaHqfeV7soYIPNWadSdL3TCgsMk0nxtMMTKMhab7tdeuw2pIkAqSzaO-YQtKRGfYTySBddZWJ8sDZSr1LVfPlJPJG2-1H9Z8yoX9anAslpvyj8lNBFwgGeOb28y0WwSOsJWKDQJSSC8wxuzm0saeio6i4MdamBysCAn2WovRuk2Ogn6duEmIH1foStxWi1cvJXUIXI_C1tWhet3RYYiEIHlIG7G"
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-3">
+        {[
+          { name: 'name', type: 'text', placeholder: 'Full name', icon: <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> },
+          { name: 'email', type: 'email', placeholder: 'Email address', icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /> },
+          { name: 'password', type: 'password', placeholder: 'Password (min 6 chars)', icon: <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /> },
+        ].map(f => (
+          <div key={f.name} className="relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">{f.icon}</svg>
+            <input
+              type={f.type} name={f.name} required placeholder={f.placeholder}
+              minLength={f.name === 'password' ? 6 : undefined}
+              className="w-full h-14 pl-11 pr-4 rounded-2xl bg-[#1a2e12] border border-[#59f20d]/10 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#59f20d]/40 transition-colors"
             />
-            <div className="absolute bottom-4 left-6 z-20">
-              <h1 className="text-white text-2xl font-bold tracking-tight">Join the Family</h1>
-              <p className="text-white/80 text-sm">Register and grow in faith together.</p>
-            </div>
           </div>
+        ))}
 
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit} method="post" className="p-8 space-y-4">
-            {/* Name */}
-            <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">👤</span>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                placeholder="Full Name"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
-              />
-            </div>
-
-            {/* Email */}
-            <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">📧</span>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                placeholder="your@email.com"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
-              />
-            </div>
-
-            {/* Password */}
-            <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">🔒</span>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                minLength={6}
-                placeholder="Password (min 6 characters)"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
-              />
-            </div>
-
-            {/* Age & Gender Row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">🎂</span>
-                <input
-                  type="number"
-                  id="age"
-                  name="age"
-                  required
-                  min="1"
-                  max="18"
-                  placeholder="Age"
-                  className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
-                />
-              </div>
-              <CustomSelect
-                id="gender"
-                name="gender"
-                value={selectedGender}
-                onChange={setSelectedGender}
-                options={[
-                  { value: 'male', label: 'Male' },
-                  { value: 'female', label: 'Female' }
-                ]}
-                placeholder="Gender"
-                icon="⚧"
-                required
-              />
-            </div>
-
-            {/* Church Stage */}
-            <CustomSelect
-              id="tenant"
-              name="tenant"
-              value={selectedTenant}
-              onChange={handleTenantChange}
-              options={tenants.map(t => ({ value: t.id, label: t.name }))}
-              placeholder="Select Church Stage"
-              icon="⛪"
-              required
+        <div className="grid grid-cols-2 gap-3">
+          <div className="relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <input
+              type="number" name="age" required min="1" max="18" placeholder="Age"
+              className="w-full h-14 pl-11 pr-4 rounded-2xl bg-[#1a2e12] border border-[#59f20d]/10 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#59f20d]/40 transition-colors"
             />
-
-            {/* Grade */}
-            <CustomSelect
-              id="grade"
-              name="grade"
-              value={selectedGrade}
-              onChange={handleGradeChange}
-              options={grades.map(g => ({ value: g.id, label: g.name }))}
-              placeholder="Select Grade"
-              icon="🎓"
-              disabled={!selectedTenant}
-              required
-            />
-
-            {/* Class */}
-            <CustomSelect
-              id="class"
-              name="class"
-              value={selectedClass}
-              onChange={setSelectedClass}
-              options={classes.map(c => ({ value: c.id, label: c.name }))}
-              placeholder="Select Class"
-              icon="📚"
-              disabled={!selectedGrade}
-              required
-            />
-
-            {/* Status Messages */}
-            {status === 'success' && message && (
-              <MessageBox type="success" message={message} />
-            )}
-
-            {status === 'error' && message && (
-              <MessageBox type="error" message={message} />
-            )}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={status === 'loading'}
-              className="w-full py-4 bg-[#6ef516] hover:bg-[#5ee305] text-[#0d1a08] font-bold text-lg rounded-full shadow-lg shadow-[#6ef516]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {status === 'loading' ? 'Registering...' : 'Create Account'}
-              <span>→</span>
-            </button>
-          </form>
+          </div>
+          <CustomSelect id="gender" name="gender" value={selectedGender} onChange={setSelectedGender}
+            options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }]}
+            placeholder="Gender" icon="⚧" required />
         </div>
-      </main>
 
-      {/* Footer Decoration */}
-      <footer className="py-10 flex flex-col items-center justify-center text-[#6ef516]/40 pointer-events-none select-none">
-        <span className="text-4xl mb-2">🌳</span>
-        <p className="text-xs font-medium uppercase tracking-widest">Grow in Grace</p>
-      </footer>
+        <CustomSelect id="tenant" name="tenant" value={selectedTenant} onChange={handleTenantChange}
+          options={tenants.map(t => ({ value: t.id, label: t.name }))}
+          placeholder="Select Church Stage" icon="⛪" required />
+
+        <CustomSelect id="grade" name="grade" value={selectedGrade} onChange={handleGradeChange}
+          options={grades.map(g => ({ value: g.id, label: g.name }))}
+          placeholder="Select Grade" icon="🎓" disabled={!selectedTenant} required />
+
+        <CustomSelect id="class" name="class" value={selectedClass} onChange={setSelectedClass}
+          options={classes.map(c => ({ value: c.id, label: c.name }))}
+          placeholder="Select Class" icon="📚" disabled={!selectedGrade} required />
+
+        {(status === 'success' || status === 'error') && message && (
+          <MessageBox type={status === 'success' ? 'success' : 'error'} message={message} />
+        )}
+
+        <button
+          type="submit" disabled={status === 'loading'}
+          className="w-full h-14 rounded-2xl bg-[#59f20d] text-[#0d1a08] font-black text-base shadow-xl shadow-[#59f20d]/20 active:scale-[0.98] transition-all disabled:opacity-50 mt-2"
+        >
+          {status === 'loading' ? 'Creating account...' : 'Create Account'}
+        </button>
+      </form>
+
+      <p className="mt-8 text-slate-500 text-sm">
+        Already have an account?{' '}
+        <a href="/login" className="text-[#59f20d] font-bold hover:underline">Sign in</a>
+      </p>
     </div>
   )
 }

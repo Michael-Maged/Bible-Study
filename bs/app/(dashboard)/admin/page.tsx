@@ -12,178 +12,171 @@ import AdminNav from '@/components/AdminNav'
 import PushSubscriber from '@/components/PushSubscriber'
 
 export default function AdminDashboard() {
-  const [userRole, setUserRole] = useState<string>('')
+  const [userRole, setUserRole] = useState('')
   const [stats, setStats] = useState({ totalUsers: 0, pendingCount: 0, lastUpdated: '' })
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [todayReading, setTodayReading] = useState<{ book: string; chapter: number; fromVerse: number; toVerse: number; verseCount: number } | null | undefined>(undefined)
   const router = useRouter()
 
-  const loadStats = async () => {
-    if (!isOnline()) {
-      const cached = getCachedStats()
-      if (cached) setStats(cached)
-      return
-    }
-    const result = await getDashboardStats()
-    if (result.success && result.data) {
-      setStats(result.data)
-      cacheStats(result.data)
-    } else {
-      const cached = getCachedStats()
-      if (cached) setStats(cached)
-    }
-  }
-
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      const role = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
-      
+      const role = document.cookie.split('; ').find(r => r.startsWith('user-role='))?.split('=')[1]
       if (!session || (role !== 'admin' && role !== 'superuser')) {
         router.push('/login')
-      } else {
-        setUserRole(role || '')
-        loadStats()
-        getAnalytics().then(r => { if (r.success && r.data) setAnalytics(r.data) })
-        getTodayAdminReading().then(r => { setTodayReading(r.success ? r.data : null) })
+        return
       }
+      setUserRole(role || '')
+      if (!isOnline()) {
+        const cached = getCachedStats()
+        if (cached) setStats(cached)
+      } else {
+        const result = await getDashboardStats()
+        if (result.success && result.data) { setStats(result.data); cacheStats(result.data) }
+        else { const cached = getCachedStats(); if (cached) setStats(cached) }
+      }
+      getAnalytics().then(r => { if (r.success && r.data) setAnalytics(r.data) })
+      getTodayAdminReading().then(r => { setTodayReading(r.success ? r.data : null) })
     }
     checkAuth()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
-    <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-white min-h-screen pb-24">
+    <div className="bg-[#0d1a08] text-slate-100 min-h-screen pb-24">
       <OfflineBanner />
       <PushSubscriber />
-      <header className="sticky top-0 z-20 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-[#59f20d]/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-700">
-            <span className="text-2xl">📖</span>
-          </div>
+
+      {/* Header */}
+      <header className="px-5 pt-12 pb-6">
+        <div className="flex items-center justify-between mb-1">
           <div>
-            <h1 className="text-lg font-bold leading-none">{userRole === 'superuser' ? 'Superuser' : 'Admin'} Dashboard</h1>
-            <p className="text-xs text-zinc-500 font-medium mt-1">Manage Bible Study</p>
+            <p className="text-[#59f20d] text-xs font-bold uppercase tracking-widest mb-1">
+              {userRole === 'superuser' ? 'Superuser' : 'Admin'}
+            </p>
+            <h1 className="text-2xl font-black tracking-tight">Dashboard</h1>
+          </div>
+          <div className="w-11 h-11 rounded-2xl bg-[#59f20d]/10 border border-[#59f20d]/20 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#59f20d" strokeWidth={1.5} className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
           </div>
         </div>
       </header>
 
-      <main className="p-4 space-y-6 max-w-md mx-auto">
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-[#59f20d] text-2xl">📊</span>
-            <h2 className="text-lg font-bold">Quick Stats</h2>
+      <main className="px-5 space-y-5 max-w-md mx-auto">
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-[#59f20d] rounded-2xl p-5">
+            <p className="text-[#0d1a08] text-xs font-bold uppercase tracking-wider mb-2">
+              {userRole === 'admin' ? 'Total Users' : 'Total Kids'}
+            </p>
+            <p className="text-[#0d1a08] text-4xl font-black">{stats.totalUsers}</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">{userRole === 'admin' ? 'Total Users' : 'Total Kids'}</p>
-              <p className="text-3xl font-bold text-[#59f20d]">{stats.totalUsers}</p>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Pending</p>
-              <p className="text-3xl font-bold text-orange-500">{stats.pendingCount}</p>
-            </div>
+          <div className="bg-[#1a2e12] rounded-2xl p-5 border border-[#59f20d]/10">
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Pending</p>
+            <p className="text-orange-400 text-4xl font-black">{stats.pendingCount}</p>
           </div>
-        </section>
+        </div>
 
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-[#59f20d] text-2xl">📅</span>
-            <h2 className="text-lg font-bold">Today&apos;s Reading</h2>
+        {/* Today's Reading */}
+        <div className="bg-[#1a2e12] rounded-2xl border border-[#59f20d]/10 overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#59f20d]/10 flex items-center gap-2">
+            <div className="w-1.5 h-4 bg-[#59f20d] rounded-full" />
+            <p className="font-bold text-sm">Today&apos;s Reading</p>
           </div>
-          {todayReading === undefined ? (
-            <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 flex justify-center">
-              <div className="w-6 h-6 border-4 border-[#59f20d] border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : todayReading === null ? (
-            <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 text-center">
-              <p className="text-zinc-400 text-sm font-medium">No reading assigned for today</p>
-            </div>
-          ) : (
-            <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-800">
+          <div className="p-5">
+            {todayReading === undefined ? (
+              <div className="flex justify-center py-4">
+                <div className="w-6 h-6 border-2 border-[#59f20d]/30 border-t-[#59f20d] rounded-full animate-spin" />
+              </div>
+            ) : todayReading === null ? (
+              <p className="text-slate-500 text-sm text-center py-2">No reading assigned for today</p>
+            ) : (
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-[#59f20d]/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl">📖</span>
+                <div className="w-14 h-14 bg-[#59f20d]/10 rounded-2xl flex items-center justify-center flex-shrink-0 border border-[#59f20d]/20">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#59f20d" strokeWidth={1.5} className="w-7 h-7">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-base truncate">{bibleBooks.find(b => b.id === Number(todayReading.book))?.name ?? `Book ${todayReading.book}`}</p>
-                  <p className="text-sm text-zinc-500 font-medium">Chapter {todayReading.chapter} · Verses {todayReading.fromVerse}–{todayReading.toVerse}</p>
+                  <p className="font-black text-base truncate">
+                    {bibleBooks.find(b => b.id === Number(todayReading.book))?.name ?? `Book ${todayReading.book}`}
+                  </p>
+                  <p className="text-sm text-slate-400 mt-0.5">
+                    Ch. {todayReading.chapter} · v.{todayReading.fromVerse}–{todayReading.toVerse}
+                  </p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-2xl font-black text-[#59f20d]">{todayReading.verseCount}</p>
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase">Verses</p>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase">verses</p>
                 </div>
               </div>
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-[#59f20d] text-2xl">📈</span>
-            <h2 className="text-lg font-bold">Analytics</h2>
+            )}
           </div>
+        </div>
 
+        {/* Analytics */}
+        <div className="bg-[#1a2e12] rounded-2xl border border-[#59f20d]/10 overflow-hidden">
+          <div className="px-5 py-4 border-b border-[#59f20d]/10 flex items-center gap-2">
+            <div className="w-1.5 h-4 bg-[#59f20d] rounded-full" />
+            <p className="font-bold text-sm">Analytics</p>
+          </div>
           {!analytics ? (
-            <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 text-center shadow-sm border border-zinc-100 dark:border-zinc-800">
-              <div className="w-8 h-8 border-4 border-[#59f20d] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <div className="flex justify-center py-8">
+              <div className="w-6 h-6 border-2 border-[#59f20d]/30 border-t-[#59f20d] rounded-full animate-spin" />
             </div>
           ) : (
-            <>
+            <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">📖 Reading Rate</p>
-                  <p className="text-3xl font-black text-[#59f20d]">{analytics.overallReadingPct}%</p>
-                  <div className="mt-2 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#59f20d] rounded-full transition-all" style={{ width: `${analytics.overallReadingPct}%` }} />
+                <div className="bg-[#0d1a08] rounded-xl p-4">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Reading Rate</p>
+                  <p className="text-3xl font-black text-[#59f20d] mb-2">{analytics.overallReadingPct}%</p>
+                  <div className="h-1.5 bg-[#59f20d]/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#59f20d] rounded-full" style={{ width: `${analytics.overallReadingPct}%` }} />
                   </div>
                 </div>
-                <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-100 dark:border-zinc-800">
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">✅ Correct Answers</p>
-                  <p className="text-3xl font-black text-blue-500">{analytics.overallCorrectPct}%</p>
-                  <div className="mt-2 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${analytics.overallCorrectPct}%` }} />
+                <div className="bg-[#0d1a08] rounded-xl p-4">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Quiz Score</p>
+                  <p className="text-3xl font-black text-blue-400 mb-2">{analytics.overallCorrectPct}%</p>
+                  <div className="h-1.5 bg-blue-400/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-400 rounded-full" style={{ width: `${analytics.overallCorrectPct}%` }} />
                   </div>
                 </div>
               </div>
-
               {analytics.byClass.length > 0 && (
-                <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
-                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Per Class</p>
-                  </div>
-                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {analytics.byClass.map(cls => (
-                      <div key={cls.className} className="px-4 py-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-sm">{cls.className}</p>
-                          <span className="text-xs text-zinc-400">{cls.totalKids} kids</span>
+                <div className="space-y-3">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">By Class</p>
+                  {analytics.byClass.map(cls => (
+                    <div key={cls.className} className="bg-[#0d1a08] rounded-xl p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-bold text-sm">{cls.className}</p>
+                        <span className="text-xs text-slate-500 bg-[#1a2e12] px-2 py-0.5 rounded-full">{cls.totalKids} kids</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-500 w-12">Reading</span>
+                          <div className="flex-1 h-1.5 bg-[#59f20d]/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-[#59f20d] rounded-full" style={{ width: `${cls.readingPct}%` }} />
+                          </div>
+                          <span className="text-xs font-black text-[#59f20d] w-8 text-right">{cls.readingPct}%</span>
                         </div>
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-zinc-400 w-16">📖 Reading</span>
-                            <div className="flex-1 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                              <div className="h-full bg-[#59f20d] rounded-full" style={{ width: `${cls.readingPct}%` }} />
-                            </div>
-                            <span className="text-xs font-black text-[#59f20d] w-8 text-right">{cls.readingPct}%</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-500 w-12">Quiz</span>
+                          <div className="flex-1 h-1.5 bg-blue-400/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-400 rounded-full" style={{ width: `${cls.correctPct}%` }} />
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-zinc-400 w-16">✅ Correct</span>
-                            <div className="flex-1 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${cls.correctPct}%` }} />
-                            </div>
-                            <span className="text-xs font-black text-blue-500 w-8 text-right">{cls.correctPct}%</span>
-                          </div>
+                          <span className="text-xs font-black text-blue-400 w-8 text-right">{cls.correctPct}%</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </>
+            </div>
           )}
-        </section>
+        </div>
       </main>
 
       <AdminNav active="dashboard" />

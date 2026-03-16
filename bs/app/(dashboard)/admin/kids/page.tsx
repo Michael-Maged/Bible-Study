@@ -19,185 +19,155 @@ export default function AssignedKidsPage() {
   const router = useRouter()
   const [kids, setKids] = useState<Kid[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [classFilter, setClassFilter] = useState<string>('all')
-  const [userRole, setUserRole] = useState<string>('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [userRole, setUserRole] = useState('')
 
-  
   async function loadKids() {
     setLoading(true)
     const result = await fetchAssignedKids()
     if (result.success && result.data) {
-      const allKids: Kid[] = [
+      setKids([
         ...result.data.superusers.map((s: RequestDetail) => ({ ...s, type: 'admin' as const })),
-        ...result.data.kids.map((k: RequestDetail) => ({ ...k, type: 'kid' as const }))
-      ]
-      setKids(allKids)
+        ...result.data.kids.map((k: RequestDetail) => ({ ...k, type: 'kid' as const })),
+      ])
     }
     setLoading(false)
   }
 
   useEffect(() => {
-    const role = document.cookie.split('; ').find(row => row.startsWith('user-role='))?.split('=')[1]
+    const role = document.cookie.split('; ').find(r => r.startsWith('user-role='))?.split('=')[1]
     setUserRole(role || '')
     loadKids()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleAction(id: string, type: 'admin' | 'kid', approved: boolean) {
     const result = await handleApproveRequest(type, id, approved)
-    if (result.success) {
-      await loadKids()
-    }
+    if (result.success) loadKids()
   }
-
-  const classNames = Array.from(new Set(kids.filter(k => k.type === 'kid' && k.class?.name).map(k => k.class!.name))).sort()
-
-  const filteredKids = kids.filter(k => {
-    const matchesSearch = k.user.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || k.status === statusFilter
-    const matchesClass = classFilter === 'all' || (k.type === 'kid' && k.class?.name === classFilter)
-    const matchesType = userRole === 'superuser' ? k.type === 'kid' : true
-    return matchesSearch && matchesStatus && matchesClass && matchesType
-  })
 
   const displayKids = userRole === 'superuser' ? kids.filter(k => k.type === 'kid') : kids
+  const filtered = displayKids.filter(k => {
+    const matchSearch = k.user.name.toLowerCase().includes(search.toLowerCase())
+    const matchStatus = statusFilter === 'all' || k.status === statusFilter
+    return matchSearch && matchStatus
+  })
+
   const stats = {
-    superusers: kids.filter(k => k.type === 'admin').length,
-    kids: kids.filter(k => k.type === 'kid').length,
-    approved: displayKids.filter(k => k.status === 'accepted').length,
-    pending: displayKids.filter(k => k.status === 'pending').length
+    total: displayKids.length,
+    accepted: displayKids.filter(k => k.status === 'accepted').length,
+    pending: displayKids.filter(k => k.status === 'pending').length,
   }
 
+  const statusColor = (s: string) =>
+    s === 'accepted' ? 'text-[#59f20d] bg-[#59f20d]/10' :
+    s === 'pending'  ? 'text-orange-400 bg-orange-400/10' :
+    'text-red-400 bg-red-400/10'
+
   return (
-    <div className="bg-[#f6f8f5] dark:bg-[#162210] text-[#121c0d] dark:text-[#f6f8f5] min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md border-b border-[#59f20d]/10">
-        <div className="flex items-center p-4 justify-center max-w-md mx-auto w-full">
-          <h1 className="text-lg font-bold tracking-tight">My Kids</h1>
-        </div>
+    <div className="bg-[#0d1a08] text-slate-100 min-h-screen pb-24">
+      <header className="px-5 pt-12 pb-6">
+        <p className="text-[#59f20d] text-xs font-bold uppercase tracking-widest mb-1">Management</p>
+        <h1 className="text-2xl font-black tracking-tight">My Kids</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto pb-24 max-w-md mx-auto w-full px-4">
-        <div className="py-4 space-y-3">
-          {userRole === 'admin' ? (
-            <div className="grid grid-cols-4 gap-2">
-              <div className="bg-white dark:bg-[#1f2e18] rounded-xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-bold text-purple-500">{stats.superusers}</p>
-                <p className="text-xs text-gray-500">Superusers</p>
-              </div>
-              <div className="bg-white dark:bg-[#1f2e18] rounded-xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-bold text-[#59f20d]">{stats.kids}</p>
-                <p className="text-xs text-gray-500">Kids</p>
-              </div>
-              <div className="bg-white dark:bg-[#1f2e18] rounded-xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-bold text-green-500">{stats.approved}</p>
-                <p className="text-xs text-gray-500">Approved</p>
-              </div>
-              <div className="bg-white dark:bg-[#1f2e18] rounded-xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-bold text-orange-500">{stats.pending}</p>
-                <p className="text-xs text-gray-500">Pending</p>
-              </div>
+      <main className="px-5 space-y-4 max-w-md mx-auto">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Total', value: stats.total, color: 'text-slate-100' },
+            { label: 'Active', value: stats.accepted, color: 'text-[#59f20d]' },
+            { label: 'Pending', value: stats.pending, color: 'text-orange-400' },
+          ].map(s => (
+            <div key={s.label} className="bg-[#1a2e12] rounded-2xl p-4 text-center border border-[#59f20d]/10">
+              <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">{s.label}</p>
             </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-white dark:bg-[#1f2e18] rounded-xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-bold text-[#59f20d]">{stats.kids}</p>
-                <p className="text-xs text-gray-500">Total</p>
-              </div>
-              <div className="bg-white dark:bg-[#1f2e18] rounded-xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-bold text-green-500">{stats.approved}</p>
-                <p className="text-xs text-gray-500">Approved</p>
-              </div>
-              <div className="bg-white dark:bg-[#1f2e18] rounded-xl p-3 text-center shadow-sm">
-                <p className="text-2xl font-bold text-orange-500">{stats.pending}</p>
-                <p className="text-xs text-gray-500">Pending</p>
-              </div>
-            </div>
-          )}
+          ))}
+        </div>
 
-          <label className="relative flex items-center w-full">
-            <span className="absolute left-4 text-[#59f20d]/70 text-xl">🔍</span>
+        {/* Search + Filter */}
+        <div className="space-y-2">
+          <div className="relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
             <input
-              className="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search by name..."
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-12 pl-11 pr-4 rounded-xl bg-[#1a2e12] border border-[#59f20d]/10 text-sm placeholder:text-slate-600 focus:outline-none focus:border-[#59f20d]/40"
             />
-          </label>
-
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-12 px-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base text-gray-700 dark:text-gray-300"
-            >
-              <option value="all">All Status</option>
-              <option value="accepted">Approved</option>
-              <option value="pending">Pending</option>
-            </select>
-            <select
-              value={classFilter}
-              onChange={(e) => setClassFilter(e.target.value)}
-              className="h-12 px-4 rounded-xl border-none bg-white dark:bg-[#1f2e18] shadow-sm focus:ring-2 focus:ring-[#59f20d] text-base text-gray-700 dark:text-gray-300"
-            >
-              <option value="all">All Classes</option>
-              {classNames.map(name => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
+          </div>
+          <div className="flex gap-2">
+            {['all', 'accepted', 'pending', 'rejected'].map(s => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`flex-1 h-9 rounded-xl text-xs font-bold capitalize transition-all ${
+                  statusFilter === s
+                    ? 'bg-[#59f20d] text-[#0d1a08]'
+                    : 'bg-[#1a2e12] text-slate-400 border border-[#59f20d]/10'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
           </div>
         </div>
 
+        {/* List */}
         {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="text-zinc-500">Loading...</div>
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-[#59f20d]/30 border-t-[#59f20d] rounded-full animate-spin" />
           </div>
-        ) : filteredKids.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <span className="text-6xl mb-4">👥</span>
-            <p className="text-zinc-500">No kids found</p>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-slate-600">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} className="w-16 h-16 mx-auto mb-3 opacity-30">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <p className="font-bold">No kids found</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {filteredKids.map((kid) => (
-              <div key={`${kid.type}-${kid.id}`} className="bg-white dark:bg-[#1f2e18] rounded-xl overflow-hidden shadow-sm border border-[#59f20d]/5">
+          <div className="space-y-2">
+            {filtered.map(kid => (
+              <div key={`${kid.type}-${kid.id}`} className="bg-[#1a2e12] rounded-2xl border border-[#59f20d]/10 overflow-hidden">
                 <button
                   onClick={() => router.push(`/admin/kids/${kid.type}/${kid.id}`)}
-                  className="w-full p-4 text-left hover:bg-[#59f20d]/5 transition-colors"
+                  className="w-full p-4 text-left flex items-center gap-3 hover:bg-[#59f20d]/5 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold">{kid.user.name}</h3>
-                      <div className="flex gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        <span className="flex items-center gap-1">{kid.user.gender === 'male' ? '👦' : '👧'} {kid.user.gender}</span>
-                        <span className="flex items-center gap-1">🎓 {kid.type === 'admin' ? kid.grade?.name : kid.class?.name}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                        kid.status === 'accepted' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
-                        kid.status === 'pending' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400' :
-                        'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                      }`}>
-                        {kid.status}
+                  <div className="w-11 h-11 rounded-xl bg-[#0d1a08] flex items-center justify-center flex-shrink-0 text-2xl">
+                    {kid.user.gender === 'male' ? '👦' : '👧'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold truncate">{kid.user.name}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {kid.type === 'admin' ? kid.grade?.name : kid.class?.name}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${statusColor(kid.status)}`}>
+                      {kid.status}
+                    </span>
+                    {kid.type === 'admin' && (
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full text-purple-400 bg-purple-400/10">
+                        superuser
                       </span>
-                      {kid.type === 'admin' && <span className="text-[#59f20d] font-bold text-xs px-2 py-1 bg-[#59f20d]/10 rounded-full">Superuser</span>}
-                    </div>
+                    )}
                   </div>
                 </button>
                 {kid.status === 'pending' && (
-                  <div className="flex gap-3 p-4 pt-0">
+                  <div className="flex gap-2 px-4 pb-4">
                     <button
                       onClick={() => handleAction(kid.id, kid.type, false)}
-                      className="flex-1 h-12 rounded-full bg-[#59f20d]/10 text-[#121c0d] dark:text-[#59f20d] font-bold text-sm hover:bg-[#59f20d]/20 transition-colors border border-[#59f20d]/20"
+                      className="flex-1 h-10 rounded-xl bg-[#0d1a08] text-slate-300 font-bold text-sm border border-[#59f20d]/10 hover:border-red-400/30 hover:text-red-400 transition-all"
                     >
                       Reject
                     </button>
                     <button
                       onClick={() => handleAction(kid.id, kid.type, true)}
-                      className="flex-[2] h-12 rounded-full bg-[#59f20d] text-black font-bold text-sm shadow-md active:scale-95 transition-all"
+                      className="flex-[2] h-10 rounded-xl bg-[#59f20d] text-[#0d1a08] font-bold text-sm active:scale-95 transition-all"
                     >
                       Approve
                     </button>

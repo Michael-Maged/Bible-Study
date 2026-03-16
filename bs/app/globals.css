@@ -1,47 +1,46 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f0f7ee;
+  --bg-card: #ffffff;
+  --fg: #0d1a08;
+  --primary: #59f20d;
+  --primary-dim: rgba(89,242,13,0.12);
+  --border: rgba(89,242,13,0.12);
+}
+
+.dark {
+  --bg: #0d1a08;
+  --bg-card: #1a2e12;
+  --fg: #f0f7ee;
+  --border: rgba(89,242,13,0.1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Custom dropdown styling */
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(89,242,13,0.3); border-radius: 99px; }
+
+/* Select options */
 select option {
-  background-color: #f0fde4;
-  color: #0d1a08;
-  padding: 12px;
-  border-radius: 8px;
+  background-color: #1a2e12;
+  color: #f0f7ee;
 }
-
-@media (prefers-color-scheme: dark) {
-  select option {
-    background-color: #1a2c14;
-    color: #ffffff;
-  }
-}
-
-select option:hover,
 select option:checked {
-  background-color: #6ef516 !important;
-  color: #0d1a08 !important;
+  background-color: #59f20d;
+  color: #0d1a08;
 }
