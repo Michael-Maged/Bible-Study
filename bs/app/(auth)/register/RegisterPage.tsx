@@ -6,6 +6,7 @@ import { registerKidWithEmail } from './emailActions'
 import { fetchTenants, fetchGradesByTenant, fetchClassesByGrade } from './tenantActions'
 import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
+import PasswordInput from '@/components/PasswordInput'
 import type { Tenant, Grade, Class } from '@/types'
 
 export default function RegisterPage() {
@@ -70,6 +71,16 @@ export default function RegisterPage() {
     
     const form = e.currentTarget
     const formData = new FormData(form)
+    
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+    
+    if (password !== confirmPassword) {
+      setStatus('error')
+      setMessage('Passwords do not match')
+      return
+    }
+    
     try {
       const result = await registerKidWithEmail(formData)
       
@@ -150,18 +161,24 @@ export default function RegisterPage() {
             </div>
 
             {/* Password */}
-            <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">🔒</span>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                minLength={6}
-                placeholder="Password (min 6 characters)"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
-              />
-            </div>
+            <PasswordInput
+              name="password"
+              placeholder="Password (min 6 characters)"
+              minLength={6}
+              required
+              icon="🔒"
+              className="h-14 rounded-full bg-[#f0fde4] dark:bg-[#1a2c14] border-none focus:ring-2 focus:ring-[#6ef516] placeholder:text-[#7cb85f]/50"
+            />
+
+            {/* Confirm Password */}
+            <PasswordInput
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              minLength={6}
+              required
+              icon="🔒"
+              className="h-14 rounded-full bg-[#f0fde4] dark:bg-[#1a2c14] border-none focus:ring-2 focus:ring-[#6ef516] placeholder:text-[#7cb85f]/50"
+            />
 
             {/* Age & Gender Row */}
             <div className="grid grid-cols-2 gap-4">

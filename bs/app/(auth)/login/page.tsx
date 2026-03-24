@@ -4,12 +4,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { loginWithEmail } from './emailActions'
 import MessageBox from '@/components/MessageBox'
+import PasswordInput from '@/components/PasswordInput'
 
 export default function LoginPage() {
   const [step, setStep] = useState<'credentials' | 'pending'>('credentials')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [message, setMessage] = useState('')
-  const router = useRouter()
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -136,16 +136,13 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 ml-2">Password</label>
-            <div className="relative flex items-center">
-              <div className="absolute left-4 text-zinc-400 text-xl">🔒</div>
-              <input
-                type="password"
-                name="password"
-                placeholder="Enter your password"
-                required
-                className="w-full pl-12 pr-4 py-4 rounded-full border-2 border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-900 dark:text-white focus:ring-4 focus:ring-[#59f20d]/20 focus:border-[#59f20d] outline-none transition-all placeholder:text-zinc-400"
-              />
-            </div>
+            <PasswordInput
+              name="password"
+              placeholder="Enter your password"
+              required
+              icon="🔒"
+              className="pl-12 pr-12 py-4 rounded-full border-2 border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 focus:ring-4 focus:ring-[#59f20d]/20 focus:border-[#59f20d] text-zinc-900 dark:text-white placeholder:text-zinc-400"
+            />
           </div>
 
           {status === 'error' && message && <MessageBox type="error" message={message} />}
