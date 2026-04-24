@@ -1,29 +1,26 @@
+import { CheckCircle2, XCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
 interface MessageBoxProps {
   type: 'success' | 'error'
   message: string
+  className?: string
 }
 
-export default function MessageBox({ type, message }: MessageBoxProps) {
+export default function MessageBox({ type, message, className }: MessageBoxProps) {
   const isError = type === 'error'
-  
   return (
-    <div className={`p-4 rounded-2xl border flex items-start gap-3 ${
-      isError 
-        ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30' 
-        : 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30'
-    }`}>
-      <span className="text-2xl flex-shrink-0">
-        {isError ? '⚠️' : '✅'}
-      </span>
-      <div className="flex-1">
-        <p className={`text-sm font-medium ${
-          isError 
-            ? 'text-red-800 dark:text-red-200' 
-            : 'text-green-800 dark:text-green-200'
-        }`}>
-          {message}
-        </p>
-      </div>
+    <div className={cn(
+      'p-4 rounded-xl border flex items-start gap-3',
+      isError
+        ? 'bg-destructive/10 border-destructive/30 text-destructive'
+        : 'bg-[oklch(0.596_0.145_162.48)]/10 border-[oklch(0.596_0.145_162.48)]/30 text-[oklch(0.596_0.145_162.48)]',
+      className
+    )}>
+      {isError
+        ? <XCircle size={20} className="flex-shrink-0 mt-0.5" />
+        : <CheckCircle2 size={20} className="flex-shrink-0 mt-0.5" />}
+      <p className="text-sm font-medium">{message}</p>
     </div>
   )
 }

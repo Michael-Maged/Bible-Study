@@ -4,94 +4,149 @@ import { getReadingHistory } from './actions'
 import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import { cacheHistory, getCachedHistory } from '@/utils/offlineCache'
-import type { ReadingHistory } from '@/types'
 import KidNav from '@/components/KidNav'
 import { useOfflineData } from '@/hooks/useOfflineData'
 
 export default function HistoryPage() {
-  const { data: history, loading } = useOfflineData(
-    getReadingHistory,
-    getCachedHistory,
-    cacheHistory
-  )
+  const { data: history, loading } = useOfflineData(getReadingHistory, getCachedHistory, cacheHistory)
 
-  const getCalendarDays = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = today.getMonth()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const days = []
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      days.push(dateStr)
-    }
-    return days
-  }
+  if (loading) return <LoadingScreen />
 
-  if (loading) {
-    return <LoadingScreen />
-  }
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+  const todayNum = today.getDate()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const firstWeekday = new Date(year, month, 1).getDay() // 0=Sun
 
-  const calendarDays = getCalendarDays()
   const completedSet = new Set(history?.completedDays || [])
-  const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
+  const todayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(todayNum).padStart(2, '0')}`
+
+  const monthLabel = today.toLocaleString('default', { month: 'long', year: 'numeric' })
+
+  // completion rate
+  const pastDays = todayNum
+  const completedCount = history?.completedDays?.filter((d: string) => d <= todayStr).length ?? 0
+  const completionRate = pastDays > 0 ? Math.round((completedCount / pastDays) * 100) : 0
+
+  const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
   return (
-    <div className="bg-[#f6f8f5] dark:bg-[#162210] text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+    <div className="min-h-screen bg-background text-foreground pb-24">
       <OfflineBanner />
-      <header className="sticky top-0 z-50 bg-[#f6f8f5]/80 dark:bg-[#162210]/80 backdrop-blur-md px-6 py-4 flex items-center justify-center border-b border-[#59f20d]/10">
-        <h1 className="text-xl font-extrabold">My Progress</h1>
-      </header>
 
-      <main className="max-w-4xl mx-auto px-6 pt-6">
-        <section className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-[#59f20d]/10 text-center">
-            <div className="text-3xl mb-2">📚</div>
-            <p className="text-2xl font-black">{history?.totalDays || 0}</p>
-            <p className="text-xs font-bold text-slate-500 uppercase">Total Days</p>
-          </div>
-          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-[#59f20d]/10 text-center">
-            <div className="text-3xl mb-2">🔥</div>
-            <p className="text-2xl font-black">{history?.currentStreak || 0}</p>
-            <p className="text-xs font-bold text-slate-500 uppercase">Current</p>
-          </div>
-          <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-[#59f20d]/10 text-center">
-            <div className="text-3xl mb-2">🏆</div>
-            <p className="text-2xl font-black">{history?.longestStreak || 0}</p>
-            <p className="text-xs font-bold text-slate-500 uppercase">Longest</p>
-          </div>
-        </section>
+      <main className="max-w-lg mx-auto px-5 pt-6 space-y-4">
 
-        <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-[#59f20d]/10 mb-6">
-          <h2 className="text-lg font-black mb-4">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
-          <div className="grid grid-cols-7 gap-2">
-            {calendarDays.map((day, index) => {
-              const isCompleted = completedSet.has(day)
-              const isFuture = day > today
-              const dayNum = index + 1
+        {/* Page header */}
+        <div className="mb-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{monthLabel}</p>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Your month</h1>
+        </div>
+
+        {/* Stat tiles */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { value: history?.longestStreak ?? 0, label: 'Longest streak', accent: true },
+            { value: `${completionRate}%`, label: 'Completion', accent: false },
+            { value: history?.totalDays ?? 0, label: 'Days read', accent: false },
+          ].map(({ value, label, accent }) => (
+            <div key={label} className="rounded-2xl border border-border bg-card p-3">
+              <div
+                className="text-[22px] font-bold tracking-tight leading-none"
+                style={{ color: accent ? 'var(--primary)' : 'var(--foreground)' }}
+              >
+                {value}
+              </div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-1.5">
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar */}
+        <div className="rounded-2xl border border-border bg-card p-4">
+          {/* Weekday headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {weekdays.map((d, i) => (
+              <div key={i} className="text-center text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Day grid */}
+          <div className="grid grid-cols-7 gap-1 justify-items-center">
+            {/* leading blanks */}
+            {Array.from({ length: firstWeekday }).map((_, i) => (
+              <div key={`blank-${i}`} className="w-[34px] h-[34px]" />
+            ))}
+
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1
+              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+              const isToday = day === todayNum
+              const isFuture = day > todayNum
+              const isCompleted = completedSet.has(dateStr)
+              const isMissed = !isFuture && !isCompleted && !isToday
+
+              let style: React.CSSProperties = {}
+              let textColor = ''
+
+              if (isToday) {
+                style = {
+                  background: '#f4e4c0',
+                  border: '2px solid #c2851b',
+                  borderRadius: 10,
+                }
+                textColor = '#8a5a0f'
+              } else if (isCompleted) {
+                style = { background: '#c2851b', borderRadius: 10 }
+                textColor = '#fff'
+              } else if (isMissed) {
+                style = {
+                  background: 'rgba(166,66,66,0.10)',
+                  border: '1px solid rgba(166,66,66,0.28)',
+                  borderRadius: 10,
+                }
+                textColor = '#a64242'
+              } else if (isFuture) {
+                style = { borderRadius: 10, opacity: 0.4 }
+                textColor = 'var(--muted-foreground)'
+              }
+
               return (
                 <div
                   key={day}
-                  className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-bold ${
-                    isFuture
-                      ? 'bg-slate-50 dark:bg-slate-900 text-slate-300'
-                      : isCompleted
-                      ? 'bg-green-100 dark:bg-green-900/30'
-                      : 'bg-red-100 dark:bg-red-900/30'
-                  }`}
-                  title={day}
+                  className="w-[34px] h-[34px] flex items-center justify-center text-[13px] font-semibold"
+                  style={{ color: textColor || 'var(--muted-foreground)', ...style }}
                 >
-                  <span className="text-[10px] text-slate-500">{dayNum}</span>
-                  {!isFuture && <span className="text-lg">{isCompleted ? '✅' : '❌'}</span>}
+                  {day}
                 </div>
               )
             })}
           </div>
-        </section>
+
+          {/* Legend */}
+          <div className="flex flex-wrap gap-4 justify-center mt-4 pt-3 border-t border-border">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-[3px]" style={{ background: '#c2851b' }} />
+              <span className="text-[11px] font-semibold text-muted-foreground">Completed</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-[3px]" style={{ background: 'rgba(166,66,66,0.10)', border: '1px solid rgba(166,66,66,0.28)' }} />
+              <span className="text-[11px] font-semibold text-muted-foreground">Missed</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-[3px]" style={{ background: '#f4e4c0', border: '2px solid #c2851b' }} />
+              <span className="text-[11px] font-semibold text-muted-foreground">Today</span>
+            </div>
+          </div>
+        </div>
+
       </main>
 
-        <KidNav active="history" />
+      <KidNav active="history" />
     </div>
   )
 }

@@ -2,279 +2,178 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2, User, Mail } from 'lucide-react'
 import { registerKidWithEmail } from './emailActions'
 import { fetchTenants, fetchGradesByTenant, fetchClassesByGrade } from './tenantActions'
 import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
 import PasswordInput from '@/components/PasswordInput'
+import AppLogo from '@/components/AppLogo'
+import { Button } from '@/components/ui/button'
 import type { Tenant, Grade, Class } from '@/types'
+
+function LabeledInput({
+  label,
+  icon: Icon,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; icon: React.ElementType }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</label>
+      <div className="relative">
+        <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <input
+          {...props}
+          className="w-full h-11 pl-9 pr-4 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground"
+        />
+      </div>
+    </div>
+  )
+}
+
+function LabeledSelect({ label, ...props }: React.ComponentProps<typeof CustomSelect> & { label: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</label>
+      <CustomSelect {...props} />
+    </div>
+  )
+}
 
 export default function RegisterPage() {
   const router = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
-  
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [grades, setGrades] = useState<Grade[]>([])
   const [classes, setClasses] = useState<Class[]>([])
-  
   const [selectedTenant, setSelectedTenant] = useState('')
   const [selectedGrade, setSelectedGrade] = useState('')
   const [selectedGender, setSelectedGender] = useState('')
-
   const [selectedClass, setSelectedClass] = useState('')
 
-  const loadTenants = async () => {
-    const result = await fetchTenants()
-    if (result.success) {
-      setTenants(result.data || [])
-    }
-  }
-
   useEffect(() => {
-    loadTenants()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchTenants().then((r) => { if (r.success) setTenants(r.data || []) })
   }, [])
 
-  async function handleTenantChange(tenantId: string) {
-    setSelectedTenant(tenantId)
-    setSelectedGrade('')
-    setGrades([])
-    setClasses([])
-    
-    if (tenantId) {
-      const result = await fetchGradesByTenant(tenantId)
-      if (result.success) {
-        setGrades(result.data || [])
-      }
-    }
+  async function handleTenantChange(id: string) {
+    setSelectedTenant(id); setSelectedGrade(''); setGrades([]); setClasses([])
+    if (id) fetchGradesByTenant(id).then((r) => { if (r.success) setGrades(r.data || []) })
   }
 
-  async function handleGradeChange(gradeId: string) {
-    setSelectedGrade(gradeId)
-    setClasses([])
-    
-    if (gradeId) {
-      const selectedGradeObj = grades.find(g => g.id === gradeId)
-      if (selectedGradeObj) {
-        const result = await fetchClassesByGrade(selectedGradeObj.grade_num.toString())
-        if (result.success) {
-          setClasses(result.data || [])
-        }
-      }
+  async function handleGradeChange(id: string) {
+    setSelectedGrade(id); setClasses([])
+    if (id) {
+      const g = grades.find((g) => g.id === id)
+      if (g) fetchClassesByGrade(g.grade_num.toString()).then((r) => { if (r.success) setClasses(r.data || []) })
     }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setStatus('loading')
-    
-    const form = e.currentTarget
-    const formData = new FormData(form)
-    
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
-    
-    if (password !== confirmPassword) {
-      setStatus('error')
-      setMessage('Passwords do not match')
-      return
+    const formData = new FormData(e.currentTarget)
+    if (formData.get('password') !== formData.get('confirmPassword')) {
+      setStatus('error'); setMessage('Passwords do not match'); return
     }
-    
     try {
       const result = await registerKidWithEmail(formData)
-      
       if (result.success) {
-        setStatus('success')
-        setMessage('Registration successful! Waiting for admin approval...')
+        setStatus('success'); setMessage('Registration successful! Waiting for admin approval…')
         setTimeout(() => router.push('/login'), 2000)
       } else {
-        setStatus('error')
-        setMessage(result.error || 'Registration failed')
+        setStatus('error'); setMessage(result.error || 'Registration failed')
       }
     } catch (err) {
-      setStatus('error')
-      setMessage(err instanceof Error ? err.message : 'An error occurred')
+      setStatus('error'); setMessage(err instanceof Error ? err.message : 'An error occurred')
     }
   }
 
   return (
-    <div className="bg-[#f0fde4] dark:bg-[#1a2c14] min-h-screen flex flex-col">
-      {/* Top Navigation Bar */}
-      <header className="w-full px-6 lg:px-40 py-5 bg-[#f0fde4] dark:bg-[#1a2c14] border-b border-[#6ef516]/20">
-        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#6ef516] p-2 rounded-lg flex items-center justify-center">
-              <span className="text-white text-2xl">📖</span>
-            </div>
-            <h2 className="text-[#0d1a08] dark:text-white text-xl font-bold tracking-tight">BibleApp</h2>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 py-10">
+      <div className="w-full max-w-sm space-y-6">
+
+        <div className="text-center space-y-2">
+          <AppLogo size="lg" className="justify-center" />
+          <div className="flex items-center justify-center gap-1.5 mt-1">
+            <div className="w-6 h-px bg-primary opacity-60" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <div className="w-6 h-px bg-primary opacity-60" />
           </div>
-          <a className="text-sm font-semibold text-[#0d1a08] dark:text-white hover:text-[#6ef516] transition-colors" href="#">
-            Need help?
-          </a>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-2">Join your class</h1>
+          <p className="text-sm text-muted-foreground">Tell us a little about yourself</p>
         </div>
-      </header>
 
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-[500px] bg-white dark:bg-[#243d1c] rounded-xl shadow-xl shadow-[#6ef516]/10 overflow-hidden">
-          {/* Hero Image/Section */}
-          <div className="relative h-40 w-full overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-            <div className="absolute inset-0 bg-[#6ef516]/20 mix-blend-multiply z-0"></div>
-            <img
-              alt="Peaceful morning with an open Bible"
-              className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnHDFDB0uyxKNP9dCdREDdgxqud5Jz9b0WU1BC68iv-cy4IjPzopaHqfeV7soYIPNWadSdL3TCgsMk0nxtMMTKMhab7tdeuw2pIkAqSzaO-YQtKRGfYTySBddZWJ8sDZSr1LVfPlJPJG2-1H9Z8yoX9anAslpvyj8lNBFwgGeOb28y0WwSOsJWKDQJSSC8wxuzm0saeio6i4MdamBysCAn2WovRuk2Ogn6duEmIH1foStxWi1cvJXUIXI_C1tWhet3RYYiEIHlIG7G"
-            />
-            <div className="absolute bottom-4 left-6 z-20">
-              <h1 className="text-white text-2xl font-bold tracking-tight">Join the Family</h1>
-              <p className="text-white/80 text-sm">Register and grow in faith together.</p>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <LabeledInput label="Full Name" icon={User} type="text" name="name" placeholder="Your full name" required />
+            <LabeledInput label="Email" icon={Mail} type="email" name="email" placeholder="your@email.com" required />
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Password</label>
+              <PasswordInput
+                name="password" placeholder="Password (min 6 characters)"
+                minLength={6} required
+                className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30"
+              />
             </div>
-          </div>
-
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit} method="post" className="p-8 space-y-4">
-            {/* Name */}
-            <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">👤</span>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                placeholder="Full Name"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Confirm Password</label>
+              <PasswordInput
+                name="confirmPassword" placeholder="Confirm Password"
+                minLength={6} required
+                className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30"
               />
             </div>
 
-            {/* Email */}
-            <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">📧</span>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                placeholder="your@email.com"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+            <div className="grid grid-cols-2 gap-3">
+              <LabeledInput label="Age" icon={User} type="number" name="age" placeholder="Age" min="1" max="18" required />
+              <LabeledSelect
+                label="Gender"
+                id="gender" name="gender" value={selectedGender} onChange={setSelectedGender}
+                options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }]}
+                placeholder="Gender" icon="⚧" required
               />
             </div>
 
-            {/* Password */}
-            <PasswordInput
-              name="password"
-              placeholder="Password (min 6 characters)"
-              minLength={6}
-              required
-              icon="🔒"
-              className="h-14 rounded-full bg-[#f0fde4] dark:bg-[#1a2c14] border-none focus:ring-2 focus:ring-[#6ef516] placeholder:text-[#7cb85f]/50"
+            <LabeledSelect
+              label="Church Stage"
+              id="tenant" name="tenant" value={selectedTenant} onChange={handleTenantChange}
+              options={tenants.map((t) => ({ value: t.id, label: t.name }))}
+              placeholder="Select Church Stage" icon="⛪" required
+            />
+            <LabeledSelect
+              label="Grade"
+              id="grade" name="grade" value={selectedGrade} onChange={handleGradeChange}
+              options={grades.map((g) => ({ value: g.id, label: g.name }))}
+              placeholder="Select Grade" icon="🎓" disabled={!selectedTenant} required
+            />
+            <LabeledSelect
+              label="Class"
+              id="class" name="class" value={selectedClass} onChange={setSelectedClass}
+              options={classes.map((c) => ({ value: c.id, label: c.name }))}
+              placeholder="Select Class" icon="📚" disabled={!selectedGrade} required
             />
 
-            {/* Confirm Password */}
-            <PasswordInput
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              minLength={6}
-              required
-              icon="🔒"
-              className="h-14 rounded-full bg-[#f0fde4] dark:bg-[#1a2c14] border-none focus:ring-2 focus:ring-[#6ef516] placeholder:text-[#7cb85f]/50"
-            />
-
-            {/* Age & Gender Row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">🎂</span>
-                <input
-                  type="number"
-                  id="age"
-                  name="age"
-                  required
-                  min="1"
-                  max="18"
-                  placeholder="Age"
-                  className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
-                />
-              </div>
-              <CustomSelect
-                id="gender"
-                name="gender"
-                value={selectedGender}
-                onChange={setSelectedGender}
-                options={[
-                  { value: 'male', label: 'Male' },
-                  { value: 'female', label: 'Female' }
-                ]}
-                placeholder="Gender"
-                icon="⚧"
-                required
-              />
-            </div>
-
-            {/* Church Stage */}
-            <CustomSelect
-              id="tenant"
-              name="tenant"
-              value={selectedTenant}
-              onChange={handleTenantChange}
-              options={tenants.map(t => ({ value: t.id, label: t.name }))}
-              placeholder="Select Church Stage"
-              icon="⛪"
-              required
-            />
-
-            {/* Grade */}
-            <CustomSelect
-              id="grade"
-              name="grade"
-              value={selectedGrade}
-              onChange={handleGradeChange}
-              options={grades.map(g => ({ value: g.id, label: g.name }))}
-              placeholder="Select Grade"
-              icon="🎓"
-              disabled={!selectedTenant}
-              required
-            />
-
-            {/* Class */}
-            <CustomSelect
-              id="class"
-              name="class"
-              value={selectedClass}
-              onChange={setSelectedClass}
-              options={classes.map(c => ({ value: c.id, label: c.name }))}
-              placeholder="Select Class"
-              icon="📚"
-              disabled={!selectedGrade}
-              required
-            />
-
-            {/* Status Messages */}
-            {status === 'success' && message && (
-              <MessageBox type="success" message={message} />
+            {(status === 'success' || status === 'error') && message && (
+              <MessageBox type={status === 'success' ? 'success' : 'error'} message={message} />
             )}
 
-            {status === 'error' && message && (
-              <MessageBox type="error" message={message} />
-            )}
-
-            {/* Submit Button */}
-            <button
+            <Button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full py-4 bg-[#6ef516] hover:bg-[#5ee305] text-[#0d1a08] font-bold text-lg rounded-full shadow-lg shadow-[#6ef516]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]"
             >
-              {status === 'loading' ? 'Registering...' : 'Create Account'}
-              <span>→</span>
-            </button>
+              {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />Creating account…</> : 'Create Account'}
+            </Button>
           </form>
         </div>
-      </main>
 
-      {/* Footer Decoration */}
-      <footer className="py-10 flex flex-col items-center justify-center text-[#6ef516]/40 pointer-events-none select-none">
-        <span className="text-4xl mb-2">🌳</span>
-        <p className="text-xs font-medium uppercase tracking-widest">Grow in Grace</p>
-      </footer>
+        <p className="text-center text-sm text-muted-foreground">
+          Already have an account?{' '}
+          <a href="/login" className="text-primary font-semibold hover:underline underline-offset-4">Sign in</a>
+        </p>
+      </div>
     </div>
   )
 }
