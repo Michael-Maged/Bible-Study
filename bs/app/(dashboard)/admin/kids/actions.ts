@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
-import { approveAdminRequest, approveKidRequest } from '@/api/adminApi'
 
 export async function fetchAssignedKids() {
   const supabase = await createClient()
@@ -64,11 +63,13 @@ export async function fetchAssignedKids() {
 }
 
 export async function handleApproveRequest(type: 'admin' | 'kid', id: string, approved: boolean) {
+  const supabase = await createClient()
+  const status = approved ? 'accepted' : 'rejected'
   if (type === 'admin') {
-    const { error } = await approveAdminRequest(id, approved)
+    const { error } = await supabase.from('admin').update({ status }).eq('id', id)
     if (error) return { success: false, error: error.message }
   } else {
-    const { error } = await approveKidRequest(id, approved)
+    const { error } = await supabase.from('enrollment').update({ status }).eq('id', id)
     if (error) return { success: false, error: error.message }
   }
   return { success: true }

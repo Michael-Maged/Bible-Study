@@ -4,35 +4,45 @@ import { useState, useEffect } from 'react'
 import { Eye, Plus, Trash2, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import AdminNav from '@/components/AdminNav'
 import OfflineBanner from '@/components/OfflineBanner'
-import type { QuestionBuilder, QuestionOptionBuilder, BibleBookInfo, BibleChapterInfo } from '@/types'
+import type { QuestionBuilder, QuestionOptionBuilder } from '@/types'
 import { bibleBooks } from '@/constants/bibleBooks'
 import MessageBox from '@/components/MessageBox'
 import { Button } from '@/components/ui/button'
 
 export default function AssignmentsPage() {
-  const [currentDate, setCurrentDate] = useState(() => typeof window !== 'undefined' ? new Date() : new Date('2026-02-27'))
-  const [selectedDate, setSelectedDate] = useState(() => typeof window !== 'undefined' ? new Date() : new Date('2026-02-27'))
+  const [currentDate, setCurrentDate] = useState<Date | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [bookId, setBookId] = useState('')
   const [chapter, setChapter] = useState('')
   const [verseFrom, setVerseFrom] = useState('')
   const [verseTo, setVerseTo] = useState('')
   const [versePreview, setVersePreview] = useState<string[]>([])
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
-  const [chapterInfo, setChapterInfo] = useState<BibleChapterInfo | null>(null)
-  const [bookInfo, setBookInfo] = useState<BibleBookInfo | null>(null)
+  const [maxChapter, setMaxChapter] = useState<number | null>(null)
+  const [maxVerse, setMaxVerse] = useState<number | null>(null)
+  const [chapterError, setChapterError] = useState('')
+  const [verseError, setVerseError] = useState('')
   const [userGrade, setUserGrade] = useState<number | null>(null)
   const [userTenant, setUserTenant] = useState<string | null>(null)
   const [isWholeTenant, setIsWholeTenant] = useState(false)
   const [questions, setQuestions] = useState<QuestionBuilder[]>([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
+  useEffect(() => {
+    const now = new Date()
+    setCurrentDate(now)
+    setSelectedDate(now)
+    fetchUserData()
+  }, [])
+
   const changeMonth = (direction: number) => {
+    if (!currentDate) return
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1))
   }
 
-  const getDaysInMonth = () => {
-    const year = currentDate.getFullYear()
-    const month = currentDate.getMonth()
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
     const firstDay = new Date(year, month, 1).getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const prevMonthDays = new Date(year, month, 0).getDate()
@@ -41,8 +51,6 @@ export default function AssignmentsPage() {
     for (let i = 1; i <= daysInMonth; i++) days.push({ day: i, isCurrentMonth: true })
     return days
   }
-
-  useEffect(() => { fetchUserData() }, [])
 
   const fetchUserData = async () => {
     try {
@@ -59,25 +67,55 @@ export default function AssignmentsPage() {
     } catch {}
   }
 
-  const fetchBookInfo = async () => {
-    const res = await fetch(`/api/bible?book=${bookId}`)
-    setBookInfo(await res.json())
-  }
-
-  const fetchChapterInfo = async () => {
-    const res = await fetch(`/api/bible?book=${bookId}&ch=${chapter}`)
-    setChapterInfo(await res.json())
-  }
-
+  // Fetch max chapters when book changes
   useEffect(() => {
-    if (bookId) { fetchBookInfo(); setChapter(''); setVerseFrom(''); setVerseTo(''); setChapterInfo(null) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!bookId) { setMaxChapter(null); setMaxVerse(null); return }
+    fetch(`/api/bible?book=${bookId}`)
+      .then(r => r.json())
+      .then(d => setMaxChapter(d.chapters ?? null))
+      .catch(() => {})
   }, [bookId])
 
+  // Fetch max verses when chapter changes
   useEffect(() => {
-    if (bookId && chapter) { fetchChapterInfo(); setVerseFrom(''); setVerseTo('') }
+    if (!bookId || !chapter) { setMaxVerse(null); return }
+    const ch = parseInt(chapter)
+    if (!ch || (maxChapter && ch > maxChapter)) { setMaxVerse(null); return }
+    fetch(`/api/bible?book=${bookId}&ch=${chapter}`)
+      .then(r => r.json())
+      .then(d => setMaxVerse(d.verses_count ?? null))
+      .catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookId, chapter])
+
+  const validateChapter = (val: string) => {
+    const n = parseInt(val)
+    if (!val) { setChapterError(''); return }
+    if (isNaN(n) || n < 1) { setChapterError('Must be at least 1'); return }
+    if (maxChapter && n > maxChapter) { setChapterError(`Max chapter is ${maxChapter}`); return }
+    setChapterError('')
+  }
+
+  const validateVerses = (from: string, to: string) => {
+    const f = parseInt(from), t = parseInt(to)
+    if (!from && !to) { setVerseError(''); return }
+    if (from && (isNaN(f) || f < 1)) { setVerseError('From must be at least 1'); return }
+    if (to && (isNaN(t) || t < 1)) { setVerseError('To must be at least 1'); return }
+    if (maxVerse) {
+      if (from && f > maxVerse) { setVerseError(`Max verse is ${maxVerse}`); return }
+      if (to && t > maxVerse) { setVerseError(`Max verse is ${maxVerse}`); return }
+    }
+    if (from && to && f > t) { setVerseError('From must be ≤ To'); return }
+    setVerseError('')
+  }
+
+  const fetchFullChapter = async () => {
+    if (!bookId || !chapter) return
+    if (maxVerse) { setVerseFrom('1'); setVerseTo(maxVerse.toString()); setVerseError(''); return }
+    const res = await fetch(`/api/bible?book=${bookId}&ch=${chapter}`)
+    const data = await res.json()
+    if (data.verses_count) { setVerseFrom('1'); setVerseTo(data.verses_count.toString()); setVerseError('') }
+  }
 
   const loadPreview = async () => {
     if (!bookId || !chapter) return
@@ -96,6 +134,9 @@ export default function AssignmentsPage() {
   }
 
   const saveReading = async () => {
+    if (chapterError || verseError) {
+      setFeedback({ type: 'error', message: 'Fix validation errors before publishing' }); return
+    }
     if (!bookId || !chapter || !verseFrom || !verseTo || !selectedDate) {
       setFeedback({ type: 'error', message: 'Please fill all fields' }); return
     }
@@ -160,11 +201,7 @@ export default function AssignmentsPage() {
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Daily Config</p>
             <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Assign Reading</h1>
           </div>
-          <Button
-            onClick={saveReading}
-            className="shadow-[0_2px_0_rgba(138,90,15,0.25)] mt-1"
-            size="sm"
-          >
+          <Button onClick={saveReading} className="shadow-[0_2px_0_rgba(138,90,15,0.25)] mt-1" size="sm">
             Publish
           </Button>
         </div>
@@ -172,38 +209,46 @@ export default function AssignmentsPage() {
         {/* Schedule */}
         <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
           <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Schedule</p>
-          <div className="flex items-center justify-between">
-            <button onClick={() => changeMonth(-1)} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-accent/30 transition-colors">
-              <ChevronLeft size={16} />
-            </button>
-            <p className="font-bold text-sm">{currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
-            <button onClick={() => changeMonth(1)} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-accent/30 transition-colors">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-          <div className="grid grid-cols-7 text-center gap-y-1">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-              <span key={i} className="text-[10px] font-bold text-muted-foreground uppercase">{d}</span>
-            ))}
-            {getDaysInMonth().map((item, i) => {
-              const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), item.day)
-              const isSelected = selectedDate.toDateString() === dateObj.toDateString()
-              return (
-                <button key={i} onClick={() => item.isCurrentMonth && setSelectedDate(dateObj)} disabled={!item.isCurrentMonth}
-                  className="h-8 w-8 mx-auto flex items-center justify-center text-xs font-medium rounded-full transition-colors"
-                  style={
-                    isSelected
-                      ? { background: '#c2851b', color: '#fff', fontWeight: 700 }
-                      : !item.isCurrentMonth
-                      ? { color: 'var(--muted-foreground)', opacity: 0.3, cursor: 'not-allowed' }
-                      : { color: 'var(--foreground)' }
-                  }
-                >
-                  {item.day}
+          {!currentDate ? (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <button onClick={() => changeMonth(-1)} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-accent/30 transition-colors">
+                  <ChevronLeft size={16} />
                 </button>
-              )
-            })}
-          </div>
+                <p className="font-bold text-sm">{currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+                <button onClick={() => changeMonth(1)} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-accent/30 transition-colors">
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+              <div className="grid grid-cols-7 text-center gap-y-1">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                  <span key={i} className="text-[10px] font-bold text-muted-foreground uppercase">{d}</span>
+                ))}
+                {getDaysInMonth(currentDate).map((item, i) => {
+                  const dateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), item.day)
+                  const isSelected = selectedDate?.toDateString() === dateObj.toDateString()
+                  return (
+                    <button key={i} onClick={() => item.isCurrentMonth && setSelectedDate(dateObj)} disabled={!item.isCurrentMonth}
+                      className="h-8 w-8 mx-auto flex items-center justify-center text-xs font-medium rounded-full transition-colors"
+                      style={
+                        isSelected
+                          ? { background: '#c2851b', color: '#fff', fontWeight: 700 }
+                          : !item.isCurrentMonth
+                          ? { color: 'var(--muted-foreground)', opacity: 0.3, cursor: 'not-allowed' }
+                          : { color: 'var(--foreground)' }
+                      }
+                    >
+                      {item.day}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Passage */}
@@ -219,7 +264,7 @@ export default function AssignmentsPage() {
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Bible Book</label>
-            <select value={bookId} onChange={(e) => setBookId(e.target.value)} className={inputClass}>
+            <select value={bookId} onChange={(e) => { setBookId(e.target.value); setChapter(''); setVerseFrom(''); setVerseTo(''); setChapterError(''); setVerseError('') }} className={inputClass}>
               <option value="">Select Book</option>
               {bibleBooks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
@@ -228,33 +273,54 @@ export default function AssignmentsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Chapter</label>
-              <select value={chapter} onChange={(e) => setChapter(e.target.value)} className={inputClass} disabled={!bookInfo}>
-                <option value="">Select</option>
-                {bookInfo && Array.from({ length: bookInfo.chapters }, (_, i) => i + 1).map(ch => <option key={ch} value={ch}>{ch}</option>)}
-              </select>
-              {chapterInfo && <p className="text-xs text-muted-foreground">{chapterInfo.verses_count} verses</p>}
+              <input
+                type="number"
+                min="1"
+                value={chapter}
+                onChange={(e) => { setChapter(e.target.value); setVerseFrom(''); setVerseTo(''); setVerseError(''); validateChapter(e.target.value) }}
+                onBlur={(e) => validateChapter(e.target.value)}
+                placeholder={maxChapter ? `1–${maxChapter}` : 'e.g. 3'}
+                disabled={!bookId}
+                className={`${inputClass} ${chapterError ? 'border-destructive focus:ring-destructive/30' : ''}`}
+              />
+              {chapterError && <p className="text-xs text-destructive font-semibold">{chapterError}</p>}
+              {!chapterError && maxChapter && <p className="text-xs text-muted-foreground">{maxChapter} chapters</p>}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Verses</label>
               <div className="flex items-center gap-1">
-                <select value={verseFrom} onChange={(e) => setVerseFrom(e.target.value)} className={inputClass} disabled={!chapterInfo}>
-                  <option value="">From</option>
-                  {chapterInfo && Array.from({ length: chapterInfo.verses_count }, (_, i) => i + 1).map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
+                <input
+                  type="number"
+                  min="1"
+                  value={verseFrom}
+                  onChange={(e) => { setVerseFrom(e.target.value); validateVerses(e.target.value, verseTo) }}
+                  onBlur={(e) => validateVerses(e.target.value, verseTo)}
+                  placeholder="From"
+                  disabled={!chapter || !!chapterError}
+                  className={`${inputClass} ${verseError ? 'border-destructive focus:ring-destructive/30' : ''}`}
+                />
                 <span className="text-muted-foreground">–</span>
-                <select value={verseTo} onChange={(e) => setVerseTo(e.target.value)} className={inputClass} disabled={!chapterInfo}>
-                  <option value="">To</option>
-                  {chapterInfo && Array.from({ length: chapterInfo.verses_count }, (_, i) => i + 1).map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
+                <input
+                  type="number"
+                  min="1"
+                  value={verseTo}
+                  onChange={(e) => { setVerseTo(e.target.value); validateVerses(verseFrom, e.target.value) }}
+                  onBlur={(e) => validateVerses(verseFrom, e.target.value)}
+                  placeholder="To"
+                  disabled={!chapter || !!chapterError}
+                  className={`${inputClass} ${verseError ? 'border-destructive focus:ring-destructive/30' : ''}`}
+                />
               </div>
+              {verseError && <p className="text-xs text-destructive font-semibold">{verseError}</p>}
+              {!verseError && maxVerse && <p className="text-xs text-muted-foreground">{maxVerse} verses</p>}
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1" onClick={() => { if (chapterInfo) { setVerseFrom('1'); setVerseTo(chapterInfo.verses_count.toString()) } }} disabled={!chapterInfo}>
+            <Button variant="outline" size="sm" className="flex-1" onClick={fetchFullChapter} disabled={!bookId || !chapter}>
               Full Chapter
             </Button>
-            <Button size="sm" className="flex-1 shadow-[0_2px_0_rgba(138,90,15,0.25)]" onClick={loadPreview} disabled={!bookId || !chapter || isLoadingPreview}>
+            <Button size="sm" className="flex-1 shadow-[0_2px_0_rgba(138,90,15,0.25)]" onClick={loadPreview} disabled={!bookId || !chapter || isLoadingPreview || !!chapterError || !!verseError}>
               {isLoadingPreview ? <Loader2 size={14} className="animate-spin" /> : <><Eye size={14} className="mr-1" />Preview</>}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => { setVerseFrom(''); setVerseTo(''); setVersePreview([]) }}>Clear</Button>
@@ -292,10 +358,7 @@ export default function AssignmentsPage() {
               style={{ borderColor: 'rgba(194,133,27,0.35)', borderLeftWidth: 4, borderLeftColor: '#c2851b' }}
             >
               <div className="flex items-center justify-between">
-                <span
-                  className="text-xs font-bold px-2.5 py-0.5 rounded-full"
-                  style={{ background: 'rgba(194,133,27,0.10)', color: '#c2851b' }}
-                >
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(194,133,27,0.10)', color: '#c2851b' }}>
                   Question {qi + 1}
                 </span>
                 <button onClick={() => removeQuestion(qi)} className="text-muted-foreground hover:text-destructive transition-colors">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { loginWithEmail } from './emailActions'
 import { Button } from '@/components/ui/button'
@@ -19,37 +20,8 @@ function WarmOrnament() {
   )
 }
 
-function PendingView({ onBack }: { onBack: () => void }) {
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-      <OfflineBanner />
-      <div className="w-full max-w-sm text-center space-y-6">
-        <AppLogo size="lg" className="justify-center" />
-        <div className="rounded-2xl border border-border bg-card p-8 space-y-4 shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mx-auto">
-            <span className="text-3xl">📖</span>
-          </div>
-          <h2 className="text-2xl font-black text-foreground">Almost there!</h2>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Your account is being reviewed. This usually takes a few minutes.
-          </p>
-          <div className="flex items-center justify-center gap-2 pt-2">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="w-2 h-2 rounded-full bg-primary/60 animate-pulse" />
-            <span className="w-2 h-2 rounded-full bg-primary/30 animate-pulse" />
-            <span className="text-xs text-muted-foreground ml-1">Waiting for approval…</span>
-          </div>
-        </div>
-        <button onClick={onBack} className="text-sm text-primary font-semibold hover:underline underline-offset-4">
-          Back to Login
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export default function LoginPage() {
-  const [step, setStep] = useState<'credentials' | 'pending'>('credentials')
+  const router = useRouter()
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [message, setMessage] = useState('')
 
@@ -61,7 +33,7 @@ export default function LoginPage() {
     try {
       const result = await loginWithEmail(formData.get('email') as string, formData.get('password') as string)
       if (result.success && result.user) {
-        if (result.isPending) { setStep('pending'); return }
+        if (result.isPending) { router.push('/pending'); return }
         window.location.href = result.user.role === 'admin' || result.user.role === 'superuser' ? '/admin' : '/kid/dashboard'
       } else {
         setStatus('error')
@@ -72,8 +44,6 @@ export default function LoginPage() {
       setMessage(err instanceof Error ? err.message : 'Login failed')
     }
   }
-
-  if (step === 'pending') return <PendingView onBack={() => setStep('credentials')} />
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
