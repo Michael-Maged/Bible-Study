@@ -1,15 +1,32 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/server'
-import { createUser } from '@/api/userApi'
 import { createClient } from '@supabase/supabase-js'
 import { sendNewRegistrationNotification } from '@/utils/pushNotify'
 
-const getAnonClient = () => {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+const getAnonClient = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+async function createUser(userData: {
+  name: string; email?: string; age: number; gender: string
+  tenantId?: string; gradeId?: string; classId?: string; auth_id?: string
+}) {
+  const supabaseAdmin = createAdminClient()
+  const { data: user, error: userError } = await supabaseAdmin
+    .from('user')
+    .insert({ name: userData.name, email: userData.email, age: userData.age, gender: userData.gender, auth_id: userData.auth_id })
+    .select()
+    .single()
+  if (userError || !user) return { data: null, error: userError }
+
+  const { error: enrollError } = await supabaseAdmin
+    .from('enrollment')
+    .insert({ user_id: user.id, class: userData.classId, tenant: userData.tenantId, grade: userData.gradeId, status: 'pending' })
+  if (enrollError) return { data: null, error: enrollError }
+
+  return { data: user, error: null }
 }
 
 export async function registerKidWithEmail(formData: FormData) {
