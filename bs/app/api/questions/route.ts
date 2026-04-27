@@ -62,14 +62,86 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Reading ID required' }, { status: 400 })
     }
 
-    const { data: questions, error } = await serviceSupabase
+    const { data: questions, error: qError } = await serviceSupabase
       .from('question')
-      .select('*, options(*)')
+      .select('id, question, score')
       .eq('reading', readingId)
 
-    if (error) throw error
+    if (qError) {
+      console.error('question fetch error:', qError)
+      return NextResponse.json({ success: false, error: qError.message }, { status: 500 })
+    }
 
-    return NextResponse.json({ success: true, data: questions })
+    const questionsWithData = await Promise.all(
+      (questions || []).map(async (q) => {
+        const { data: options, error: oError } = await serviceSupabase
+          .from('options')
+          .select('id, option')
+          .eq('question', q.id)
+
+        if (oError) console.error('options fetch error:', oError)
+
+        const { data: correctanswers, error: cError } = await serviceSupabase
+          .from('correctanswers')
+          .select('correct_option')
+          .eq('question', q.id)
+
+        if (cError) console.error('correctanswers fetch error:', cError)
+
+        return { ...q, options: options || [], correctanswers: correctanswers || [] }
+      })
+    )
+
+    return NextResponse.json({ success: true, data: questionsWithData })
+  } catch (error: any) {
+    console.error('GET /api/questions error:', error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { questionId } = await request.json()
+    if (!questionId) return NextResponse.json({ success: false, error: 'Question ID required' }, { status: 400 })
+    const { error } = await serviceSupabase.from('question').delete().eq('id', questionId)
+    if (error) throw error
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const { questionId, question, score, options } = await request.json()
+    if (!questionId) return NextResponse.json({ success: false, error: 'Question ID required' }, { status: 400 })
+
+    // Update question text and score
+    const { error: qError } = await serviceSupabase
+      .from('question')
+      .update({ question, score })
+      .eq('id', questionId)
+    if (qError) throw qError
+
+    // Delete old options and correct answers, then re-insert
+    await serviceSupabase.from('correctanswers').delete().eq('question', questionId)
+    await serviceSupabase.from('options').delete().eq('question', questionId)
+
+    const optionsToInsert = options.map((opt: { text: string }) => ({ question: questionId, option: opt.text }))
+    const { data: optionsData, error: oError } = await serviceSupabase.from('options').insert(optionsToInsert).select()
+    if (oError) throw oError
+
+    const correctAnswers = options
+      .map((opt: { text: string; isCorrect: boolean }, idx: number) => opt.isCorrect ? idx : -1)
+      .filter((idx: number) => idx !== -1)
+      .map((idx: number) => ({ question: questionId, correct_option: optionsData[idx].id }))
+
+    if (correctAnswers.length > 0) {
+      const { error: cError } = await serviceSupabase.from('correctanswers').insert(correctAnswers)
+      if (cError) throw cError
+    }
+
+    return NextResponse.json({ success: true })
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }

@@ -84,26 +84,6 @@ export default function LeaderboardPage() {
           <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Leaderboard</h1>
         </div>
 
-        {/* Period filter pills */}
-        <div
-          className="flex gap-1 p-1 rounded-full"
-          style={{ background: '#f0e8d6' }}
-        >
-          {['This week', 'This month', 'All time'].map((label, i) => (
-            <div
-              key={label}
-              className="flex-1 text-center text-xs font-bold py-1.5 rounded-full transition-colors"
-              style={
-                i === 2
-                  ? { background: '#fff', color: 'var(--foreground)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }
-                  : { color: 'var(--muted-foreground)' }
-              }
-            >
-              {label}
-            </div>
-          ))}
-        </div>
-
         {users.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
             <svg width="40" height="40" viewBox="0 0 20 20" fill="none" className="mb-3 opacity-30">

@@ -57,6 +57,23 @@ export default function RootLayout({
         className={`${plusJakartaSans.variable} ${cairo.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            document.addEventListener('visibilitychange', function() {
+              if (document.visibilityState === 'visible') {
+                var last = parseInt(sessionStorage.getItem('_last_active') || '0');
+                var now = Date.now();
+                if (now - last > 60000) {
+                  sessionStorage.setItem('_last_active', now.toString());
+                  window.location.reload();
+                }
+              } else {
+                sessionStorage.setItem('_last_active', Date.now().toString());
+              }
+            });
+            sessionStorage.setItem('_last_active', Date.now().toString());
+          `
+        }} />
         {children}
       </body>
     </html>

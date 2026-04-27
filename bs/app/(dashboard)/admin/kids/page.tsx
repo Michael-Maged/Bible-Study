@@ -7,6 +7,7 @@ import type { RequestDetail } from '@/types'
 import AdminNav from '@/components/AdminNav'
 import OfflineBanner from '@/components/OfflineBanner'
 import KidSummaryTile from '@/components/admin/KidSummaryTile'
+import CustomSelect from '@/components/CustomSelect'
 import { Button } from '@/components/ui/button'
 
 type Kid = {
@@ -24,6 +25,8 @@ export default function AssignedKidsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [classFilter, setClassFilter] = useState<string>('all')
   const [userRole, setUserRole] = useState<string>('')
 
   async function loadKids() {
@@ -52,10 +55,15 @@ export default function AssignedKidsPage() {
   }
 
   const displayKids = userRole === 'superuser' ? kids.filter((k) => k.type === 'kid') : kids
+
+  const classes = Array.from(new Set(displayKids.filter(k => k.class?.name).map(k => k.class!.name))).sort()
+
   const filteredKids = displayKids.filter((k) => {
     const matchesSearch = k.user.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === 'all' || k.status === statusFilter
-    return matchesSearch && matchesStatus
+    const matchesType = typeFilter === 'all' || k.type === typeFilter
+    const matchesClass = classFilter === 'all' || k.class?.name === classFilter
+    return matchesSearch && matchesStatus && matchesType && matchesClass
   })
 
   const pending = displayKids.filter((k) => k.status === 'pending').length
@@ -124,6 +132,40 @@ export default function AssignedKidsPage() {
               {label}
             </button>
           ))}
+        </div>
+
+        {/* Type + Class filters */}
+        <div className="flex gap-2">
+          {userRole !== 'superuser' && (
+            <div className="flex-1">
+              <CustomSelect
+                id="type-filter"
+                name="type-filter"
+                value={typeFilter}
+                onChange={setTypeFilter}
+                options={[
+                  { value: 'all', label: 'All types' },
+                  { value: 'kid', label: 'Kids' },
+                  { value: 'admin', label: 'Superusers' },
+                ]}
+                placeholder="All types"
+                icon=""
+              />
+            </div>
+          )}
+          {classes.length > 0 && (
+            <div className="flex-1">
+              <CustomSelect
+                id="class-filter"
+                name="class-filter"
+                value={classFilter}
+                onChange={setClassFilter}
+                options={[{ value: 'all', label: 'All classes' }, ...classes.map(c => ({ value: c, label: c }))]}
+                placeholder="All classes"
+                icon=""
+              />
+            </div>
+          )}
         </div>
 
         {/* List */}
