@@ -110,7 +110,6 @@ export default function PendingPage() {
 
         {/* Timeline card */}
         <div className="bg-card rounded-2xl border border-border p-5">
-          <TimelineStep state="done" label="Phone verified" meta="Submitted" />
           <TimelineStep state="active" label="Waiting for teacher approval" meta="In review" />
           <TimelineStep state="next" label="Start today's reading" meta="Up next" last />
         </div>

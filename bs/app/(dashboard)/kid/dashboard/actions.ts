@@ -1,29 +1,43 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getLocalDateString } from '@/utils/dateUtils'
 
 export async function getUserProfile() {
   try {
     const supabase = await createClient()
+    const supabaseAdmin = createAdminClient()
     const { data: { user: authUser } } = await supabase.auth.getUser()
-    
+
     if (!authUser) {
       return { success: false, error: 'Not authenticated' }
     }
 
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabaseAdmin
       .from('user')
-      .select('*, enrollment(*, class:classes(*))')
+      .select('*')
       .eq('auth_id', authUser.id)
       .single()
 
+    console.log('[getUserProfile] authUser.id:', authUser.id, 'user:', !!user, 'error:', userError?.message)
+
+    // Fetch enrollment + class separately to avoid nested join errors
+    const { data: enrollment, error: enrollError } = user ? await supabaseAdmin
+      .from('enrollment')
+      .select('*, class:classes!enrollment_class_fkey(name, grade:grade!class_grade_fkey(name, tenant:tenant!grade_tenant_fkey(name)))')
+      .eq('user_id', user.id)
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle() : { data: null, error: null }
+
+    console.log('[getUserProfile] enrollment:', !!enrollment, 'enrollError:', enrollError?.message)
+
     if (!user) {
-      return { success: false, error: 'User not found' }
+      return { success: false, error: userError?.message || 'User not found' }
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         name: user.name,
         email: user.email,
@@ -35,9 +49,9 @@ export async function getUserProfile() {
         points: user.current_score || 0,
         level: 5,
         progress: 80,
-        grade: user.enrollment?.[0]?.class?.grade,
-        tenant: user.enrollment?.[0]?.class?.tenant,
-        className: user.enrollment?.[0]?.class?.name
+        grade: enrollment?.class?.grade?.name ?? null,
+        tenant: enrollment?.class?.grade?.tenant?.name ?? null,
+        className: enrollment?.class?.name ?? null
       }
     }
   } catch (error) {
@@ -56,7 +70,7 @@ export async function getTodayReading() {
 
     const { data: user } = await supabase
       .from('user')
-      .select('id, *, enrollment(*, class:classes(*, grade:grade(*)))')
+      .select('id, *, enrollment(*, class:classes!enrollment_class_fkey(*, grade:grade!class_grade_fkey(*)))')
       .eq('auth_id', authUser.id)
       .single()
 

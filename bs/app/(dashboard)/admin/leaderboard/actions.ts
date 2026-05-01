@@ -1,15 +1,16 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 
 export async function getAdminLeaderboard() {
   try {
     const supabase = await createClient()
+    const supabaseAdmin = createAdminClient()
     const { data: { user: authUser } } = await supabase.auth.getUser()
 
     if (!authUser) return { success: false, error: 'Not authenticated', data: [] }
 
-    const { data: userData } = await supabase
+    const { data: userData } = await supabaseAdmin
       .from('user')
       .select('id')
       .eq('auth_id', authUser.id)
@@ -17,19 +18,19 @@ export async function getAdminLeaderboard() {
 
     if (!userData) return { success: false, error: 'User not found', data: [] }
 
-    const { data: adminData } = await supabase
+    const { data: adminData } = await supabaseAdmin
       .from('admin')
-      .select('*, user!inner(*), grade!inner(*)')
+      .select('*, user(*), grade:grade!admin_grade_fkey(*)')
       .eq('user_id', userData.id)
       .single()
 
     if (!adminData) return { success: false, error: 'Admin not found', data: [] }
 
-    const adminGradeNum = adminData.grade.grade_num
-    const isMixed = adminData.grade.gender === 'mix' || adminData.grade.gender === 'mixed'
-    const adminGender = adminData.user.gender
+    const adminGradeNum = adminData.grade?.grade_num
+    const isMixed = adminData.grade?.gender === 'mix' || adminData.grade?.gender === 'mixed'
+    const adminGender = adminData.user?.gender
 
-    const { data: classes } = await supabase
+    const { data: classes } = await supabaseAdmin
       .from('classes')
       .select('id')
       .eq('grade', adminGradeNum)
@@ -38,15 +39,16 @@ export async function getAdminLeaderboard() {
 
     const classIds = classes.map(c => c.id)
 
-    const { data: enrollments } = await supabase
+    const { data: enrollments } = await supabaseAdmin
       .from('enrollment')
       .select('user_id')
       .in('class', classIds)
+      .eq('status', 'accepted')
 
     const userIds = enrollments?.map(e => e.user_id) || []
     if (!userIds.length) return { success: true, data: [] }
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('user')
       .select('id, name, current_score, gender')
       .in('id', userIds)

@@ -10,13 +10,13 @@ export async function GET() {
 
     const { data: user } = await supabase
       .from('user')
-      .select('*, admin(*), enrollment(*)')
+      .select('*, admin(*), enrollment(*, class:classes!enrollment_class_fkey(*, grade:grade!class_grade_fkey(*)))')
       .eq('auth_id', authUser.id)
       .single()
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    const grade = user.admin?.[0]?.grade || user.enrollment?.[0]?.grade || null
+    const grade = user.admin?.[0]?.grade || user.enrollment?.[0]?.class?.grade?.id || null
     const tenant = user.admin?.[0]?.tenant || user.enrollment?.[0]?.tenant || null
 
     return NextResponse.json({ grade, tenant })
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     if (userData.classId) {
       const { error: enrollError } = await supabaseAdmin
         .from('enrollment')
-        .insert({ user_id: user.id, class: userData.classId, tenant: userData.tenantId, grade: userData.gradeId, status: 'pending' })
+        .insert({ user_id: user.id, class: userData.classId, status: 'pending' })
       if (enrollError) throw new Error(enrollError.message)
     }
 

@@ -23,7 +23,7 @@ async function createUser(userData: {
 
   const { error: enrollError } = await supabaseAdmin
     .from('enrollment')
-    .insert({ user_id: user.id, class: userData.classId, tenant: userData.tenantId, grade: userData.gradeId, status: 'pending' })
+    .insert({ user_id: user.id, class: userData.classId, status: 'pending' })
   if (enrollError) return { data: null, error: enrollError }
 
   return { data: user, error: null }

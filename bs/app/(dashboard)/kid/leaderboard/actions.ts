@@ -1,17 +1,18 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 
 export async function getLeaderboard() {
   try {
     const supabase = await createClient()
+    const supabaseAdmin = createAdminClient()
     const { data: { user: authUser } } = await supabase.auth.getUser()
-    
+
     if (!authUser) {
       return { success: false, error: 'Not authenticated', data: [] }
     }
 
-    const { data: currentUser } = await supabase
+    const { data: currentUser } = await supabaseAdmin
       .from('user')
       .select('gender, enrollment(class)')
       .eq('auth_id', authUser.id)
@@ -23,7 +24,7 @@ export async function getLeaderboard() {
 
     const classId = currentUser.enrollment[0].class
 
-    const { data: classData } = await supabase
+    const { data: classData } = await supabaseAdmin
       .from('classes')
       .select('grade')
       .eq('id', classId)
@@ -33,7 +34,7 @@ export async function getLeaderboard() {
       return { success: false, error: 'Grade not found', data: [] }
     }
 
-    const { data: gradeData } = await supabase
+    const { data: gradeData } = await supabaseAdmin
       .from('grade')
       .select('gender')
       .eq('grade_num', classData.grade)
@@ -42,26 +43,26 @@ export async function getLeaderboard() {
     const classGender = gradeData?.gender
     const userGender = currentUser.gender
 
-    const { data: enrollments } = await supabase
+    const { data: enrollments } = await supabaseAdmin
       .from('enrollment')
       .select('user_id')
       .eq('class', classId)
+      .eq('status', 'accepted')
 
     const userIds = enrollments?.map(e => e.user_id) || []
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('user')
       .select('id, name, current_score, gender')
       .in('id', userIds)
       .order('current_score', { ascending: false })
       .limit(50)
 
-    if (classGender !== 'mixed') {
+    if (classGender !== 'mixed' && classGender !== 'mix') {
       query = query.eq('gender', userGender)
     }
 
     const { data: users, error } = await query
-
     if (error) throw error
 
     return { success: true, data: users || [] }
@@ -73,13 +74,14 @@ export async function getLeaderboard() {
 export async function getCurrentUserRank() {
   try {
     const supabase = await createClient()
+    const supabaseAdmin = createAdminClient()
     const { data: { user: authUser } } = await supabase.auth.getUser()
-    
+
     if (!authUser) {
       return { success: false, error: 'Not authenticated' }
     }
 
-    const { data: user } = await supabase
+    const { data: user } = await supabaseAdmin
       .from('user')
       .select('id, name, current_score, gender, enrollment(class)')
       .eq('auth_id', authUser.id)
@@ -89,7 +91,7 @@ export async function getCurrentUserRank() {
       return { success: false, error: 'Class not found' }
     }
 
-    const { data: classData } = await supabase
+    const { data: classData } = await supabaseAdmin
       .from('classes')
       .select('grade')
       .eq('id', user.enrollment[0].class)
@@ -99,7 +101,7 @@ export async function getCurrentUserRank() {
       return { success: false, error: 'Grade not found' }
     }
 
-    const { data: gradeData } = await supabase
+    const { data: gradeData } = await supabaseAdmin
       .from('grade')
       .select('gender')
       .eq('grade_num', classData.grade)
@@ -107,34 +109,30 @@ export async function getCurrentUserRank() {
 
     const classGender = gradeData?.gender
 
-    const { data: enrollments } = await supabase
+    const { data: enrollments } = await supabaseAdmin
       .from('enrollment')
       .select('user_id')
       .eq('class', user.enrollment[0].class)
+      .eq('status', 'accepted')
 
     const userIds = enrollments?.map(e => e.user_id) || []
 
-    let countQuery = supabase
+    let countQuery = supabaseAdmin
       .from('user')
       .select('*', { count: 'exact', head: true })
       .in('id', userIds)
       .gt('current_score', user.current_score)
 
-    if (classGender !== 'mixed') {
+    if (classGender !== 'mixed' && classGender !== 'mix') {
       countQuery = countQuery.eq('gender', user.gender)
     }
 
     const { count } = await countQuery
-
     const rank = (count || 0) + 1
 
-    return { 
-      success: true, 
-      data: { 
-        name: user.name, 
-        score: user.current_score, 
-        rank 
-      } 
+    return {
+      success: true,
+      data: { name: user.name, score: user.current_score, rank }
     }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }

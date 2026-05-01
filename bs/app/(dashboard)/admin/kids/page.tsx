@@ -15,7 +15,7 @@ type Kid = {
   user: { name: string; gender: string; age?: number; id?: string; user_id?: string }
   class?: { name: string; grade: number }
   grade?: { name: string }
-  status: 'pending' | 'accepted' | 'rejected'
+  status: 'pending' | 'accepted' | 'rejected' | 'transferred'
   type: 'admin' | 'kid'
 }
 
@@ -118,6 +118,7 @@ export default function AssignedKidsPage() {
             { key: 'all', label: 'All' },
             { key: 'accepted', label: 'Approved' },
             { key: 'pending', label: 'Pending' },
+            { key: 'transferred', label: 'Transferred' },
           ].map(({ key, label }) => (
             <button
               key={key}

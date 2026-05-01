@@ -179,7 +179,7 @@ export type OptionInsert = {
 
 export type RequestDetail = {
   id: string
-  status: 'pending' | 'accepted' | 'rejected'
+  status: 'pending' | 'accepted' | 'rejected' | 'transferred'
   type: 'admin' | 'kid'
   role?: string
   user: { name: string; email?: string; age: number; gender: string }
