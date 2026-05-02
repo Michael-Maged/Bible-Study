@@ -304,7 +304,7 @@ export default function KidDetailPage() {
         )}
 
         {/* Transfer */}
-        {isKid && request.status !== 'rejected' && (
+        {isKid && request.class && request.status !== 'rejected' && (
           <div className="pt-2">
             <Button
               variant="outline"
