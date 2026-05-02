@@ -2,13 +2,43 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2, User, Mail } from 'lucide-react'
 import { registerAdminWithEmail } from '../register/emailActions'
 import { fetchTenants, fetchGradesByTenant } from '../register/tenantActions'
 import CustomSelect from '@/components/CustomSelect'
 import MessageBox from '@/components/MessageBox'
 import PasswordInput from '@/components/PasswordInput'
+import AppLogo from '@/components/AppLogo'
+import { Button } from '@/components/ui/button'
 import type { Tenant, Grade } from '@/types'
-import Image from "next/image";
+
+function LabeledInput({
+  label,
+  icon: Icon,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; icon: React.ElementType }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</label>
+      <div className="relative">
+        <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <input
+          {...props}
+          className="w-full h-11 pl-9 pr-4 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground"
+        />
+      </div>
+    </div>
+  )
+}
+
+function LabeledSelect({ label, ...props }: React.ComponentProps<typeof CustomSelect> & { label: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</label>
+      <CustomSelect {...props} />
+    </div>
+  )
+}
 
 export default function AdminRegisterPage() {
   const router = useRouter()
@@ -21,225 +51,127 @@ export default function AdminRegisterPage() {
   const [selectedGrade, setSelectedGrade] = useState('')
   const [selectedGender, setSelectedGender] = useState('')
 
-  const loadTenants = async () => {
-    const result = await fetchTenants()
-    if (result.success) {
-      setTenants(result.data || [])
-    }
-  }
-
   useEffect(() => {
-    loadTenants()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchTenants().then((r) => { if (r.success) setTenants(r.data || []) })
   }, [])
 
-  async function handleTenantChange(tenantId: string) {
-    setSelectedTenant(tenantId)
-    setSelectedGrade('')
-    setGrades([])
-    
-    if (tenantId) {
-      const result = await fetchGradesByTenant(tenantId)
-      if (result.success) {
-        setGrades(result.data || [])
-      }
-    }
+  async function handleTenantChange(id: string) {
+    setSelectedTenant(id); setSelectedGrade(''); setGrades([])
+    if (id) fetchGradesByTenant(id).then((r) => { if (r.success) setGrades(r.data || []) })
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setStatus('loading')
-    
-    const form = e.currentTarget
-    const formData = new FormData(form)
-    
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
-    
-    if (password !== confirmPassword) {
-      setStatus('error')
-      setMessage('Passwords do not match')
-      return
+    const formData = new FormData(e.currentTarget)
+    if (formData.get('password') !== formData.get('confirmPassword')) {
+      setStatus('error'); setMessage('Passwords do not match'); return
     }
-    
     try {
       const result = await registerAdminWithEmail(formData)
-      
       if (result.success) {
-        setStatus('success')
-        setMessage('Registration successful! Waiting for admin approval...')
+        setStatus('success'); setMessage('Registration successful! Waiting for admin approval…')
         setTimeout(() => router.push('/login'), 2000)
       } else {
-        setStatus('error')
-        setMessage(result.error || 'Registration failed')
+        setStatus('error'); setMessage(result.error || 'Registration failed')
       }
     } catch (err) {
-      setStatus('error')
-      setMessage(err instanceof Error ? err.message : 'An error occurred')
+      setStatus('error'); setMessage(err instanceof Error ? err.message : 'An error occurred')
     }
   }
 
   return (
-    <div className="bg-[#f0fde4] dark:bg-[#1a2c14] min-h-screen flex flex-col">
-      <header className="w-full px-6 lg:px-40 py-5 bg-[#f0fde4] dark:bg-[#1a2c14] border-b border-[#6ef516]/20">
-        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#6ef516] p-2 rounded-lg flex items-center justify-center">
-              <span className="text-white text-2xl">📖</span>
-            </div>
-            <h2 className="text-[#0d1a08] dark:text-white text-xl font-bold tracking-tight">BibleApp</h2>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 py-10">
+      <div className="w-full max-w-sm space-y-6">
+
+        <div className="text-center space-y-2">
+          <AppLogo size="lg" className="justify-center" />
+          <div className="flex items-center justify-center gap-1.5 mt-1">
+            <div className="w-6 h-px bg-primary opacity-60" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <div className="w-6 h-px bg-primary opacity-60" />
           </div>
-          <a className="text-sm font-semibold text-[#0d1a08] dark:text-white hover:text-[#6ef516] transition-colors" href="#">
-            Need help?
-          </a>
+          {/* Teacher account badge */}
+          <div className="flex justify-center mt-2">
+            <span className="inline-flex items-center gap-1.5 bg-accent text-accent-foreground text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-current" />
+              Teacher account
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-1">Start a class</h1>
+          <p className="text-sm text-muted-foreground">Set up your Sunday school program</p>
         </div>
-      </header>
 
-      <main className="flex-1 flex items-center justify-center p-6 py-12">
-        <div className="w-full max-w-[500px] min-h-[700px] bg-white dark:bg-[#243d1c] rounded-xl shadow-xl shadow-[#6ef516]/10 overflow-visible">
-          <div className="relative h-40 w-full overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-            <div className="absolute inset-0 bg-[#6ef516]/20 mix-blend-multiply z-0"></div>
-            <Image
-              alt="Admin registration"
-              className="w-full h-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnHDFDB0uyxKNP9dCdREDdgxqud5Jz9b0WU1BC68iv-cy4IjPzopaHqfeV7soYIPNWadSdL3TCgsMk0nxtMMTKMhab7tdeuw2pIkAqSzaO-YQtKRGfYTySBddZWJ8sDZSr1LVfPlJPJG2-1H9Z8yoX9anAslpvyj8lNBFwgGeOb28y0WwSOsJWKDQJSSC8wxuzm0saeio6i4MdamBysCAn2WovRuk2Ogn6duEmIH1foStxWi1cvJXUIXI_C1tWhet3RYYiEIHlIG7G"
-            />
-            <div className="absolute bottom-4 left-6 z-20">
-              <h1 className="text-white text-2xl font-bold tracking-tight">Admin Registration</h1>
-              <p className="text-white/80 text-sm">Create an admin account</p>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <LabeledInput label="Full Name" icon={User} type="text" name="name" placeholder="Your full name" required />
+            <LabeledInput label="Email" icon={Mail} type="email" name="email" placeholder="your@email.com" required />
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Password</label>
+              <PasswordInput
+                name="password" placeholder="Password (min 6 characters)"
+                minLength={6} required
+                className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30"
+              />
             </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-8 space-y-4">
-            <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">👤</span>
-              <input
-                type="text"
-                name="name"
-                required
-                placeholder="Full Name"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Confirm Password</label>
+              <PasswordInput
+                name="confirmPassword" placeholder="Confirm Password"
+                minLength={6} required
+                className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30"
               />
             </div>
 
-            <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">📧</span>
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="your@email.com"
-                className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
+            <div className="grid grid-cols-2 gap-3">
+              <LabeledInput label="Age" icon={User} type="number" name="age" placeholder="Age" min="18" required />
+              <LabeledSelect
+                label="Gender"
+                id="gender" name="gender" value={selectedGender} onChange={setSelectedGender}
+                options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }]}
+                placeholder="Gender" icon="⚧" required
               />
             </div>
 
-            <PasswordInput
-              name="password"
-              placeholder="Password (min 6 characters)"
-              minLength={6}
-              required
-              icon="🔒"
-              className="h-14 rounded-full bg-[#f0fde4] dark:bg-[#1a2c14] border-none focus:ring-2 focus:ring-[#6ef516] placeholder:text-[#7cb85f]/50"
+            <LabeledSelect
+              label="Role"
+              id="role" name="role" value={selectedRole} onChange={setSelectedRole}
+              options={[{ value: 'admin', label: 'Admin' }, { value: 'superuser', label: 'Superuser' }]}
+              placeholder="Select Role" icon="🔑" required
+            />
+            <LabeledSelect
+              label="Church Stage"
+              id="tenant" name="tenant" value={selectedTenant} onChange={handleTenantChange}
+              options={tenants.map((t) => ({ value: t.id, label: t.name }))}
+              placeholder="Select Tenant" icon="⛪" required
+            />
+            <LabeledSelect
+              label="Grade"
+              id="grade" name="grade" value={selectedGrade} onChange={setSelectedGrade}
+              options={grades.map((g) => ({ value: g.id, label: g.name }))}
+              placeholder="Select Grade" icon="🎓" disabled={!selectedTenant} required
             />
 
-            <PasswordInput
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              minLength={6}
-              required
-              icon="🔒"
-              className="h-14 rounded-full bg-[#f0fde4] dark:bg-[#1a2c14] border-none focus:ring-2 focus:ring-[#6ef516] placeholder:text-[#7cb85f]/50"
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 group-focus-within:text-[#6ef516]">🎂</span>
-                <input
-                  type="number"
-                  name="age"
-                  required
-                  min="18"
-                  placeholder="Age"
-                  className="w-full pl-12 pr-4 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white placeholder:text-[#7cb85f]/50 focus:ring-2 focus:ring-[#6ef516] transition-all"
-                />
-              </div>
-              <CustomSelect
-                id="gender"
-                name="gender"
-                value={selectedGender}
-                onChange={setSelectedGender}
-                options={[
-                  { value: 'male', label: 'Male' },
-                  { value: 'female', label: 'Female' }
-                ]}
-                placeholder="Gender"
-                icon="⚧"
-                required
-              />
-            </div>
-
-            <CustomSelect
-              id="role"
-              name="role"
-              value={selectedRole}
-              onChange={setSelectedRole}
-              options={[
-                { value: 'admin', label: 'Admin' },
-                { value: 'superuser', label: 'Superuser' }
-              ]}
-              placeholder="Select Role"
-              icon="🔑"
-              required
-            />
-
-            <CustomSelect
-              id="tenant"
-              name="tenant"
-              value={selectedTenant}
-              onChange={handleTenantChange}
-              options={tenants.map(t => ({ value: t.id, label: t.name }))}
-              placeholder="Select Tenant"
-              icon="⛪"
-              required
-            />
-
-            <CustomSelect
-              id="grade"
-              name="grade"
-              value={selectedGrade}
-              onChange={setSelectedGrade}
-              options={grades.map(g => ({ value: g.id, label: g.name }))}
-              placeholder="Select Grade"
-              icon="🎓"
-              disabled={!selectedTenant}
-              required
-            />
-
-            {status === 'success' && message && (
-              <MessageBox type="success" message={message} />
+            {(status === 'success' || status === 'error') && message && (
+              <MessageBox type={status === 'success' ? 'success' : 'error'} message={message} />
             )}
 
-            {status === 'error' && message && (
-              <MessageBox type="error" message={message} />
-            )}
-
-            <button
+            <Button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full py-4 bg-[#6ef516] hover:bg-[#5ee305] text-[#0d1a08] font-bold text-lg rounded-full shadow-lg shadow-[#6ef516]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]"
             >
-              {status === 'loading' ? 'Registering...' : 'Create Admin Account'}
-              <span>→</span>
-            </button>
+              {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />Creating account…</> : 'Create Admin Account'}
+            </Button>
           </form>
         </div>
-      </main>
 
-      <footer className="py-10 flex flex-col items-center justify-center text-[#6ef516]/40 pointer-events-none select-none">
-        <span className="text-4xl mb-2">🌳</span>
-        <p className="text-xs font-medium uppercase tracking-widest">Grow in Grace</p>
-      </footer>
+        <p className="text-center text-sm text-muted-foreground">
+          Already have an account?{' '}
+          <a href="/login" className="text-primary font-semibold hover:underline underline-offset-4">Sign in</a>
+        </p>
+      </div>
     </div>
   )
 }

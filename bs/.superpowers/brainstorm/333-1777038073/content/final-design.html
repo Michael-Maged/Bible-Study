@@ -1,0 +1,141 @@
+<h2>Final Design — Full screen mockup</h2>
+<p class="subtitle">Admin view (left) and Kid view (right). Does this look right?</p>
+
+<div class="split">
+
+  <!-- Admin mockup -->
+  <div class="mockup">
+    <div class="mockup-header">Admin View</div>
+    <div class="mockup-body" style="padding:0;background:#0f172a;min-height:420px;display:flex;flex-direction:column;position:relative;overflow:hidden;">
+
+      <!-- Top header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);border-bottom:1px solid #1e293b;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;border-radius:9px;background:#d97706;display:flex;align-items:center;justify-content:center;font-size:13px;">✝</div>
+          <span style="color:#f8fafc;font-size:13px;font-weight:800;letter-spacing:-0.3px;">Bible Kids</span>
+        </div>
+        <button style="width:32px;height:32px;border-radius:9px;background:#1e293b;border:1px solid #334155;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M7 4H4a1 1 0 00-1 1v10a1 1 0 001 1h3M13 14l3-4-3-4M16 10H7" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- Page content -->
+      <div style="flex:1;padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#1e293b;border-radius:12px;padding:12px;">
+          <div style="color:#94a3b8;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Today's Reading</div>
+          <div style="color:#f1f5f9;font-size:12px;font-weight:700;">Genesis 1:1–31</div>
+          <div style="color:#64748b;font-size:10px;margin-top:2px;">12 kids assigned</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:#1e293b;border-radius:10px;padding:10px;"><div style="color:#818cf8;font-size:18px;font-weight:800;">24</div><div style="color:#64748b;font-size:9px;">Active Kids</div></div>
+          <div style="background:#1e293b;border-radius:10px;padding:10px;"><div style="color:#34d399;font-size:18px;font-weight:800;">89%</div><div style="color:#64748b;font-size:9px;">Completion</div></div>
+        </div>
+        <div style="background:#1e293b;border-radius:10px;padding:10px;opacity:0.5;height:60px;"></div>
+      </div>
+
+      <!-- Floating nav -->
+      <div style="padding:0 10px 12px;flex-shrink:0;">
+        <div style="display:flex;background:#1e293b;border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.5);padding:5px;gap:3px;">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:15px;background:#4f46e5;color:white;justify-content:center;min-height:48px;">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2.2"/><rect x="11" y="2" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2.2"/><rect x="2" y="11" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2.2"/><rect x="11" y="11" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2.2"/></svg>
+            <span style="font-size:9px;font-weight:700;">Home</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;color:#475569;justify-content:center;min-height:48px;">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="7" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M1 17c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span style="font-size:9px;">Kids</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;color:#475569;justify-content:center;min-height:48px;">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M7 7h6M7 10h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span style="font-size:9px;">Reading</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;color:#475569;justify-content:center;min-height:48px;">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.8"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span style="font-size:9px;">History</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;color:#475569;justify-content:center;min-height:48px;">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M7 18V11h6v7M3 18v-5h4v5M13 18V7h4v11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span style="font-size:9px;">Ranks</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kid mockup -->
+  <div class="mockup">
+    <div class="mockup-header">Kid View</div>
+    <div class="mockup-body" style="padding:0;background:#0f172a;min-height:420px;display:flex;flex-direction:column;position:relative;overflow:hidden;">
+
+      <!-- Top header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);border-bottom:1px solid #1e293b;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;border-radius:9px;background:#d97706;display:flex;align-items:center;justify-content:center;font-size:13px;">✝</div>
+          <span style="color:#f8fafc;font-size:13px;font-weight:800;letter-spacing:-0.3px;">Bible Kids</span>
+        </div>
+        <button style="width:32px;height:32px;border-radius:9px;background:#1e293b;border:1px solid #334155;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M7 4H4a1 1 0 00-1 1v10a1 1 0 001 1h3M13 14l3-4-3-4M16 10H7" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- Page content -->
+      <div style="flex:1;padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#1e293b;border-radius:12px;padding:12px;">
+          <div style="color:#94a3b8;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Today's Passage</div>
+          <div style="color:#f1f5f9;font-size:12px;font-weight:700;">John 3:16–21</div>
+          <div style="color:#64748b;font-size:10px;margin-top:2px;">3 questions</div>
+        </div>
+        <div style="background:#1e293b;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;border:3px solid #4f46e5;display:flex;align-items:center;justify-content:center;color:#818cf8;font-size:11px;font-weight:700;">85%</div>
+          <div><div style="color:#f1f5f9;font-size:11px;font-weight:700;">Keep it up!</div><div style="color:#64748b;font-size:9px;">6 day streak</div></div>
+        </div>
+        <div style="background:#1e293b;border-radius:10px;padding:10px;opacity:0.5;height:60px;"></div>
+      </div>
+
+      <!-- Floating nav (4 tabs) -->
+      <div style="padding:0 10px 12px;flex-shrink:0;">
+        <div style="display:flex;background:#1e293b;border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.5);padding:5px;gap:3px;">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:15px;background:#4f46e5;color:white;justify-content:center;min-height:48px;">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M3 8.5L10 3l7 5.5V16a1.5 1.5 0 01-1.5 1.5h-3v-5h-5v5h-3A1.5 1.5 0 013 16V8.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span style="font-size:9px;font-weight:700;">Today</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;color:#475569;justify-content:center;min-height:48px;">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none"><rect x="3" y="4.5" width="14" height="12.5" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 8h14M7 3v3M13 3v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span style="font-size:9px;">History</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;color:#475569;justify-content:center;min-height:48px;">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M6 16V9h8v7M3 16V12h3v4M14 16v-5h3v5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <span style="font-size:9px;">Ranks</span>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;color:#475569;justify-content:center;min-height:48px;">
+            <svg width="19" height="19" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 17c0-3 2.9-5.3 6.5-5.3S16.5 14 16.5 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span style="font-size:9px;">Me</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <p class="label">What's changing (summary)</p>
+  <ul style="color:#94a3b8;font-size:13px;line-height:1.8;padding-left:18px;">
+    <li>New <strong style="color:#e2e8f0;">AppHeader</strong> component — logo left, logout icon right, same for both roles</li>
+    <li><strong style="color:#e2e8f0;">AdminNav</strong> — drops logout button, gains floating card style + animated indigo pill</li>
+    <li><strong style="color:#e2e8f0;">KidNav</strong> — same floating card style + animated indigo pill (consistent with admin)</li>
+    <li>Both layouts get <code style="color:#818cf8;">pt-[header-height]</code> + <code style="color:#818cf8;">pb-[safe-area + nav-height]</code></li>
+    <li>Safe-area insets via <code style="color:#818cf8;">env(safe-area-inset-bottom)</code> so the nav sits above the iPhone home bar</li>
+    <li>Framer-motion <code style="color:#818cf8;">layoutId</code> animates the pill between tabs (spring, same as today)</li>
+  </ul>
+</div>
+
+<div class="options" style="margin-top:16px;">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>Looks good — write the spec</h3></div>
+  </div>
+  <div class="option" data-choice="tweak" onclick="toggleSelect(this)">
+    <div class="letter">↩</div>
+    <div class="content"><h3>I want to change something</h3></div>
+  </div>
+</div>

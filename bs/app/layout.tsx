@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Cairo } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  variable: "--font-arabic",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,7 +28,7 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#59f20d",
+  themeColor: "#4338ca",
 };
 
 export default function RootLayout({
@@ -37,8 +39,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <script dangerouslySetInnerHTML={{
           __html: `
             if('serviceWorker' in navigator){
@@ -54,9 +54,26 @@ export default function RootLayout({
         }} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${plusJakartaSans.variable} ${cairo.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            document.addEventListener('visibilitychange', function() {
+              if (document.visibilityState === 'visible') {
+                var last = parseInt(sessionStorage.getItem('_last_active') || '0');
+                var now = Date.now();
+                if (now - last > 60000) {
+                  sessionStorage.setItem('_last_active', now.toString());
+                  window.location.reload();
+                }
+              } else {
+                sessionStorage.setItem('_last_active', Date.now().toString());
+              }
+            });
+            sessionStorage.setItem('_last_active', Date.now().toString());
+          `
+        }} />
         {children}
       </body>
     </html>

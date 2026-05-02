@@ -1,47 +1,24 @@
 'use client'
 
+import { motion } from 'framer-motion'
+import AppLogo from '@/components/AppLogo'
+
 export default function LoadingScreen() {
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: '#f6f8f5',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '24px' }}>
-          <div className="w-20 h-20 border-4 border-[#59f20d]/20 border-t-[#59f20d] rounded-full animate-spin"></div>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '32px'
-          }}>
-            📖
-          </div>
-        </div>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#0f172a',
-          marginBottom: '8px'
-        }}>Loading...</h2>
-        <p style={{
-          fontSize: '14px',
-          color: '#64748b'
-        }}>Please wait</p>
-      </div>
+    <div className="fixed inset-0 bg-background z-[9999] flex flex-col items-center justify-center gap-8">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
+        <AppLogo size="lg" />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+        className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin"
+      />
     </div>
   )
 }

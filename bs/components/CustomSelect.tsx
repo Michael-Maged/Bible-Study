@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { ChevronDown } from 'lucide-react'
 
 interface Option {
   value: string
@@ -36,7 +37,9 @@ export default function CustomSelect({
   const containerRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true) }, [])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (disabled || options.length === 0) setIsOpen(false) }, [disabled, options.length])
 
   useEffect(() => {
@@ -65,7 +68,6 @@ export default function CustomSelect({
   }, [isOpen])
 
   const selectedLabel = options.find(opt => opt.value === value)?.label || ''
-  const baseClass = `w-full pl-12 pr-10 py-4 bg-[#f0fde4] dark:bg-[#1a2c14] border-none rounded-full text-[#0d1a08] dark:text-white focus:ring-2 focus:ring-[#6ef516] transition-all appearance-none ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`
 
   function openDropdown() {
     if (disabled) return
@@ -73,9 +75,11 @@ export default function CustomSelect({
     setIsOpen(prev => !prev)
   }
 
+  const triggerClass = `w-full h-11 pl-10 pr-10 rounded-xl border border-border bg-background text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`
+
   return (
-    <div ref={containerRef} className="relative group">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6ef516]/60 pointer-events-none z-10">{icon}</span>
+    <div ref={containerRef} className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-sm">{icon}</span>
 
       {/* Mobile: native select */}
       <select
@@ -85,7 +89,7 @@ export default function CustomSelect({
         disabled={disabled}
         required={required}
         onChange={e => onChange(e.target.value)}
-        className={`md:hidden ${baseClass} ${!value ? 'text-[#7cb85f]/50' : ''}`}
+        className={`md:hidden ${triggerClass} ${!value ? 'text-muted-foreground' : 'text-foreground'}`}
       >
         <option value="">{placeholder}</option>
         {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -97,29 +101,27 @@ export default function CustomSelect({
         type="button"
         onClick={openDropdown}
         disabled={disabled}
-        className={`hidden md:flex items-center ${baseClass} text-left ${!selectedLabel ? 'text-[#7cb85f]/50' : ''}`}
+        className={`hidden md:flex items-center text-left ${triggerClass} ${!selectedLabel ? 'text-muted-foreground' : 'text-foreground'}`}
       >
         {selectedLabel || placeholder}
       </button>
 
-      <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#6ef516]/60">
-        <svg width="16" height="16" viewBox="0 0 16 16">
-          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+        <ChevronDown size={14} />
       </span>
 
       {mounted && isOpen && !disabled && createPortal(
         <div
           style={dropdownStyle}
           onMouseDown={e => e.stopPropagation()}
-          className="bg-white dark:bg-[#243d1c] rounded-2xl shadow-xl shadow-[#6ef516]/10 max-h-60 overflow-y-auto border border-[#6ef516]/20"
+          className="bg-card rounded-xl shadow-xl border border-border max-h-60 overflow-y-auto"
         >
           {options.map(option => (
             <button
               key={option.value}
               type="button"
               onMouseDown={e => { e.stopPropagation(); onChange(option.value); setIsOpen(false) }}
-              className={`w-full px-4 py-3 text-left hover:bg-[#6ef516] hover:text-[#0d1a08] transition-colors first:rounded-t-2xl last:rounded-b-2xl ${value === option.value ? 'bg-[#6ef516]/20 font-semibold' : 'text-[#0d1a08] dark:text-white'}`}
+              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-primary hover:text-primary-foreground transition-colors first:rounded-t-xl last:rounded-b-xl ${value === option.value ? 'bg-primary/10 font-semibold text-primary' : 'text-foreground'}`}
             >
               {option.label}
             </button>
