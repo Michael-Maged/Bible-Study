@@ -121,12 +121,21 @@ export async function getRequestDetails(type: 'admin' | 'kid', id: string) {
 
 export async function getTenants() {
   const supabaseAdmin = createAdminClient()
+  // Access tenant data via grade join (direct SELECT on tenant table is permission-restricted)
   const { data, error } = await supabaseAdmin
-    .from('tenant')
-    .select('id, name')
-    .order('name')
+    .from('grade')
+    .select('tenantData:tenant!grade_tenant_fkey(id, name)')
   if (error) return { success: false as const, error: error.message, data: [] as { id: string; name: string }[] }
-  return { success: true as const, data: data || [] }
+  const seen = new Set<string>()
+  const tenants: { id: string; name: string }[] = []
+  for (const row of data || []) {
+    const t = row.tenantData as unknown as { id: string; name: string } | null
+    if (t && !seen.has(t.id)) {
+      seen.add(t.id)
+      tenants.push(t)
+    }
+  }
+  return { success: true as const, data: tenants.sort((a, b) => a.name.localeCompare(b.name)) }
 }
 
 export async function getGradesByTenant(tenantId: string) {

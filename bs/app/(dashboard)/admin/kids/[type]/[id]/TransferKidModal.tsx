@@ -44,10 +44,16 @@ export default function TransferKidModal({
     setSelectedClass(null)
     setError(null)
     setLoading(true)
-    getTenants().then(res => {
-      setTenants(res.data)
-      setLoading(false)
-    })
+    getTenants()
+      .then(res => {
+        if (!res.success) setError((res as { error?: string }).error || 'Failed to load tenants')
+        else setTenants(res.data)
+        setLoading(false)
+      })
+      .catch(() => {
+        setError('Failed to load tenants')
+        setLoading(false)
+      })
   }, [open])
 
   async function handleSelectTenant(t: Tenant) {
@@ -130,9 +136,16 @@ export default function TransferKidModal({
           </div>
         )}
 
+        {!loading && error && step !== 4 && (
+          <p className="text-xs text-red-500 font-medium px-1">{error}</p>
+        )}
+
         {/* Step 1: Tenants */}
-        {!loading && step === 1 && (
+        {!loading && !error && step === 1 && (
           <div className="space-y-2">
+            {tenants.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">No tenants found.</p>
+            )}
             {tenants.map(t => (
               <button
                 key={t.id}
