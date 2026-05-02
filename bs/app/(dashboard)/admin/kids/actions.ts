@@ -2,6 +2,14 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { createClient as createAnonClient } from '@supabase/supabase-js'
+
+function anonClient() {
+  return createAnonClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 export async function fetchAssignedKids() {
   const supabase = await createClient()
@@ -77,12 +85,35 @@ export async function fetchAssignedKids() {
 
 export async function handleApproveRequest(type: 'admin' | 'kid', id: string, approved: boolean) {
   const supabase = await createClient()
-  const status = approved ? 'accepted' : 'rejected'
+  const supabaseAdmin = createAdminClient()
+
   if (type === 'admin') {
+    const status = approved ? 'accepted' : 'rejected'
     const { error } = await supabase.from('admin').update({ status }).eq('id', id)
     if (error) return { success: false, error: error.message }
   } else {
-    const { error } = await supabase.from('enrollment').update({ status }).eq('id', id)
+    if (!approved) {
+      // Check if this is a transferred kid — if so, send them back to original admin
+      const { data: enrollment } = await supabaseAdmin
+        .from('enrollment')
+        .select('status, pending_class')
+        .eq('id', id)
+        .single()
+
+      if (enrollment?.status === 'transferred' && enrollment?.pending_class) {
+        const { error } = await supabaseAdmin
+          .from('enrollment')
+          .update({ class: enrollment.pending_class, pending_class: null, status: 'rejected' })
+          .eq('id', id)
+        if (error) return { success: false, error: error.message }
+        return { success: true }
+      }
+    }
+
+    const status = approved ? 'accepted' : 'rejected'
+    const update: Record<string, unknown> = { status }
+    if (approved) update.pending_class = null
+    const { error } = await supabaseAdmin.from('enrollment').update(update).eq('id', id)
     if (error) return { success: false, error: error.message }
   }
   return { success: true }
@@ -120,27 +151,13 @@ export async function getRequestDetails(type: 'admin' | 'kid', id: string) {
 }
 
 export async function getTenants() {
-  const supabaseAdmin = createAdminClient()
-  // Access tenant data via grade join (direct SELECT on tenant table is permission-restricted)
-  const { data, error } = await supabaseAdmin
-    .from('grade')
-    .select('tenantData:tenant!grade_tenant_fkey(id, name)')
+  const { data, error } = await anonClient().from('tenant').select('id, name').order('name')
   if (error) return { success: false as const, error: error.message, data: [] as { id: string; name: string }[] }
-  const seen = new Set<string>()
-  const tenants: { id: string; name: string }[] = []
-  for (const row of data || []) {
-    const t = row.tenantData as unknown as { id: string; name: string } | null
-    if (t && !seen.has(t.id)) {
-      seen.add(t.id)
-      tenants.push(t)
-    }
-  }
-  return { success: true as const, data: tenants.sort((a, b) => a.name.localeCompare(b.name)) }
+  return { success: true as const, data: data || [] }
 }
 
 export async function getGradesByTenant(tenantId: string) {
-  const supabaseAdmin = createAdminClient()
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await anonClient()
     .from('grade')
     .select('id, grade_num, name, gender')
     .eq('tenant', tenantId)
@@ -220,12 +237,24 @@ export async function transferKid(enrollmentId: string, newClassId: string) {
 
   const newStatus = sameContext ? 'accepted' : 'transferred'
 
-  const { error: updateError } = await supabaseAdmin
+  // Update class first (DB trigger may fire here and reset status/pending_class)
+  const { error: classUpdateError } = await supabaseAdmin
     .from('enrollment')
-    .update({ class: newClassId, status: newStatus })
+    .update({ class: newClassId })
     .eq('id', enrollmentId)
 
-  if (updateError) return { success: false as const, error: updateError.message }
+  if (classUpdateError) return { success: false as const, error: classUpdateError.message }
+
+  // Update status and pending_class together after the trigger has fired
+  const statusUpdate: Record<string, unknown> = { status: newStatus }
+  if (!sameContext) statusUpdate.pending_class = enrollment.class
+
+  const { error: statusUpdateError } = await supabaseAdmin
+    .from('enrollment')
+    .update(statusUpdate)
+    .eq('id', enrollmentId)
+
+  if (statusUpdateError) return { success: false as const, error: statusUpdateError.message }
 
   revalidatePath('/admin/kids')
   revalidatePath('/admin/kids/kid/[id]', 'page')

@@ -62,6 +62,11 @@ export default function TransferKidModal({
     setSelectedClass(null)
     setLoading(true)
     const res = await getGradesByTenant(t.id)
+    if (!res.success) {
+      setError((res as { error?: string }).error || 'Failed to load grades')
+      setLoading(false)
+      return
+    }
     setGrades(res.data)
     setLoading(false)
     setStep(2)
@@ -72,6 +77,11 @@ export default function TransferKidModal({
     setSelectedClass(null)
     setLoading(true)
     const res = await getClassesByGrade(g.grade_num)
+    if (!res.success) {
+      setError((res as { error?: string }).error || 'Failed to load classes')
+      setLoading(false)
+      return
+    }
     setClasses(res.data)
     setLoading(false)
     setStep(3)
@@ -116,7 +126,7 @@ export default function TransferKidModal({
               Step {step} of 4
             </p>
             <h2 className="text-[17px] font-bold text-foreground">
-              {step === 1 && 'Select Tenant'}
+              {step === 1 && 'Select Church Stage'}
               {step === 2 && 'Select Grade'}
               {step === 3 && 'Select Class'}
               {step === 4 && 'Confirm Transfer'}
@@ -144,7 +154,7 @@ export default function TransferKidModal({
         {!loading && !error && step === 1 && (
           <div className="space-y-2">
             {tenants.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 text-center">No tenants found.</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">No church stages found.</p>
             )}
             {tenants.map(t => (
               <button
@@ -166,7 +176,7 @@ export default function TransferKidModal({
         )}
 
         {/* Step 2: Grades */}
-        {!loading && step === 2 && (
+        {!loading && !error && step === 2 && (
           <div className="space-y-2">
             <button
               onClick={() => setStep(1)}
@@ -194,7 +204,7 @@ export default function TransferKidModal({
         )}
 
         {/* Step 3: Classes */}
-        {!loading && step === 3 && (
+        {!loading && !error && step === 3 && (
           <div className="space-y-2">
             <button
               onClick={() => setStep(2)}

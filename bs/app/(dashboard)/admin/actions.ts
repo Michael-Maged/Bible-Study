@@ -46,7 +46,7 @@ export async function getDashboardStats(cacheData?: AdminStats) {
       ] = await Promise.all([
         supabaseAdmin.from('admin').select('id').eq('role', 'superuser').eq('status', 'pending').eq('grade', adminRecord.grade).eq('tenant', adminRecord.tenant),
         supabaseAdmin.from('admin').select('id').eq('role', 'superuser').eq('status', 'accepted').eq('grade', adminRecord.grade).eq('tenant', adminRecord.tenant),
-        supabaseAdmin.from('enrollment').select('id').in('class', classIds).eq('status', 'pending'),
+        supabaseAdmin.from('enrollment').select('id').in('class', classIds).in('status', ['pending', 'transferred']),
         supabaseAdmin.from('enrollment').select('id').in('class', classIds).eq('status', 'accepted'),
       ])
 
@@ -60,7 +60,7 @@ export async function getDashboardStats(cacheData?: AdminStats) {
         { data: pendingKids },
         { data: acceptedKids },
       ] = await Promise.all([
-        supabaseAdmin.from('enrollment').select('id').in('class', classIds).eq('status', 'pending'),
+        supabaseAdmin.from('enrollment').select('id').in('class', classIds).in('status', ['pending', 'transferred']),
         supabaseAdmin.from('enrollment').select('id').in('class', classIds).eq('status', 'accepted'),
       ])
 

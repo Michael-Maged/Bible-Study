@@ -296,15 +296,24 @@ export default function KidDetailPage() {
         )}
 
         {/* Approve / Reject */}
-        {request.status === 'pending' && (
+        {(request.status === 'pending' || request.status === 'transferred') && (
           <div className="flex gap-3 pt-2">
             <Button variant="outline" className="flex-1" onClick={() => setConfirmAction('reject')}>Reject</Button>
             <Button className="flex-[2] shadow-[0_2px_0_rgba(138,90,15,0.25)]" onClick={() => setConfirmAction('approve')}>Approve</Button>
           </div>
         )}
 
+        {/* Accept (for returned-rejected kids) */}
+        {isKid && request.status === 'rejected' && (
+          <div className="pt-2">
+            <Button className="w-full shadow-[0_2px_0_rgba(138,90,15,0.25)]" onClick={() => setConfirmAction('approve')}>
+              Accept
+            </Button>
+          </div>
+        )}
+
         {/* Transfer */}
-        {isKid && request.class && request.status !== 'rejected' && (
+        {isKid && request.class && (
           <div className="pt-2">
             <Button
               variant="outline"

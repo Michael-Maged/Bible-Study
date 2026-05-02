@@ -191,9 +191,10 @@ export default function AssignedKidsPage() {
                     kidId={kid.id}
                     kidName={kid.user.name}
                     readToday={kid.status === 'accepted'}
+                    statusLabel={kid.status === 'transferred' ? 'Transferred' : kid.status === 'rejected' ? 'Rejected' : 'Pending'}
                     onTap={() => router.push(`/admin/kids/${kid.type}/${kid.id}`)}
                   />
-                  {kid.status === 'pending' && (
+                  {(kid.status === 'pending' || kid.status === 'transferred') && (
                     <div className="flex gap-2 px-4 pb-3">
                       <Button
                         variant="outline"
@@ -209,6 +210,17 @@ export default function AssignedKidsPage() {
                         onClick={() => handleAction(kid.id, kid.type, true)}
                       >
                         Approve
+                      </Button>
+                    </div>
+                  )}
+                  {kid.status === 'rejected' && kid.type === 'kid' && (
+                    <div className="flex gap-2 px-4 pb-3">
+                      <Button
+                        size="sm"
+                        className="w-full shadow-[0_2px_0_rgba(138,90,15,0.25)]"
+                        onClick={() => handleAction(kid.id, kid.type, true)}
+                      >
+                        Accept
                       </Button>
                     </div>
                   )}

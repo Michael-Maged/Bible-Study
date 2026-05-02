@@ -7,6 +7,7 @@ interface KidSummaryTileProps {
   kidId: string
   kidName: string
   readToday: boolean
+  statusLabel?: string
   score?: number
   className?: string
   onTap: () => void
@@ -16,7 +17,7 @@ function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
-export default function KidSummaryTile({ kidName, readToday, score, className, onTap }: KidSummaryTileProps) {
+export default function KidSummaryTile({ kidName, readToday, statusLabel, score, className, onTap }: KidSummaryTileProps) {
   return (
     <button
       onClick={onTap}
@@ -39,15 +40,17 @@ export default function KidSummaryTile({ kidName, readToday, score, className, o
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <Badge
-          variant={readToday ? 'default' : 'secondary'}
+          variant="secondary"
           className={cn(
             'text-xs font-bold',
             readToday
               ? 'bg-[oklch(0.596_0.145_162.48)]/15 text-[oklch(0.596_0.145_162.48)] border-[oklch(0.596_0.145_162.48)]/30'
-              : 'bg-accent/15 text-accent border-accent/30'
+              : statusLabel === 'Rejected'
+                ? 'bg-[rgba(166,66,66,0.10)] text-[#a64242] border-[rgba(166,66,66,0.3)]'
+                : 'bg-accent/15 text-accent border-accent/30'
           )}
         >
-          {readToday ? 'Read' : 'Pending'}
+          {readToday ? 'Read' : (statusLabel ?? 'Pending')}
         </Badge>
         <ChevronRight size={16} className="text-muted-foreground" />
       </div>
