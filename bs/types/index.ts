@@ -183,6 +183,6 @@ export type RequestDetail = {
   type: 'admin' | 'kid'
   role?: string
   user: { name: string; email?: string; age: number; gender: string }
-  class?: { name: string; grade: number }
+  class?: { id: string; name: string; grade: number; gradeInfo?: { tenant: string } }
   grade?: { name: string }
 }
