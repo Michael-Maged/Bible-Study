@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import MessageBox from '@/components/MessageBox'
 import LoadingScreen from '@/components/LoadingScreen'
+import TransferKidModal from './TransferKidModal'
 
 type KidProfile = {
   id: string; name: string; email?: string; age?: number; gender: string
@@ -45,6 +46,7 @@ export default function KidDetailPage() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
 
   const load = async () => {
     const type = params.type as 'admin' | 'kid'
@@ -301,6 +303,19 @@ export default function KidDetailPage() {
           </div>
         )}
 
+        {/* Transfer */}
+        {isKid && request.status !== 'rejected' && (
+          <div className="pt-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setTransferOpen(true)}
+            >
+              Transfer to Another Class
+            </Button>
+          </div>
+        )}
+
       </main>
 
       <ConfirmDialog
@@ -323,6 +338,18 @@ export default function KidDetailPage() {
         loading={actionLoading}
       />
 
+      {isKid && request.class && (
+        <TransferKidModal
+          open={transferOpen}
+          onClose={() => setTransferOpen(false)}
+          enrollmentId={params.id as string}
+          kidName={displayName}
+          currentClassId={request.class.id}
+          currentClassName={request.class.name}
+          currentGradeNum={request.class.grade}
+          currentTenantId={request.class.gradeInfo?.tenant ?? ''}
+        />
+      )}
       <AdminNav active="kids" />
     </div>
   )
