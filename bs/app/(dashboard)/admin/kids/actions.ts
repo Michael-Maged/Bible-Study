@@ -90,30 +90,31 @@ export async function handleApproveRequest(type: 'admin' | 'kid', id: string, ap
 
 export async function getRequestDetails(type: 'admin' | 'kid', id: string) {
   const supabase = await createClient()
-  
+  const supabaseAdmin = createAdminClient()
+
   if (type === 'admin') {
     const { data, error } = await supabase
       .from('admin')
       .select('*, user(*), grade:grade!admin_grade_fkey(*)')
       .eq('id', id)
       .single()
-    
+
     if (error || !data) {
       return { success: false, error: 'Request not found' }
     }
-    
+
     return { success: true, data: { ...data, type: 'admin' } }
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('enrollment')
       .select('*, user(*), class:classes!enrollment_class_fkey(id, name, grade, gradeInfo:grade!class_grade_fkey(tenant))')
       .eq('id', id)
       .single()
-    
+
     if (error || !data) {
       return { success: false, error: 'Request not found' }
     }
-    
+
     return { success: true, data: { ...data, type: 'kid' } }
   }
 }
@@ -151,17 +152,37 @@ export async function getClassesByGrade(gradeNum: number) {
 }
 
 export async function transferKid(enrollmentId: string, newClassId: string) {
+  const supabase = await createClient()
   const supabaseAdmin = createAdminClient()
 
-  const { data: enrollment } = await supabaseAdmin
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+  if (!authUser) return { success: false as const, error: 'Not authenticated' }
+
+  const { data: userData } = await supabaseAdmin
+    .from('user')
+    .select('id')
+    .eq('auth_id', authUser.id)
+    .single()
+
+  if (!userData) return { success: false as const, error: 'User not found' }
+
+  const { data: adminData } = await supabaseAdmin
+    .from('admin')
+    .select('id')
+    .eq('user_id', userData.id)
+    .single()
+
+  if (!adminData) return { success: false as const, error: 'Not authorized' }
+
+  const { data: enrollment, error: enrollError } = await supabaseAdmin
     .from('enrollment')
     .select('class')
     .eq('id', enrollmentId)
     .single()
 
-  if (!enrollment) return { success: false as const, error: 'Enrollment not found' }
+  if (enrollError || !enrollment) return { success: false as const, error: enrollError?.message || 'Enrollment not found' }
 
-  const [{ data: currentClass }, { data: newClass }] = await Promise.all([
+  const [currentClassResult, newClassResult] = await Promise.all([
     supabaseAdmin
       .from('classes')
       .select('grade, gradeInfo:grade!class_grade_fkey(tenant)')
@@ -174,7 +195,11 @@ export async function transferKid(enrollmentId: string, newClassId: string) {
       .single(),
   ])
 
-  if (!currentClass || !newClass) return { success: false as const, error: 'Class not found' }
+  if (currentClassResult.error || newClassResult.error || !currentClassResult.data || !newClassResult.data) {
+    return { success: false as const, error: 'Class not found' }
+  }
+  const currentClass = currentClassResult.data
+  const newClass = newClassResult.data
 
   const currentGradeInfo = currentClass.gradeInfo as unknown as { tenant: string } | null
   const newGradeInfo = newClass.gradeInfo as unknown as { tenant: string } | null
@@ -193,5 +218,6 @@ export async function transferKid(enrollmentId: string, newClassId: string) {
   if (updateError) return { success: false as const, error: updateError.message }
 
   revalidatePath('/admin/kids')
+  revalidatePath('/admin/kids/kid/[id]', 'page')
   return { success: true as const, newStatus }
 }
