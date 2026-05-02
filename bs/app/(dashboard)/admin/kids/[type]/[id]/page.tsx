@@ -114,7 +114,7 @@ export default function KidDetailPage() {
 
   const statusColor =
     request.status === 'accepted' ? { bg: 'rgba(90,122,58,0.10)', text: '#5a7a3a', border: 'rgba(90,122,58,0.3)' }
-    : request.status === 'pending' ? { bg: 'rgba(194,133,27,0.10)', text: '#c2851b', border: 'rgba(194,133,27,0.3)' }
+    : request.status === 'pending' || request.status === 'transferred' ? { bg: 'rgba(194,133,27,0.10)', text: '#c2851b', border: 'rgba(194,133,27,0.3)' }
     : { bg: 'rgba(166,66,66,0.10)', text: '#a64242', border: 'rgba(166,66,66,0.3)' }
 
   return (

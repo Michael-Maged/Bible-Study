@@ -170,6 +170,7 @@ export async function transferKid(enrollmentId: string, newClassId: string) {
     .from('admin')
     .select('id')
     .eq('user_id', userData.id)
+    .eq('status', 'accepted')
     .single()
 
   if (!adminData) return { success: false as const, error: 'Not authorized' }
