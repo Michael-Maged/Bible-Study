@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isPending) {
+      await supabase.auth.signOut()
       return NextResponse.redirect(`${origin}/pending`)
     }
 

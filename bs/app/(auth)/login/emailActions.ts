@@ -49,7 +49,13 @@ export async function loginWithEmail(email: string, password: string) {
       // Set user-role cookie for non-pending users
       const { cookies } = await import('next/headers')
       const cookieStore = await cookies()
-      cookieStore.set('user-role', userRole, { path: '/', maxAge: 60 * 60 * 24 * 7 })
+      cookieStore.set('user-role', userRole, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+      })
     }
     
     return { 
