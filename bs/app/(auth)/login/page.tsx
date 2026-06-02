@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { loginWithEmail } from './emailActions'
@@ -28,25 +28,25 @@ function LoginForm() {
 
   const searchParams = useSearchParams()
 
-  useEffect(() => {
-    const error = searchParams.get('error')
-    if (error === 'not_registered') {
-      setStatus('error')
-      setMessage('No account found. Please register first.')
-    } else if (error === 'auth_failed') {
-      setStatus('error')
-      setMessage('Sign in failed. Please try again.')
-    }
-  }, [searchParams])
+  const errorParam = searchParams.get('error')
+  const oauthError =
+    errorParam === 'not_registered' ? 'No account found. Please register first.' :
+    errorParam === 'auth_failed' ? 'Sign in failed. Please try again.' :
+    null
 
   async function handleGoogleLogin() {
+    setStatus('loading')
     const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`
       }
     })
+    if (error) {
+      setStatus('error')
+      setMessage('Google sign-in failed. Please try again.')
+    }
   }
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -117,6 +117,7 @@ function LoginForm() {
               </div>
             </div>
 
+            {oauthError && <MessageBox type="error" message={oauthError} />}
             {status === 'error' && message && <MessageBox type="error" message={message} />}
 
             <Button
@@ -137,7 +138,8 @@ function LoginForm() {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full h-11 flex items-center justify-center gap-3 rounded-xl border border-border bg-background text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+            disabled={status === 'loading'}
+            className="w-full h-11 flex items-center justify-center gap-3 rounded-xl border border-border bg-background text-sm font-semibold text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
               <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -177,7 +179,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="min-h-screen" />}>
       <LoginForm />
     </Suspense>
   )
