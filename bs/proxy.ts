@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const publicPaths = ['/login', '/register', '/admin-register', '/auth/callback', '/pending']
   const adminPaths = ['/admin']
   const kidPaths = ['/kid']
-  
+
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
   const isAdminPath = adminPaths.some(path => pathname.startsWith(path))
   const isKidPath = kidPaths.some(path => pathname.startsWith(path))
@@ -39,11 +39,11 @@ export async function middleware(request: NextRequest) {
 
   const userRole = request.cookies.get('user-role')?.value
   let session = null
-  
+
   try {
     const { data: { session: authSession } } = await supabase.auth.getSession()
     session = authSession
-    
+
     // Refresh session if it exists
     if (session) {
       await supabase.auth.getUser()
@@ -56,22 +56,22 @@ export async function middleware(request: NextRequest) {
   if (!session && !userRole) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
-  
+
   // Protect admin routes - only admin and superuser can access
   if (isAdminPath && (userRole !== 'admin' && userRole !== 'superuser')) {
     return NextResponse.redirect(new URL('/kid/dashboard', request.url))
   }
-  
+
   // Protect kid routes - kids cannot access admin routes
   if (isKidPath && (userRole === 'admin' || userRole === 'superuser')) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
-  
+
   // Redirect admins from old routes to admin dashboard
   if ((userRole === 'admin' || userRole === 'superuser') && (pathname === '/dashboard' || pathname === '/leaderboard' || pathname === '/profile')) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
-  
+
   // Redirect kids from old routes to new kid routes
   if (userRole === 'kid') {
     if (pathname === '/dashboard') {
@@ -84,7 +84,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/kid/profile', request.url))
     }
   }
-  
+
   // Redirect root path based on role
   if (pathname === '/') {
     if (userRole === 'admin' || userRole === 'superuser') {
