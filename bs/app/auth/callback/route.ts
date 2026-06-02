@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (userError || !user) {
-      await supabase.auth.signOut()
+      const { error: signOutError } = await supabase.auth.signOut()
+      if (signOutError) console.error('signOut error (not_registered):', signOutError.message)
       return NextResponse.redirect(`${origin}/login?error=not_registered`)
     }
 
@@ -41,7 +42,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (isPending) {
-      await supabase.auth.signOut()
+      const { error: signOutError } = await supabase.auth.signOut()
+      if (signOutError) console.error('signOut error (pending):', signOutError.message)
       return NextResponse.redirect(`${origin}/pending`)
     }
 
