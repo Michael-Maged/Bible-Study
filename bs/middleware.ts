@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const publicPaths = ['/login', '/register', '/admin-register']
+  const publicPaths = ['/login', '/register', '/admin-register', '/auth/callback']
   const adminPaths = ['/admin']
   const kidPaths = ['/kid']
   
