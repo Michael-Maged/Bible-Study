@@ -41,12 +41,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (isPending) {
-      await supabase.auth.signOut()
       return NextResponse.redirect(`${origin}/pending`)
     }
 
     const cookieStore = await cookies()
-    cookieStore.set('user-role', userRole, { path: '/', maxAge: 60 * 60 * 24 * 7 })
+    cookieStore.set('user-role', userRole, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    })
 
     const redirectTo = userRole === 'admin' || userRole === 'superuser' ? '/admin' : '/kid/dashboard'
     return NextResponse.redirect(`${origin}${redirectTo}`)
