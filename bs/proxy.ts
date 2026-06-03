@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const publicPaths = ['/login', '/register', '/admin-register', '/auth/callback', '/pending']
+  const publicPaths = ['/login', '/register', '/admin-register', '/auth/callback', '/pending', '/reset-password']
   const adminPaths = ['/admin']
   const kidPaths = ['/kid']
 
