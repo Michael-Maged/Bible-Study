@@ -41,11 +41,26 @@ export default function ResetPasswordPage() {
     }
 
     const supabase = createClient()
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setReady(true)
       }
     })
+
+    // PKCE flow: Supabase redirects with ?code= — exchange it for a recovery session
+    const code = params.get('code')
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setStatus('error')
+          setMessage('Invalid or expired reset link. Please request a new one.')
+          setReady(true)
+        }
+        // On success, PASSWORD_RECOVERY fires via onAuthStateChange above
+      })
+    }
+
     return () => subscription.unsubscribe()
   }, [])
 
