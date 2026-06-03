@@ -23,6 +23,8 @@ function WarmOrnament() {
 
 function LoginForm() {
   const router = useRouter()
+  const [step, setStep] = useState<'login' | 'forgot' | 'sent'>('login')
+  const [forgotEmail, setForgotEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [message, setMessage] = useState('')
 
@@ -69,6 +71,96 @@ function LoginForm() {
     }
   }
 
+  async function handleSendReset(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setStatus('loading')
+    setMessage('')
+    const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value
+    const { sendPasswordReset } = await import('./resetActions')
+    const result = await sendPasswordReset(email)
+    if (result.success) {
+      setForgotEmail(email)
+      setStatus('idle')
+      setStep('sent')
+    } else {
+      setStatus('error')
+      setMessage(result.error || 'Failed to send reset email')
+    }
+  }
+
+  if (step === 'forgot') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <OfflineBanner />
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center space-y-2">
+            <AppLogo size="lg" className="justify-center" />
+            <WarmOrnament />
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Bible Kids</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground mt-3">Reset password</h1>
+            <p className="text-sm text-muted-foreground">We'll send a reset link to your email</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <form onSubmit={handleSendReset} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Email</label>
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <rect x="1" y="2.5" width="12" height="9" rx="1.5" stroke="currentColor"/>
+                    <path d="M1.5 3.5l5.5 4 5.5-4" stroke="currentColor"/>
+                  </svg>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="your@email.com"
+                    required
+                    className="w-full h-11 pl-9 pr-4 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+              {status === 'error' && message && <MessageBox type="error" message={message} />}
+              <Button type="submit" disabled={status === 'loading'} className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]">
+                {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />Sending…</> : 'Send Reset Link'}
+              </Button>
+            </form>
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            <button type="button" onClick={() => { setStep('login'); setStatus('idle'); setMessage('') }} className="text-primary font-semibold hover:underline underline-offset-4">
+              Back to sign in
+            </button>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'sent') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <OfflineBanner />
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center space-y-2">
+            <AppLogo size="lg" className="justify-center" />
+            <WarmOrnament />
+            <h1 className="text-2xl font-bold tracking-tight text-foreground mt-3">Check your inbox</h1>
+            <p className="text-sm text-muted-foreground">
+              A reset link has been sent to{' '}
+              <span className="font-semibold text-foreground">{forgotEmail}</span>
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm text-center">
+            <p className="text-sm text-muted-foreground">Click the link in the email to set a new password. Check your spam folder if you don't see it.</p>
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            <button type="button" onClick={() => setStep('login')} className="text-primary font-semibold hover:underline underline-offset-4">
+              Back to sign in
+            </button>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <OfflineBanner />
@@ -113,7 +205,13 @@ function LoginForm() {
                 className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
               <div className="text-right mt-1">
-                <span className="text-xs text-primary font-semibold cursor-pointer">Forgot password?</span>
+                <button
+                  type="button"
+                  onClick={() => { setStep('forgot'); setStatus('idle'); setMessage('') }}
+                  className="text-xs text-primary font-semibold hover:underline underline-offset-4"
+                >
+                  Forgot password?
+                </button>
               </div>
             </div>
 
