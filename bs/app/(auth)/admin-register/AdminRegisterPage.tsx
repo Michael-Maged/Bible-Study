@@ -164,7 +164,7 @@ export default function AdminRegisterPage() {
       <PageShell>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <p className="text-sm text-muted-foreground mb-4 text-center">
-            A 6-digit code was sent to{' '}
+            A verification code was sent to{' '}
             <span className="font-semibold text-foreground">{verifiedEmail}</span>
           </p>
           <form onSubmit={handleVerifyOtp} className="space-y-4">
@@ -173,8 +173,8 @@ export default function AdminRegisterPage() {
               <input
                 type="text"
                 name="otp"
-                maxLength={6}
-                placeholder="000000"
+                maxLength={8}
+                placeholder="00000000"
                 required
                 autoComplete="one-time-code"
                 className="w-full h-11 px-4 rounded-xl border border-border bg-background text-sm text-center tracking-[0.4em] font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground"
