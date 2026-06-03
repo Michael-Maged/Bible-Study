@@ -1,26 +1,110 @@
-'use client'
+# Forgot Password Implementation Plan
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
-import { loginWithEmail } from './emailActions'
-import { createClient } from '@/utils/supabase/client'
-import { Button } from '@/components/ui/button'
-import MessageBox from '@/components/MessageBox'
-import PasswordInput from '@/components/PasswordInput'
-import AppLogo from '@/components/AppLogo'
-import OfflineBanner from '@/components/OfflineBanner'
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-function WarmOrnament() {
-  return (
-    <div className="flex items-center justify-center gap-1.5">
-      <div className="w-6 h-px bg-primary opacity-60" />
-      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-      <div className="w-6 h-px bg-primary opacity-60" />
-    </div>
-  )
+**Goal:** Add forgot password flow — inline on the login page for requesting a reset, plus a dedicated `/reset-password` page for setting the new password.
+
+**Architecture:** The login page gains a `step` state (`'login' | 'forgot' | 'sent'`) to show the request form inline. Supabase sends the reset email via the configured Resend SMTP. The reset link redirects to `/reset-password`, which listens for the `PASSWORD_RECOVERY` auth event and calls `supabase.auth.updateUser({ password })`.
+
+**Tech Stack:** Next.js 15 App Router, Supabase SSR (`@supabase/ssr`), Tailwind CSS v4
+
+---
+
+## File Map
+
+| Action | File | Responsibility |
+|--------|------|----------------|
+| Modify | `proxy.ts` | Add `/reset-password` to publicPaths |
+| Create | `app/(auth)/login/resetActions.ts` | `sendPasswordReset` server action |
+| Modify | `app/(auth)/login/page.tsx` | Add forgot/sent steps to `LoginForm` |
+| Create | `app/(auth)/reset-password/page.tsx` | New password entry after clicking reset link |
+
+---
+
+## Task 1: Add `/reset-password` to proxy publicPaths
+
+**Files:**
+- Modify: `proxy.ts:7`
+
+- [ ] **Step 1: Update publicPaths in `proxy.ts`**
+
+Change line 7 from:
+```typescript
+const publicPaths = ['/login', '/register', '/admin-register', '/auth/callback', '/pending']
+```
+to:
+```typescript
+const publicPaths = ['/login', '/register', '/admin-register', '/auth/callback', '/pending', '/reset-password']
+```
+
+- [ ] **Step 2: Verify build**
+
+```bash
+npm run build
+```
+Expected: build completes with no errors.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add proxy.ts
+git commit -m "feat: add /reset-password to public paths"
+```
+
+---
+
+## Task 2: Create `app/(auth)/login/resetActions.ts`
+
+**Files:**
+- Create: `app/(auth)/login/resetActions.ts`
+
+- [ ] **Step 1: Create the file**
+
+```typescript
+'use server'
+
+import { createClient } from '@/utils/supabase/server'
+
+export async function sendPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+    })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Failed to send reset email' }
+  }
 }
+```
 
+- [ ] **Step 2: Verify build**
+
+```bash
+npm run build
+```
+Expected: build completes with no errors.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add "app/(auth)/login/resetActions.ts"
+git commit -m "feat: add sendPasswordReset server action"
+```
+
+---
+
+## Task 3: Add forgot/sent steps to `LoginForm` in `app/(auth)/login/page.tsx`
+
+**Files:**
+- Modify: `app/(auth)/login/page.tsx`
+
+The `LoginForm` component (line 24) gains `step` and `forgotEmail` state plus a `handleSendReset` handler. The JSX conditionally renders based on `step`. All existing login logic is preserved unchanged.
+
+- [ ] **Step 1: Replace the `LoginForm` component (lines 24–178) with:**
+
+```tsx
 function LoginForm() {
   const router = useRouter()
   const [step, setStep] = useState<'login' | 'forgot' | 'sent'>('login')
@@ -76,18 +160,15 @@ function LoginForm() {
     setStatus('loading')
     setMessage('')
     const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value
-    // Use browser client so PKCE code verifier is generated and stored in browser cookies
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    })
-    if (!error) {
+    const { sendPasswordReset } = await import('./resetActions')
+    const result = await sendPasswordReset(email)
+    if (result.success) {
       setForgotEmail(email)
       setStatus('idle')
       setStep('sent')
     } else {
       setStatus('error')
-      setMessage(error.message || 'Failed to send reset email')
+      setMessage(result.error || 'Failed to send reset email')
     }
   }
 
@@ -277,11 +358,228 @@ function LoginForm() {
     </div>
   )
 }
+```
 
-export default function LoginPage() {
+Also add `sendPasswordReset` is dynamically imported inside `handleSendReset` — no top-level import needed.
+
+- [ ] **Step 2: Verify build**
+
+```bash
+npm run build
+```
+Expected: `/login` listed as static route, no TypeScript errors.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add "app/(auth)/login/page.tsx"
+git commit -m "feat: add forgot password inline steps to login page"
+```
+
+---
+
+## Task 4: Create `app/(auth)/reset-password/page.tsx`
+
+**Files:**
+- Create: `app/(auth)/reset-password/page.tsx`
+
+This page listens for the Supabase `PASSWORD_RECOVERY` auth event. Until that event fires, it shows a "Verifying…" state. Once the event fires (meaning a valid recovery session is established), it shows the new password form. On success it redirects to `/login`.
+
+- [ ] **Step 1: Create `app/(auth)/reset-password/page.tsx`**
+
+```tsx
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
+import { Button } from '@/components/ui/button'
+import MessageBox from '@/components/MessageBox'
+import PasswordInput from '@/components/PasswordInput'
+import AppLogo from '@/components/AppLogo'
+
+function WarmOrnament() {
   return (
-    <Suspense fallback={<div className="min-h-screen" />}>
-      <LoginForm />
-    </Suspense>
+    <div className="flex items-center justify-center gap-1.5">
+      <div className="w-6 h-px bg-primary opacity-60" />
+      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+      <div className="w-6 h-px bg-primary opacity-60" />
+    </div>
   )
 }
+
+export default function ResetPasswordPage() {
+  const router = useRouter()
+  const [ready, setReady] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setReady(true)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function handleReset(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+
+    if (password !== confirmPassword) {
+      setStatus('error')
+      setMessage('Passwords do not match')
+      return
+    }
+
+    setStatus('loading')
+    setMessage('')
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ password })
+
+    if (error) {
+      setStatus('error')
+      setMessage(error.message || 'Failed to reset password')
+    } else {
+      setStatus('success')
+      setMessage('Password updated! Redirecting to sign in…')
+      setTimeout(() => router.push('/login'), 2000)
+    }
+  }
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-sm space-y-6 text-center">
+          <AppLogo size="lg" className="justify-center" />
+          <Loader2 size={24} className="animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground">Verifying reset link…</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="text-center space-y-2">
+          <AppLogo size="lg" className="justify-center" />
+          <WarmOrnament />
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Bible Kids</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-3">Set new password</h1>
+          <p className="text-sm text-muted-foreground">Choose a strong password</p>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <form onSubmit={handleReset} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">New Password</label>
+              <PasswordInput
+                name="password"
+                placeholder="New password (min 6 characters)"
+                minLength={6}
+                required
+                className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Confirm Password</label>
+              <PasswordInput
+                name="confirmPassword"
+                placeholder="Confirm new password"
+                minLength={6}
+                required
+                className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            {(status === 'error' || status === 'success') && message && (
+              <MessageBox type={status === 'error' ? 'error' : 'success'} message={message} />
+            )}
+
+            <Button
+              type="submit"
+              disabled={status === 'loading' || status === 'success'}
+              className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]"
+            >
+              {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />Updating…</> : 'Set New Password'}
+            </Button>
+          </form>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground">
+          <a href="/login" className="text-primary font-semibold hover:underline underline-offset-4">Back to sign in</a>
+        </p>
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Add `/reset-password` to Supabase redirect URL allowlist**
+
+In Supabase dashboard → Authentication → URL Configuration → Redirect URLs, add:
+```
+http://localhost:3000/reset-password
+```
+And your production URL:
+```
+https://your-production-domain.com/reset-password
+```
+
+- [ ] **Step 3: Verify build**
+
+```bash
+npm run build
+```
+Expected: `/reset-password` listed as a static (`○`) route, no TypeScript errors.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add "app/(auth)/reset-password/page.tsx"
+git commit -m "feat: add reset password page"
+```
+
+---
+
+## Task 5: Manual end-to-end verification
+
+- [ ] **Step 1: Start dev server**
+
+```bash
+npm run dev
+```
+
+- [ ] **Step 2: Test request flow**
+
+1. Go to `http://localhost:3000/login`
+2. Click "Forgot password?" — confirm the form switches to the reset request view
+3. Enter a registered email → click "Send Reset Link"
+4. Confirm the "Check your inbox" message appears showing the email
+
+- [ ] **Step 3: Test reset flow**
+
+1. Open the reset email → click the link
+2. Confirm you land on `/reset-password` with the new password form
+3. Enter a new password + confirm → click "Set New Password"
+4. Confirm redirect to `/login` with no errors
+5. Sign in with the new password — confirm it works
+
+- [ ] **Step 4: Test back navigation**
+
+1. Click "Forgot password?" → then "Back to sign in" → confirm returns to login form
+2. Click "Forgot password?" → send → then "Back to sign in" from sent state → confirm returns to login form
+
+- [ ] **Step 5: Final commit if any tweaks**
+
+```bash
+git add -A
+git commit -m "fix: forgot password e2e adjustments"
+```
