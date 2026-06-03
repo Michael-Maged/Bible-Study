@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
@@ -25,42 +25,18 @@ export default function ResetPasswordPage() {
   const [linkError, setLinkError] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
-  // Prevent React Strict Mode's double-invocation from consuming the one-time code twice
-  const exchangeAttempted = useRef(false)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-
-    const errorCode = params.get('error_code')
-    if (errorCode) {
-      setLinkError(
-        errorCode === 'otp_expired'
-          ? 'This reset link has expired or was already used. Please request a new one.'
-          : 'Invalid reset link. Please request a new one.'
-      )
-      return
-    }
-
+    // Code exchange already handled by /auth/callback server route.
+    // We just need to verify an active session exists.
     const supabase = createClient()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
         setReady(true)
+      } else {
+        setLinkError('Invalid or expired reset link. Please request a new one.')
       }
     })
-
-    const code = params.get('code')
-    if (code && !exchangeAttempted.current) {
-      exchangeAttempted.current = true
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-          setLinkError('Invalid or expired reset link. Please request a new one.')
-        }
-        // On success PASSWORD_RECOVERY fires via onAuthStateChange above
-      })
-    }
-
-    return () => subscription.unsubscribe()
   }, [])
 
   async function handleReset(e: React.FormEvent<HTMLFormElement>) {
