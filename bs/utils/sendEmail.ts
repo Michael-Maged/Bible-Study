@@ -1,4 +1,6 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 function escapeHtml(str: string): string {
   return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c))
@@ -6,16 +8,9 @@ function escapeHtml(str: string): string {
 
 export async function sendRejectionEmail(to: string, name: string): Promise<void> {
   const safeName = escapeHtml(name)
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  })
 
-  await transporter.sendMail({
-    from: `"Bible Kids" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: 'Bible Kids <onboarding@resend.dev>',
     to,
     subject: 'Your registration was not approved',
     html: `
