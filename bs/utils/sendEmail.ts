@@ -1,6 +1,11 @@
 import nodemailer from 'nodemailer'
 
+function escapeHtml(str: string): string {
+  return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c))
+}
+
 export async function sendRejectionEmail(to: string, name: string): Promise<void> {
+  const safeName = escapeHtml(name)
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -15,7 +20,7 @@ export async function sendRejectionEmail(to: string, name: string): Promise<void
     subject: 'Your registration was not approved',
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-        <h2 style="color:#1a1a1a">Hi ${name},</h2>
+        <h2 style="color:#1a1a1a">Hi ${safeName},</h2>
         <p style="color:#555">We're sorry to inform you that your registration was not approved at this time.</p>
         <p style="color:#555">Please re-register using the registration form with the correct information.</p>
         <p style="color:#555">If you believe this was a mistake, please contact your church administrator.</p>
