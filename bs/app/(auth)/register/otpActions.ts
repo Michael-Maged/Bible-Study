@@ -22,7 +22,8 @@ export async function sendEmailOtp(email: string): Promise<{ success: boolean; e
     const { error } = await supabase.auth.signInWithOtp({ email })
     if (error) return { success: false, error: error.message }
     return { success: true }
-  } catch {
+  } catch (e) {
+    console.error('sendEmailOtp error:', e)
     return { success: false, error: 'Failed to send verification code' }
   }
 }
@@ -45,7 +46,8 @@ export async function verifyEmailOtp(email: string, token: string): Promise<{ su
     await supabase.auth.signOut()
 
     return { success: true }
-  } catch {
+  } catch (e) {
+    console.error('verifyEmailOtp error:', e)
     return { success: false, error: 'Verification failed' }
   }
 }
