@@ -48,16 +48,8 @@ export default function ResetPasswordPage() {
       }
     })
 
-    // PKCE flow: exchange ?code= for a recovery session, then PASSWORD_RECOVERY fires
-    const code = params.get('code')
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-          setLinkError('Invalid or expired reset link. Please request a new one.')
-        }
-        // On success, PASSWORD_RECOVERY fires via onAuthStateChange above
-      })
-    }
+    // Browser client automatically handles the ?code= exchange using the stored PKCE verifier.
+    // PASSWORD_RECOVERY fires via onAuthStateChange once the session is established.
 
     return () => subscription.unsubscribe()
   }, [])

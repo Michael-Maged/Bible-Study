@@ -76,15 +76,18 @@ function LoginForm() {
     setStatus('loading')
     setMessage('')
     const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value
-    const { sendPasswordReset } = await import('./resetActions')
-    const result = await sendPasswordReset(email)
-    if (result.success) {
+    // Use browser client so PKCE code verifier is generated and stored in browser cookies
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (!error) {
       setForgotEmail(email)
       setStatus('idle')
       setStep('sent')
     } else {
       setStatus('error')
-      setMessage(result.error || 'Failed to send reset email')
+      setMessage(error.message || 'Failed to send reset email')
     }
   }
 
