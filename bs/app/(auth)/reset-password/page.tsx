@@ -26,6 +26,20 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
+    // Check for error params Supabase puts in the URL when the link is invalid/expired
+    const params = new URLSearchParams(window.location.search)
+    const errorCode = params.get('error_code')
+    if (errorCode) {
+      setStatus('error')
+      setMessage(
+        errorCode === 'otp_expired'
+          ? 'This reset link has expired or was already used. Please request a new one.'
+          : 'Invalid reset link. Please request a new one.'
+      )
+      setReady(true)
+      return
+    }
+
     const supabase = createClient()
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
