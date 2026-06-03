@@ -74,9 +74,18 @@ export async function verifyEmailOtp(email: string, token: string)
 
 - Add `step: 'email' | 'otp' | 'form'` state
 - Add `verifiedEmail: string` state
-- Add `handleSendOtp` and `handleVerifyOtp` handlers
+- Add `handleSendOtp` and `handleVerifyOtp` handlers (use shared `otpActions.ts`)
 - Step `'form'`: email input is `readOnly` with value from `verifiedEmail`
 - No changes to `handleSubmit` or `registerKidWithEmail`
+
+### Modified: `app/(auth)/admin-register/AdminRegisterPage.tsx`
+
+- Same two-step pattern as `RegisterPage.tsx`
+- Add `step: 'email' | 'otp' | 'form'` state
+- Add `verifiedEmail: string` state
+- Add `handleSendOtp` and `handleVerifyOtp` handlers (same shared `otpActions.ts`)
+- Step `'form'`: email input is `readOnly` with value from `verifiedEmail`
+- No changes to `handleSubmit` or `registerAdminWithEmail`
 
 ### Modified: `app/(auth)/register/emailActions.ts`
 
@@ -148,5 +157,5 @@ Add to `.env.local` for development and to production environment config.
 
 - Login page (`app/(auth)/login/page.tsx`) — untouched
 - `registerKidWithEmail` in `emailActions.ts` — untouched
-- Admin registration flow — untouched
+- `registerAdminWithEmail` in `emailActions.ts` — untouched
 - Transferred kid rejection handling — untouched (existing special case preserved)
