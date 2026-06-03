@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
@@ -22,14 +22,15 @@ function WarmOrnament() {
 export default function ResetPasswordPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
-  const [linkError, setLinkError] = useState('')      // blocks form — link itself is bad
+  const [linkError, setLinkError] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [message, setMessage] = useState('')           // form-level errors only
+  const [message, setMessage] = useState('')
+  // Prevent React Strict Mode's double-invocation from consuming the one-time code twice
+  const exchangeAttempted = useRef(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
 
-    // Supabase puts error params in the URL when the link is invalid/expired
     const errorCode = params.get('error_code')
     if (errorCode) {
       setLinkError(
@@ -48,8 +49,16 @@ export default function ResetPasswordPage() {
       }
     })
 
-    // Browser client automatically handles the ?code= exchange using the stored PKCE verifier.
-    // PASSWORD_RECOVERY fires via onAuthStateChange once the session is established.
+    const code = params.get('code')
+    if (code && !exchangeAttempted.current) {
+      exchangeAttempted.current = true
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setLinkError('Invalid or expired reset link. Please request a new one.')
+        }
+        // On success PASSWORD_RECOVERY fires via onAuthStateChange above
+      })
+    }
 
     return () => subscription.unsubscribe()
   }, [])
