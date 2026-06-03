@@ -22,21 +22,21 @@ function WarmOrnament() {
 export default function ResetPasswordPage() {
   const router = useRouter()
   const [ready, setReady] = useState(false)
+  const [linkError, setLinkError] = useState('')      // blocks form — link itself is bad
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState('')           // form-level errors only
 
   useEffect(() => {
-    // Check for error params Supabase puts in the URL when the link is invalid/expired
     const params = new URLSearchParams(window.location.search)
+
+    // Supabase puts error params in the URL when the link is invalid/expired
     const errorCode = params.get('error_code')
     if (errorCode) {
-      setStatus('error')
-      setMessage(
+      setLinkError(
         errorCode === 'otp_expired'
           ? 'This reset link has expired or was already used. Please request a new one.'
           : 'Invalid reset link. Please request a new one.'
       )
-      setReady(true)
       return
     }
 
@@ -48,14 +48,12 @@ export default function ResetPasswordPage() {
       }
     })
 
-    // PKCE flow: Supabase redirects with ?code= — exchange it for a recovery session
+    // PKCE flow: exchange ?code= for a recovery session, then PASSWORD_RECOVERY fires
     const code = params.get('code')
     if (code) {
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (error) {
-          setStatus('error')
-          setMessage('Invalid or expired reset link. Please request a new one.')
-          setReady(true)
+          setLinkError('Invalid or expired reset link. Please request a new one.')
         }
         // On success, PASSWORD_RECOVERY fires via onAuthStateChange above
       })
@@ -92,6 +90,28 @@ export default function ResetPasswordPage() {
     }
   }
 
+  // Link is bad — show error only, no form
+  if (linkError) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center space-y-2">
+            <AppLogo size="lg" className="justify-center" />
+            <WarmOrnament />
+            <h1 className="text-2xl font-bold tracking-tight text-foreground mt-3">Link invalid</h1>
+          </div>
+          <MessageBox type="error" message={linkError} />
+          <p className="text-center text-sm text-muted-foreground">
+            <a href="/login" className="text-primary font-semibold hover:underline underline-offset-4">
+              Back to sign in
+            </a>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Waiting for PASSWORD_RECOVERY event
   if (!ready) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
