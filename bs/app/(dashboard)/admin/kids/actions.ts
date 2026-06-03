@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { createClient as createAnonClient } from '@supabase/supabase-js'
+import { sendRejectionEmail } from '@/utils/sendEmail'
 
 function anonClient() {
   return createAnonClient(
@@ -91,31 +92,57 @@ export async function handleApproveRequest(type: 'admin' | 'kid', id: string, ap
     const status = approved ? 'accepted' : 'rejected'
     const { error } = await supabase.from('admin').update({ status }).eq('id', id)
     if (error) return { success: false, error: error.message }
-  } else {
-    if (!approved) {
-      // Check if this is a transferred kid — if so, send them back to original admin
-      const { data: enrollment } = await supabaseAdmin
-        .from('enrollment')
-        .select('status, pending_class')
-        .eq('id', id)
-        .single()
+    return { success: true }
+  }
 
-      if (enrollment?.status === 'transferred' && enrollment?.pending_class) {
-        const { error } = await supabaseAdmin
-          .from('enrollment')
-          .update({ class: enrollment.pending_class, pending_class: null, status: 'rejected' })
-          .eq('id', id)
-        if (error) return { success: false, error: error.message }
-        return { success: true }
-      }
+  // type === 'kid'
+  if (!approved) {
+    const { data: enrollment } = await supabaseAdmin
+      .from('enrollment')
+      .select('status, pending_class, user_id')
+      .eq('id', id)
+      .single()
+
+    // Transferred kid rejection: send back to original class (existing behavior)
+    if (enrollment?.status === 'transferred' && enrollment?.pending_class) {
+      const { error } = await supabaseAdmin
+        .from('enrollment')
+        .update({ class: enrollment.pending_class, pending_class: null, status: 'rejected' })
+        .eq('id', id)
+      if (error) return { success: false, error: error.message }
+      return { success: true }
     }
 
-    const status = approved ? 'accepted' : 'rejected'
-    const update: Record<string, unknown> = { status }
-    if (approved) update.pending_class = null
-    const { error } = await supabaseAdmin.from('enrollment').update(update).eq('id', id)
-    if (error) return { success: false, error: error.message }
+    // Non-transferred rejection: send email + delete all data
+    if (enrollment?.user_id) {
+      const { data: user } = await supabaseAdmin
+        .from('user')
+        .select('id, name, email, auth_id')
+        .eq('id', enrollment.user_id)
+        .single()
+
+      if (user?.email && user?.name) {
+        try {
+          await sendRejectionEmail(user.email, user.name)
+        } catch (e) {
+          console.error('Rejection email failed:', e)
+        }
+      }
+
+      await supabaseAdmin.from('enrollment').delete().eq('id', id)
+      if (user?.id) await supabaseAdmin.from('user').delete().eq('id', user.id)
+      if (user?.auth_id) await supabaseAdmin.auth.admin.deleteUser(user.auth_id)
+    }
+
+    return { success: true }
   }
+
+  // approved === true
+  const { error } = await supabaseAdmin
+    .from('enrollment')
+    .update({ status: 'accepted', pending_class: null })
+    .eq('id', id)
+  if (error) return { success: false, error: error.message }
   return { success: true }
 }
 
