@@ -114,24 +114,35 @@ export async function handleApproveRequest(type: 'admin' | 'kid', id: string, ap
     }
 
     // Non-transferred rejection: send email + delete all data
-    if (enrollment?.user_id) {
-      const { data: user } = await supabaseAdmin
-        .from('user')
-        .select('id, name, email, auth_id')
-        .eq('id', enrollment.user_id)
-        .single()
+    if (!enrollment?.user_id) {
+      return { success: false, error: 'Enrollment not found' }
+    }
 
-      if (user?.email && user?.name) {
-        try {
-          await sendRejectionEmail(user.email, user.name)
-        } catch (e) {
-          console.error('Rejection email failed:', e)
-        }
+    const { data: user } = await supabaseAdmin
+      .from('user')
+      .select('id, name, email, auth_id')
+      .eq('id', enrollment.user_id)
+      .single()
+
+    if (user?.email && user?.name) {
+      try {
+        await sendRejectionEmail(user.email, user.name)
+      } catch (e) {
+        console.error('Rejection email failed:', e)
       }
+    }
 
-      await supabaseAdmin.from('enrollment').delete().eq('id', id)
-      if (user?.id) await supabaseAdmin.from('user').delete().eq('id', user.id)
-      if (user?.auth_id) await supabaseAdmin.auth.admin.deleteUser(user.auth_id)
+    const { error: enrollDeleteError } = await supabaseAdmin.from('enrollment').delete().eq('id', id)
+    if (enrollDeleteError) return { success: false, error: enrollDeleteError.message }
+
+    if (user?.id) {
+      const { error: userDeleteError } = await supabaseAdmin.from('user').delete().eq('id', user.id)
+      if (userDeleteError) console.error('User delete failed:', userDeleteError.message)
+    }
+
+    if (user?.auth_id) {
+      const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(user.auth_id)
+      if (authDeleteError) console.error('Auth user delete failed:', authDeleteError.message)
     }
 
     return { success: true }
