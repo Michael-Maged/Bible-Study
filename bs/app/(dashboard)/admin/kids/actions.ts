@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { createClient as createAnonClient } from '@supabase/supabase-js'
-import { sendRejectionEmail } from '@/utils/sendEmail'
+import { sendRejectionEmail, sendApprovalEmail } from '@/utils/sendEmail'
 
 function anonClient() {
   return createAnonClient(
@@ -154,6 +154,30 @@ export async function handleApproveRequest(type: 'admin' | 'kid', id: string, ap
     .update({ status: 'accepted', pending_class: null })
     .eq('id', id)
   if (error) return { success: false, error: error.message }
+
+  // Send approval email
+  const { data: enrollmentData } = await supabaseAdmin
+    .from('enrollment')
+    .select('user_id')
+    .eq('id', id)
+    .single()
+
+  if (enrollmentData?.user_id) {
+    const { data: user } = await supabaseAdmin
+      .from('user')
+      .select('email, name')
+      .eq('id', enrollmentData.user_id)
+      .single()
+
+    if (user?.email && user?.name) {
+      try {
+        await sendApprovalEmail(user.email, user.name)
+      } catch (e) {
+        console.error('Approval email failed:', e)
+      }
+    }
+  }
+
   return { success: true }
 }
 
