@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button'
 import MessageBox from '@/components/MessageBox'
 import LoadingScreen from '@/components/LoadingScreen'
 import TransferKidModal from './TransferKidModal'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 type KidProfile = {
   id: string; name: string; email?: string; age?: number; gender: string
@@ -37,6 +39,7 @@ function getInitials(name: string) {
 export default function KidDetailPage() {
   const router = useRouter()
   const params = useParams()
+  const { t } = useLanguage()
   const [request, setRequest] = useState<RequestDetail | null>(null)
   const [profile, setProfile] = useState<KidProfile | null>(null)
   const [stats, setStats] = useState<DetailedStats | null>(null)
@@ -134,14 +137,18 @@ export default function KidDetailPage() {
             </svg>
           </button>
           <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Student</p>
-            <h1 className="text-[20px] font-bold tracking-tight text-foreground leading-tight">Kid Details</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.roles.student)}</p>
+            <h1 className="text-[20px] font-bold tracking-tight text-foreground leading-tight">{t(L.admin.management)}</h1>
           </div>
           <span
             className="text-xs font-bold px-2.5 py-1 rounded-full border capitalize"
             style={{ background: statusColor.bg, color: statusColor.text, borderColor: statusColor.border }}
           >
-            {request.status}
+            {request.status === 'pending' ? t(L.status.pending)
+              : request.status === 'accepted' ? t(L.status.accepted)
+              : request.status === 'rejected' ? t(L.status.rejected)
+              : request.status === 'transferred' ? t(L.status.transferred)
+              : request.status}
           </span>
         </div>
 
@@ -273,7 +280,7 @@ export default function KidDetailPage() {
         {isKid && stats && stats.readingHistory.length > 0 && (
           <div className="rounded-2xl border border-border bg-card overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Reading History</p>
+              <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.nav.history)}</p>
               <span className="text-xs text-muted-foreground">{stats.totalDaysRead} total</span>
             </div>
             <div className="divide-y divide-border">
@@ -298,8 +305,8 @@ export default function KidDetailPage() {
         {/* Approve / Reject */}
         {(request.status === 'pending' || request.status === 'transferred') && (
           <div className="flex gap-3 pt-2">
-            <Button variant="outline" className="flex-1" onClick={() => setConfirmAction('reject')}>Reject</Button>
-            <Button className="flex-[2] shadow-[0_2px_0_rgba(138,90,15,0.25)]" onClick={() => setConfirmAction('approve')}>Approve</Button>
+            <Button variant="outline" className="flex-1" onClick={() => setConfirmAction('reject')}>{t(L.admin.reject)}</Button>
+            <Button className="flex-[2] shadow-[0_2px_0_rgba(138,90,15,0.25)]" onClick={() => setConfirmAction('approve')}>{t(L.admin.approve)}</Button>
           </div>
         )}
 
@@ -307,7 +314,7 @@ export default function KidDetailPage() {
         {isKid && request.status === 'rejected' && (
           <div className="pt-2">
             <Button className="w-full shadow-[0_2px_0_rgba(138,90,15,0.25)]" onClick={() => setConfirmAction('approve')}>
-              Accept
+              {t(L.admin.accept)}
             </Button>
           </div>
         )}

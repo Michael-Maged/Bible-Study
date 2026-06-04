@@ -6,6 +6,8 @@ import OfflineBanner from '@/components/OfflineBanner'
 import LoadingScreen from '@/components/LoadingScreen'
 import { getAdminLeaderboard } from './actions'
 import type { AdminLeaderboardUser } from '@/types'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -31,6 +33,7 @@ const PODIUM_COLORS = ['#f0e8d6', '#c2851b', '#f4e4c0']
 const PODIUM_TEXT = ['#8a7a5e', '#fff', '#8a5a0f']
 
 export default function AdminLeaderboardPage() {
+  const { t } = useLanguage()
   const [users, setUsers] = useState<AdminLeaderboardUser[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -56,8 +59,8 @@ export default function AdminLeaderboardPage() {
 
         {/* Header */}
         <div className="mb-1">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Class ranking</p>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Leaderboard</h1>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.entities.class)}</p>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.nav.ranks)}</h1>
         </div>
 
         {users.length === 0 ? (
@@ -65,7 +68,7 @@ export default function AdminLeaderboardPage() {
             <svg width="40" height="40" viewBox="0 0 20 20" fill="none" className="mb-3 opacity-30">
               <path d="M6 16V9h8v7M3 16V12h3v4M14 16v-5h3v5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
             </svg>
-            <p className="font-medium text-sm">No students yet</p>
+            <p className="font-medium text-sm">{t(L.admin.noStudentsFound)}</p>
           </div>
         ) : (
           <>

@@ -8,8 +8,11 @@ import type { QuestionBuilder, QuestionOptionBuilder } from '@/types'
 import { bibleBooks } from '@/constants/bibleBooks'
 import MessageBox from '@/components/MessageBox'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 export default function AssignmentsPage() {
+  const { t } = useLanguage()
   const [currentDate, setCurrentDate] = useState<Date | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [bookId, setBookId] = useState('')
@@ -198,8 +201,8 @@ export default function AssignmentsPage() {
         {/* Page header */}
         <div className="flex items-start justify-between mb-1">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Daily Config</p>
-            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Assign Reading</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.nav.reading)}</p>
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.admin.assignReading)}</h1>
           </div>
           <Button onClick={saveReading} className="shadow-[0_2px_0_rgba(138,90,15,0.25)] mt-1" size="sm">
             Publish

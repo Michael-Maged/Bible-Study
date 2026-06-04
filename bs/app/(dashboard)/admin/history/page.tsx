@@ -10,6 +10,8 @@ import OfflineBanner from '@/components/OfflineBanner'
 import { bibleBooks } from '@/constants/bibleBooks'
 import MessageBox from '@/components/MessageBox'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 type ExistingQuestion = {
   id: string
@@ -27,6 +29,7 @@ type EditableQuestion = {
 }
 
 export default function HistoryPage() {
+  const { t } = useLanguage()
   const [readings, setReadings] = useState<AdminReading[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -156,8 +159,8 @@ export default function HistoryPage() {
 
         <div className="flex items-center justify-between mb-1">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Schedule</p>
-            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Reading History</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.nav.reading)}</p>
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.nav.history)}</h1>
           </div>
           <button
             onClick={() => { localStorage.removeItem('admin_history_cache'); loadReadings() }}
