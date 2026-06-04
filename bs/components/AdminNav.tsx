@@ -3,62 +3,66 @@
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
+import LangToggle from '@/components/LangToggle'
+import { L } from '@/utils/labels'
 
 type AdminNavTab = 'dashboard' | 'kids' | 'assignments' | 'history' | 'leaderboard'
 
-const tabs = [
-  {
-    key: 'dashboard' as const, label: 'Home', path: '/admin',
-    icon: (active: boolean) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="2" y="2" width="7" height="7" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
-        <rect x="11" y="2" width="7" height="7" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
-        <rect x="2" y="11" width="7" height="7" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
-        <rect x="11" y="11" width="7" height="7" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
-      </svg>
-    ),
-  },
-  {
-    key: 'kids' as const, label: 'Kids', path: '/admin/kids',
-    icon: (active: boolean) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="7" cy="7" r="3" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
-        <path d="M1 17c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round"/>
-        <path d="M13 5a3 3 0 010 4" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round"/>
-        <path d="M16 17c1.5-1 2-2.5 2-3.5a2.5 2.5 0 00-3-2.4" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
-    key: 'assignments' as const, label: 'Reading', path: '/admin/assignments',
-    icon: (active: boolean) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
-        <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth={active ? 2 : 1.6} strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
-    key: 'history' as const, label: 'History', path: '/admin/history',
-    icon: (active: boolean) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
-        <path d="M10 6v4l2.5 2.5" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    key: 'leaderboard' as const, label: 'Ranks', path: '/admin/leaderboard',
-    icon: (active: boolean) => (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M7 18V11h6v7M3 18v-5h4v5M13 18V7h4v11" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-]
-
 export default function AdminNav({ active }: { active: AdminNavTab }) {
   const router = useRouter()
+  const { t } = useLanguage()
+
+  const tabs = [
+    {
+      key: 'dashboard' as const, label: t(L.nav.home), path: '/admin',
+      icon: (active: boolean) => (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="2" width="7" height="7" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
+          <rect x="11" y="2" width="7" height="7" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
+          <rect x="2" y="11" width="7" height="7" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
+          <rect x="11" y="11" width="7" height="7" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
+        </svg>
+      ),
+    },
+    {
+      key: 'kids' as const, label: t(L.nav.students), path: '/admin/kids',
+      icon: (active: boolean) => (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="7" cy="7" r="3" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
+          <path d="M1 17c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round"/>
+          <path d="M13 5a3 3 0 010 4" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round"/>
+          <path d="M16 17c1.5-1 2-2.5 2-3.5a2.5 2.5 0 00-3-2.4" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    {
+      key: 'assignments' as const, label: t(L.nav.reading), path: '/admin/assignments',
+      icon: (active: boolean) => (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
+          <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth={active ? 2 : 1.6} strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    {
+      key: 'history' as const, label: t(L.nav.history), path: '/admin/history',
+      icon: (active: boolean) => (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}/>
+          <path d="M10 6v4l2.5 2.5" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+    {
+      key: 'leaderboard' as const, label: t(L.nav.ranks), path: '/admin/leaderboard',
+      icon: (active: boolean) => (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M7 18V11h6v7M3 18v-5h4v5M13 18V7h4v11" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+  ]
 
   const handleLogout = async () => {
     const { createClient } = await import('@/utils/supabase/client')
@@ -75,7 +79,10 @@ export default function AdminNav({ active }: { active: AdminNavTab }) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border">
-      <div className="flex items-stretch justify-around max-w-lg mx-auto">
+      <div className="flex items-stretch justify-around max-w-lg mx-auto relative">
+        <div className="absolute -top-8 end-3">
+          <LangToggle />
+        </div>
         {tabs.map((tab) => {
           const isActive = active === tab.key
           return (
@@ -106,7 +113,7 @@ export default function AdminNav({ active }: { active: AdminNavTab }) {
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M7 4H4a1 1 0 00-1 1v10a1 1 0 001 1h3M13 14l3-4-3-4M16 10H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span className="text-[10px] font-bold">Logout</span>
+          <span className="text-[10px] font-bold">{t(L.nav.logout)}</span>
         </button>
       </div>
     </nav>
