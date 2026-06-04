@@ -7,6 +7,8 @@ import LoadingScreen from '@/components/LoadingScreen'
 import { cacheLeaderboard, getCachedLeaderboard } from '@/utils/offlineCache'
 import type { LeaderboardUser, CurrentUserRank } from '@/types'
 import KidNav from '@/components/KidNav'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -32,6 +34,7 @@ const PODIUM_COLORS = ['#f0e8d6', '#c2851b', '#f4e4c0'] // 2nd, 1st, 3rd
 const PODIUM_TEXT = ['#8a7a5e', '#fff', '#8a5a0f']
 
 export default function LeaderboardPage() {
+  const { t } = useLanguage()
   const [users, setUsers] = useState<LeaderboardUser[]>([])
   const [currentUser, setCurrentUser] = useState<CurrentUserRank | null>(null)
   const [loading, setLoading] = useState(true)
@@ -80,8 +83,8 @@ export default function LeaderboardPage() {
 
         {/* Header */}
         <div className="mb-1">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Class ranking</p>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Leaderboard</h1>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.kid.classRanking)}</p>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.nav.ranks)}</h1>
         </div>
 
         {users.length === 0 ? (
@@ -89,7 +92,7 @@ export default function LeaderboardPage() {
             <svg width="40" height="40" viewBox="0 0 20 20" fill="none" className="mb-3 opacity-30">
               <path d="M6 16V9h8v7M3 16V12h3v4M14 16v-5h3v5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
             </svg>
-            <p className="font-medium text-sm">No students yet</p>
+            <p className="font-medium text-sm">{t(L.kid.noStudentsYet)}</p>
           </div>
         ) : (
           <>
@@ -116,7 +119,7 @@ export default function LeaderboardPage() {
                       {user.name.split(' ')[0]}
                     </div>
                     <div className="text-[11px] font-bold text-[#8a5a0f]">
-                      {user.current_score} pts
+                      {user.current_score} {t(L.kid.pts)}
                     </div>
                     {/* Podium bar */}
                     <div
@@ -171,14 +174,14 @@ export default function LeaderboardPage() {
               <UserAvatar name={currentUser.name} size={34} />
               <div>
                 <p className="font-bold text-sm text-white leading-none">{currentUser.name}</p>
-                <p className="text-[10px] text-white/70 mt-0.5">{currentUser.rank <= 10 ? 'Top 10!' : 'Keep going!'}</p>
+                <p className="text-[10px] text-white/70 mt-0.5">{currentUser.rank <= 10 ? t(L.kid.top10) : t(L.kid.keepGoing)}</p>
               </div>
             </div>
             <span
               className="font-bold text-sm px-3 py-1 rounded-full"
               style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
             >
-              {currentUser.score} pts
+              {currentUser.score} {t(L.kid.pts)}
             </span>
           </div>
         </div>

@@ -9,6 +9,8 @@ import PushSubscriber from '@/components/PushSubscriber'
 import { getAnalytics } from './actions'
 import type { Analytics } from './actions'
 import { bibleBooks } from '@/constants/bibleBooks'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 interface AdminDashboardViewProps {
   userRole: string
@@ -18,6 +20,7 @@ interface AdminDashboardViewProps {
 
 export default function AdminDashboardView({ userRole, stats, todayReading }: AdminDashboardViewProps) {
   const router = useRouter()
+  const { t } = useLanguage()
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
 
   useEffect(() => {
@@ -34,9 +37,9 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
         {/* Page header */}
         <div className="mb-1">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {userRole === 'superuser' ? 'Superuser' : 'Admin'}
+            {userRole === 'superuser' ? t(L.roles.servant) : t(L.roles.coordinator)}
           </p>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Overview</h1>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.admin.overview)}</h1>
         </div>
 
         {/* Stats grid */}
@@ -51,7 +54,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
               {stats.totalUsers}
             </div>
             <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-2">
-              {userRole === 'admin' ? 'Total Users' : 'Total Kids'}
+              {userRole === 'admin' ? t(L.admin.totalUsers) : t(L.admin.totalStudents)}
             </div>
           </div>
           <div
@@ -69,7 +72,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
               {stats.pendingCount}
             </div>
             <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-2">
-              Pending Approval
+              {t(L.admin.pendingApproval)}
             </div>
           </div>
         </motion.div>
@@ -81,7 +84,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
           transition={{ duration: 0.35, delay: 0.05 }}
         >
           <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground mb-3">
-            Today&apos;s Reading
+            {t(L.admin.todayReading)}
           </p>
           {todayReading === undefined ? (
             <div className="rounded-2xl border border-border bg-card p-5 flex justify-center">
@@ -89,7 +92,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
             </div>
           ) : todayReading === null ? (
             <div className="rounded-2xl border border-border bg-card p-5 text-center">
-              <p className="text-muted-foreground text-sm">No reading assigned for today</p>
+              <p className="text-muted-foreground text-sm">{t(L.admin.noReadingToday)}</p>
             </div>
           ) : (
             <div
@@ -100,7 +103,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icon0.svg" alt="" width={90} height={90} />
               </div>
-              <p className="text-[11px] font-bold uppercase tracking-[1.4px] text-[#8a5a0f]">Today</p>
+              <p className="text-[11px] font-bold uppercase tracking-[1.4px] text-[#8a5a0f]">{t(L.admin.today)}</p>
               <h2 className="text-[20px] font-bold tracking-tight text-foreground mt-1.5 leading-snug">
                 {bibleBooks.find((b) => b.id === Number(todayReading.book))?.name ?? `Book ${todayReading.book}`}
               </h2>
@@ -111,7 +114,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                   <path d="M6 1l1.5 3L11 4.5 8.5 7l.7 3.5L6 9l-3.2 1.5.7-3.5L1 4.5 4.5 4 6 1z"/>
                 </svg>
-                {todayReading.verseCount} verses
+                {todayReading.verseCount} {t(L.admin.verses)}
               </div>
             </div>
           )}
@@ -124,7 +127,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
           transition={{ duration: 0.35, delay: 0.1 }}
         >
           <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground mb-3">
-            Analytics
+            {t(L.admin.analytics)}
           </p>
           {!analytics ? (
             <div className="rounded-2xl border border-border bg-card p-6 flex justify-center">
@@ -138,7 +141,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
                     {analytics.overallReadingPct}%
                   </div>
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-2">
-                    Reading Rate
+                    {t(L.admin.readingRate)}
                   </div>
                 </div>
                 <div className="rounded-2xl border border-border bg-card p-4">
@@ -146,7 +149,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
                     {analytics.overallCorrectPct}%
                   </div>
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-2">
-                    Correct Answers
+                    {t(L.admin.correctAnswers)}
                   </div>
                 </div>
               </div>
@@ -154,18 +157,18 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
               {analytics.byClass.length > 0 && (
                 <div className="rounded-2xl border border-border bg-card overflow-hidden">
                   <div className="px-4 py-3 border-b border-border">
-                    <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Per Class</p>
+                    <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.admin.perClass)}</p>
                   </div>
                   <div className="divide-y divide-border">
                     {analytics.byClass.map((cls) => (
                       <div key={cls.className} className="px-4 py-3 space-y-2">
                         <div className="flex items-center justify-between">
                           <p className="font-bold text-sm">{cls.className}</p>
-                          <span className="text-xs text-muted-foreground">{cls.totalKids} kids</span>
+                          <span className="text-xs text-muted-foreground">{cls.totalKids} {t(L.admin.kids)}</span>
                         </div>
                         <div className="space-y-1.5">
-                          <ProgressBar label="Reading" value={cls.readingPct} amber />
-                          <ProgressBar label="Correct" value={cls.correctPct} amber={false} />
+                          <ProgressBar label={t(L.admin.readingRate)} value={cls.readingPct} amber />
+                          <ProgressBar label={t(L.admin.correctAnswers)} value={cls.correctPct} amber={false} />
                         </div>
                       </div>
                     ))}
@@ -184,7 +187,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
           className="pb-2"
         >
           <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground mb-3">
-            Quick Actions
+            {t(L.admin.quickActions)}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -196,7 +199,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
                 <path d="M1 17c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
                 <path d="M13 5a3 3 0 010 4M16 17c1.5-1 2-2.5 2-3.5a2.5 2.5 0 00-3-2.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
               </svg>
-              <p className="font-bold text-sm text-foreground">Manage Kids</p>
+              <p className="font-bold text-sm text-foreground">{t(L.admin.manageStudents)}</p>
             </button>
             <button
               onClick={() => router.push('/admin/assignments')}
@@ -206,7 +209,7 @@ export default function AdminDashboardView({ userRole, stats, todayReading }: Ad
                 <rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" strokeWidth="1.8"/>
                 <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
               </svg>
-              <p className="font-bold text-sm text-foreground">Assign Reading</p>
+              <p className="font-bold text-sm text-foreground">{t(L.admin.assignReading)}</p>
             </button>
           </div>
         </motion.div>

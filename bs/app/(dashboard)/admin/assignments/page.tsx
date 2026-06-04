@@ -8,8 +8,11 @@ import type { QuestionBuilder, QuestionOptionBuilder } from '@/types'
 import { bibleBooks } from '@/constants/bibleBooks'
 import MessageBox from '@/components/MessageBox'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 export default function AssignmentsPage() {
+  const { t } = useLanguage()
   const [currentDate, setCurrentDate] = useState<Date | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [bookId, setBookId] = useState('')
@@ -91,21 +94,21 @@ export default function AssignmentsPage() {
   const validateChapter = (val: string) => {
     const n = parseInt(val)
     if (!val) { setChapterError(''); return }
-    if (isNaN(n) || n < 1) { setChapterError('Must be at least 1'); return }
-    if (maxChapter && n > maxChapter) { setChapterError(`Max chapter is ${maxChapter}`); return }
+    if (isNaN(n) || n < 1) { setChapterError(t(L.assignments.mustBeAtLeast1)); return }
+    if (maxChapter && n > maxChapter) { setChapterError(`${t(L.assignments.maxChapterIs)} ${maxChapter}`); return }
     setChapterError('')
   }
 
   const validateVerses = (from: string, to: string) => {
-    const f = parseInt(from), t = parseInt(to)
+    const f = parseInt(from), t2 = parseInt(to)
     if (!from && !to) { setVerseError(''); return }
-    if (from && (isNaN(f) || f < 1)) { setVerseError('From must be at least 1'); return }
-    if (to && (isNaN(t) || t < 1)) { setVerseError('To must be at least 1'); return }
+    if (from && (isNaN(f) || f < 1)) { setVerseError(t(L.assignments.fromAtLeast1)); return }
+    if (to && (isNaN(t2) || t2 < 1)) { setVerseError(t(L.assignments.toAtLeast1)); return }
     if (maxVerse) {
-      if (from && f > maxVerse) { setVerseError(`Max verse is ${maxVerse}`); return }
-      if (to && t > maxVerse) { setVerseError(`Max verse is ${maxVerse}`); return }
+      if (from && f > maxVerse) { setVerseError(`${t(L.assignments.maxVerseIs)} ${maxVerse}`); return }
+      if (to && t2 > maxVerse) { setVerseError(`${t(L.assignments.maxVerseIs)} ${maxVerse}`); return }
     }
-    if (from && to && f > t) { setVerseError('From must be ≤ To'); return }
+    if (from && to && f > t2) { setVerseError(t(L.assignments.fromLessThanTo)); return }
     setVerseError('')
   }
 
@@ -135,13 +138,13 @@ export default function AssignmentsPage() {
 
   const saveReading = async () => {
     if (chapterError || verseError) {
-      setFeedback({ type: 'error', message: 'Fix validation errors before publishing' }); return
+      setFeedback({ type: 'error', message: t(L.assignments.fixValidation) }); return
     }
     if (!bookId || !chapter || !verseFrom || !verseTo || !selectedDate) {
-      setFeedback({ type: 'error', message: 'Please fill all fields' }); return
+      setFeedback({ type: 'error', message: t(L.assignments.fillAllFields) }); return
     }
     if (!userGrade || !userTenant) {
-      setFeedback({ type: 'error', message: 'User data not loaded' }); return
+      setFeedback({ type: 'error', message: t(L.assignments.userDataNotLoaded) }); return
     }
     const dateString = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
     try {
@@ -161,14 +164,14 @@ export default function AssignmentsPage() {
           if (!q.question.trim() || q.options.length < 2 || !q.options.some((o: QuestionOptionBuilder) => o.isCorrect) || q.options.some((o: QuestionOptionBuilder) => !o.text.trim())) continue
           await fetch('/api/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reading: readingId, question: q.question, score: q.score, options: q.options }) })
         }
-        setFeedback({ type: 'success', message: 'Reading published!' })
+        setFeedback({ type: 'success', message: t(L.assignments.readingPublished) })
         setQuestions([{ question: '', score: 10, options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }])
         setVersePreview([]); setBookId(''); setChapter('')
       } else {
-        setFeedback({ type: 'error', message: 'Error saving reading' })
+        setFeedback({ type: 'error', message: t(L.assignments.errorSaving) })
       }
     } catch {
-      setFeedback({ type: 'error', message: 'Error saving reading' })
+      setFeedback({ type: 'error', message: t(L.assignments.errorSaving) })
     }
   }
 
@@ -198,17 +201,17 @@ export default function AssignmentsPage() {
         {/* Page header */}
         <div className="flex items-start justify-between mb-1">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Daily Config</p>
-            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Assign Reading</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.nav.reading)}</p>
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.admin.assignReading)}</h1>
           </div>
           <Button onClick={saveReading} className="shadow-[0_2px_0_rgba(138,90,15,0.25)] mt-1" size="sm">
-            Publish
+            {t(L.assignments.publish)}
           </Button>
         </div>
 
         {/* Schedule */}
         <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Schedule</p>
+          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.assignments.schedule)}</p>
           {!currentDate ? (
             <div className="flex justify-center py-4">
               <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -253,26 +256,26 @@ export default function AssignmentsPage() {
 
         {/* Passage */}
         <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Passage</p>
+          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.assignments.passage)}</p>
 
           <label className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer"
             style={{ background: 'rgba(194,133,27,0.06)', borderColor: 'rgba(194,133,27,0.25)' }}
           >
             <input type="checkbox" checked={isWholeTenant} onChange={(e) => setIsWholeTenant(e.target.checked)} className="w-4 h-4 accent-primary" />
-            <span className="text-sm font-semibold" style={{ color: '#c2851b' }}>Assign to Whole Tenant</span>
+            <span className="text-sm font-semibold" style={{ color: '#c2851b' }}>{t(L.assignments.wholeTenant)}</span>
           </label>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Bible Book</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t(L.assignments.bibleBook)}</label>
             <select value={bookId} onChange={(e) => { setBookId(e.target.value); setChapter(''); setVerseFrom(''); setVerseTo(''); setChapterError(''); setVerseError('') }} className={inputClass}>
-              <option value="">Select Book</option>
+              <option value="">{t(L.assignments.selectBook)}</option>
               {bibleBooks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Chapter</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t(L.assignments.chapter)}</label>
               <input
                 type="number"
                 min="1"
@@ -284,10 +287,10 @@ export default function AssignmentsPage() {
                 className={`${inputClass} ${chapterError ? 'border-destructive focus:ring-destructive/30' : ''}`}
               />
               {chapterError && <p className="text-xs text-destructive font-semibold">{chapterError}</p>}
-              {!chapterError && maxChapter && <p className="text-xs text-muted-foreground">{maxChapter} chapters</p>}
+              {!chapterError && maxChapter && <p className="text-xs text-muted-foreground">{maxChapter} {t(L.assignments.chaptersCount)}</p>}
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Verses</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t(L.assignments.versesLabel)}</label>
               <div className="flex items-center gap-1">
                 <input
                   type="number"
@@ -295,7 +298,7 @@ export default function AssignmentsPage() {
                   value={verseFrom}
                   onChange={(e) => { setVerseFrom(e.target.value); validateVerses(e.target.value, verseTo) }}
                   onBlur={(e) => validateVerses(e.target.value, verseTo)}
-                  placeholder="From"
+                  placeholder={t(L.assignments.fromPlaceholder)}
                   disabled={!chapter || !!chapterError}
                   className={`${inputClass} ${verseError ? 'border-destructive focus:ring-destructive/30' : ''}`}
                 />
@@ -306,31 +309,31 @@ export default function AssignmentsPage() {
                   value={verseTo}
                   onChange={(e) => { setVerseTo(e.target.value); validateVerses(verseFrom, e.target.value) }}
                   onBlur={(e) => validateVerses(verseFrom, e.target.value)}
-                  placeholder="To"
+                  placeholder={t(L.assignments.toPlaceholder)}
                   disabled={!chapter || !!chapterError}
                   className={`${inputClass} ${verseError ? 'border-destructive focus:ring-destructive/30' : ''}`}
                 />
               </div>
               {verseError && <p className="text-xs text-destructive font-semibold">{verseError}</p>}
-              {!verseError && maxVerse && <p className="text-xs text-muted-foreground">{maxVerse} verses</p>}
+              {!verseError && maxVerse && <p className="text-xs text-muted-foreground">{maxVerse} {t(L.assignments.versesCount)}</p>}
             </div>
           </div>
 
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="flex-1" onClick={fetchFullChapter} disabled={!bookId || !chapter}>
-              Full Chapter
+              {t(L.assignments.fullChapter)}
             </Button>
             <Button size="sm" className="flex-1 shadow-[0_2px_0_rgba(138,90,15,0.25)]" onClick={loadPreview} disabled={!bookId || !chapter || isLoadingPreview || !!chapterError || !!verseError}>
-              {isLoadingPreview ? <Loader2 size={14} className="animate-spin" /> : <><Eye size={14} className="mr-1" />Preview</>}
+              {isLoadingPreview ? <Loader2 size={14} className="animate-spin" /> : <><Eye size={14} className="mr-1" />{t(L.assignments.previewBtn)}</>}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => { setVerseFrom(''); setVerseTo(''); setVersePreview([]) }}>Clear</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setVerseFrom(''); setVerseTo(''); setVersePreview([]) }}>{t(L.assignments.clear)}</Button>
           </div>
         </div>
 
         {/* Preview */}
         {versePreview.length > 0 && (
           <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Preview</p>
+            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.assignments.preview)}</p>
             <div className="space-y-2 max-h-72 overflow-y-auto" dir="rtl">
               {versePreview.map((verse, i) => (
                 <div key={i} className="p-3 rounded-xl bg-accent/40 text-sm leading-relaxed font-[family-name:var(--font-arabic)]">{verse}</div>
@@ -342,12 +345,12 @@ export default function AssignmentsPage() {
         {/* Quiz */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Daily Quiz</p>
+            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.assignments.dailyQuiz)}</p>
             <button
               onClick={addQuestion}
               className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border border-border bg-card hover:bg-accent/30 transition-colors"
             >
-              <Plus size={12} />New Question
+              <Plus size={12} />{t(L.assignments.newQuestion)}
             </button>
           </div>
 
@@ -359,7 +362,7 @@ export default function AssignmentsPage() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(194,133,27,0.10)', color: '#c2851b' }}>
-                  Question {qi + 1}
+                  {t(L.assignments.questionLabel)} {qi + 1}
                 </span>
                 <button onClick={() => removeQuestion(qi)} className="text-muted-foreground hover:text-destructive transition-colors">
                   <Trash2 size={14} />
@@ -369,11 +372,11 @@ export default function AssignmentsPage() {
                 value={q.question}
                 onChange={(e) => updateQuestion(qi, 'question', e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground resize-none"
-                placeholder="Enter question…"
+                placeholder={t(L.assignments.enterQuestion)}
                 rows={2}
               />
               <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-muted-foreground">Score</label>
+                <label className="text-xs font-bold text-muted-foreground">{t(L.assignments.scoreLabel)}</label>
                 <input
                   type="number"
                   value={q.score}
@@ -383,7 +386,7 @@ export default function AssignmentsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-bold text-muted-foreground">Options (tap ✓ to mark correct)</p>
+                <p className="text-xs font-bold text-muted-foreground">{t(L.assignments.optionsLabel)}</p>
                 {q.options.map((opt: QuestionOptionBuilder, oi: number) => (
                   <div key={oi} className="flex items-center gap-2">
                     <input
@@ -411,7 +414,7 @@ export default function AssignmentsPage() {
                     onClick={() => addOption(qi)}
                     className="w-full py-2 border-2 border-dashed border-border rounded-xl text-muted-foreground text-xs font-bold hover:border-primary hover:text-primary transition-colors"
                   >
-                    + Add Option
+                    {t(L.assignments.addOption)}
                   </button>
                 )}
               </div>

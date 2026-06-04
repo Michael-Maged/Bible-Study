@@ -12,12 +12,15 @@ import PushSubscriber from '@/components/PushSubscriber'
 import { markReadingComplete } from './actions'
 import { cacheReading, isOnline } from '@/utils/offlineCache'
 import type { TodayReading, Question, CorrectAnswer, Attempt, QuizResults } from '@/types'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 interface KidDashboardViewProps {
   initialReading: TodayReading | null
 }
 
 export default function KidDashboardView({ initialReading }: KidDashboardViewProps) {
+  const { t } = useLanguage()
   const [reading, setReading] = useState<TodayReading | null>(initialReading)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({})
   const [quizResults, setQuizResults] = useState<QuizResults | null>(null)
@@ -82,7 +85,7 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
   const handleSubmitQuiz = async () => {
     if (!reading?.questions?.length) return
     const allAnswered = reading.questions.every((q: Question) => selectedAnswers[q.id]?.length > 0)
-    if (!allAnswered) { setFeedback({ type: 'error', message: 'Please answer all questions' }); return }
+    if (!allAnswered) { setFeedback({ type: 'error', message: t(L.kid.answerAll) }); return }
     const answers = Object.entries(selectedAnswers).flatMap(([qId, opts]) => opts.map((o) => ({ questionId: qId, optionId: o })))
     setSubmitting(true)
     try {
@@ -134,8 +137,8 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icon0.svg" alt="" width={44} height={44} />
             </div>
-            <h2 className="text-xl font-bold text-foreground">No Reading Today</h2>
-            <p className="text-muted-foreground text-sm">Check back later for your next assignment.</p>
+            <h2 className="text-xl font-bold text-foreground">{t(L.kid.noReadingToday)}</h2>
+            <p className="text-muted-foreground text-sm">{t(L.kid.checkBackLater)}</p>
           </div>
         </div>
         <KidNav active="dashboard" />
@@ -153,8 +156,8 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
         {/* Page header */}
         <div className="flex items-start justify-between mb-1">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Peace,</p>
-            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Today&apos;s Reading</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.kid.peace)}</p>
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.kid.todayReading)}</h1>
           </div>
           <div className="w-10 h-10 rounded-full bg-accent border border-border flex items-center justify-center flex-shrink-0 mt-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -173,7 +176,7 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
           </div>
 
           <p className="text-[11px] font-bold uppercase tracking-[1.4px] text-[#8a5a0f]">
-            Today&apos;s reading
+            {t(L.kid.todayReading)}
           </p>
           <h2 className="text-[22px] font-bold tracking-tight text-foreground mt-2 max-w-[220px] leading-snug">
             {reading.bookName}
@@ -188,7 +191,7 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
                 <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
                 <path d="M6 3v3l2 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
               </svg>
-              ~5 min read
+              {t(L.kid.minRead)}
             </div>
             {totalPoints > 0 && (
               <div className="flex items-center gap-1.5 text-xs font-bold text-[#8a5a0f]">
@@ -204,7 +207,7 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
                   <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
                   <path d="M3.5 6l2 2 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                Complete
+                {t(L.kid.complete)}
               </div>
             )}
           </div>
@@ -220,7 +223,7 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
             disabled={completing}
             className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]"
           >
-            {completing ? <><Loader2 size={16} className="mr-2 animate-spin" />Marking…</> : 'Mark as Complete'}
+            {completing ? <><Loader2 size={16} className="mr-2 animate-spin" />{t(L.kid.marking)}</> : t(L.kid.markComplete)}
           </Button>
         )}
 
@@ -231,7 +234,7 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
               <circle cx="10" cy="10" r="8.5" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M6 10l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="font-bold" style={{ color: '#5a7a3a' }}>Reading Complete!</span>
+            <span className="font-bold" style={{ color: '#5a7a3a' }}>{t(L.kid.readingComplete)}</span>
           </div>
         )}
 
@@ -240,7 +243,7 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
           <div className="space-y-3">
             <div className="rounded-2xl border border-border bg-card px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-[15px] font-bold text-foreground">Quick check</span>
+                <span className="text-[15px] font-bold text-foreground">{t(L.kid.quickCheck)}</span>
                 <span className="text-xs text-muted-foreground font-semibold">
                   {reading.questions.length} question{reading.questions.length !== 1 ? 's' : ''} · {totalPoints} pts
                 </span>
@@ -265,7 +268,7 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
                 disabled={submitting || !reading.questions.every((q: Question) => selectedAnswers[q.id]?.length > 0)}
                 className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]"
               >
-                {submitting ? <><Loader2 size={16} className="mr-2 animate-spin" />Submitting…</> : 'Submit Answers'}
+                {submitting ? <><Loader2 size={16} className="mr-2 animate-spin" />{t(L.kid.submitting)}</> : t(L.kid.submitAnswers)}
               </Button>
             ) : (
               <div className="rounded-2xl border border-border bg-card p-5 text-center space-y-1">
@@ -274,8 +277,8 @@ export default function KidDashboardView({ initialReading }: KidDashboardViewPro
                     <path d="M11 2l2.2 4.6L18 7.6l-3.5 3.4.8 4.8L11 13.5l-4.3 2.3.8-4.8L4 7.6l4.8-.9L11 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <h4 className="text-base font-bold text-foreground">Brilliant work!</h4>
-                <p className="text-sm font-bold text-primary">You earned {quizResults.totalScore} points!</p>
+                <h4 className="text-base font-bold text-foreground">{t(L.kid.brilliantWork)}</h4>
+                <p className="text-sm font-bold text-primary">{t(L.kid.youEarned)} {quizResults.totalScore} {t(L.kid.points)}</p>
               </div>
             )}
           </div>

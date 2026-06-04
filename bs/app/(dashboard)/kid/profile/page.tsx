@@ -7,6 +7,8 @@ import { cacheProfile, getCachedProfile } from '@/utils/offlineCache'
 import KidNav from '@/components/KidNav'
 import { useOfflineData } from '@/hooks/useOfflineData'
 import { useState } from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -95,6 +97,7 @@ function SettingRow({
 }
 
 export default function ProfilePage() {
+  const { t, lang, toggle } = useLanguage()
   const { data: profile, loading } = useOfflineData(getUserProfile, getCachedProfile, cacheProfile)
   const [notifEnabled, setNotifEnabled] = useState(
     () => typeof window !== 'undefined' && localStorage.getItem('push_opted_out') !== 'true'
@@ -123,7 +126,7 @@ export default function ProfilePage() {
 
   if (!profile) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <p className="text-muted-foreground text-sm">Profile not found</p>
+      <p className="text-muted-foreground text-sm">{t(L.kid.profileNotFound)}</p>
     </div>
   )
 
@@ -137,8 +140,8 @@ export default function ProfilePage() {
 
         {/* Page header */}
         <div className="mb-1">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Account</p>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Profile</h1>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.kid.account)}</p>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.kid.profile)}</h1>
         </div>
 
         {/* Hero card */}
@@ -153,7 +156,7 @@ export default function ProfilePage() {
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#8a5a0f]">My class</p>
+            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#8a5a0f]">{t(L.kid.myClass)}</p>
             <p className="text-[15px] font-bold text-foreground mt-0.5">
               {profile.tenant || 'Bible Kids'}
               {profile.className ? ` · ${profile.className}` : ''}
@@ -165,11 +168,11 @@ export default function ProfilePage() {
         {/* Stat tiles */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { value: profile.current_score ?? 0, label: 'Total pts', accent: true },
-            { value: profile.streak ?? 0, label: 'Day streak', accent: false },
-            { value: profile.best_streak ?? 0, label: 'Best streak', accent: false },
-          ].map(({ value, label, accent }) => (
-            <div key={label} className="rounded-2xl border border-border bg-card p-3">
+            { value: profile.current_score ?? 0, labelKey: 'totalPts' as const, labelText: t(L.kid.totalPts), accent: true },
+            { value: profile.streak ?? 0, labelKey: 'dayStreak' as const, labelText: t(L.kid.dayStreak), accent: false },
+            { value: profile.best_streak ?? 0, labelKey: 'bestStreak' as const, labelText: t(L.kid.bestStreak), accent: false },
+          ].map(({ value, labelKey, labelText, accent }) => (
+            <div key={labelKey} className="rounded-2xl border border-border bg-card p-3">
               <div
                 className="text-[22px] font-bold tracking-tight leading-none"
                 style={{ color: accent ? 'var(--primary)' : 'var(--foreground)' }}
@@ -177,7 +180,7 @@ export default function ProfilePage() {
                 {value}
               </div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-1.5">
-                {label}
+                {labelText}
               </div>
             </div>
           ))}
@@ -193,7 +196,7 @@ export default function ProfilePage() {
             )}
             {profile.age && (
               <span className="text-xs font-semibold px-3 py-1 rounded-full border border-border bg-card text-foreground">
-                {profile.age} yrs
+                {profile.age} {t(L.kid.yrs)}
               </span>
             )}
             {profile.gender && (
@@ -206,7 +209,7 @@ export default function ProfilePage() {
 
         {/* Settings section label */}
         <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground px-1 pt-1">
-          Settings
+          {t(L.kid.settings)}
         </p>
 
         {/* Settings list */}
@@ -218,8 +221,8 @@ export default function ProfilePage() {
                 <path d="M6.5 12.5a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.3"/>
               </svg>
             }
-            label="Daily reminder"
-            sub={notifEnabled ? 'Notifications enabled' : 'Notifications off'}
+            label={t(L.kid.dailyReminder)}
+            sub={notifEnabled ? t(L.kid.notifEnabled) : t(L.kid.notifOff)}
             toggle
             toggleOn={notifEnabled}
             onToggle={toggleNotifications}
@@ -231,9 +234,10 @@ export default function ProfilePage() {
                 <path d="M2 8h12M8 2a8 8 0 010 12M8 2a8 8 0 000 12" stroke="currentColor" strokeWidth="1.3"/>
               </svg>
             }
-            label="Language"
-            sub="English"
+            label={t(L.kid.language)}
+            sub={lang === 'en' ? t(L.kid.english) : t(L.kid.arabic)}
             chevron
+            onClick={toggle}
           />
           <SettingRow
             icon={
@@ -251,8 +255,8 @@ export default function ProfilePage() {
                 <path d="M6 3H4a1 1 0 00-1 1v8a1 1 0 001 1h2M10 11l3-3-3-3M13 8H6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             }
-            label="Log out"
-            sub="Sign out of this device"
+            label={t(L.kid.logOut)}
+            sub={t(L.kid.signOutDevice)}
             chevron
             onClick={handleLogout}
             danger

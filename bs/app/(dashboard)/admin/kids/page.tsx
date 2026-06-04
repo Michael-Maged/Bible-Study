@@ -9,6 +9,8 @@ import OfflineBanner from '@/components/OfflineBanner'
 import KidSummaryTile from '@/components/admin/KidSummaryTile'
 import CustomSelect from '@/components/CustomSelect'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 type Kid = {
   id: string
@@ -21,6 +23,7 @@ type Kid = {
 
 export default function AssignedKidsPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [kids, setKids] = useState<Kid[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -77,15 +80,15 @@ export default function AssignedKidsPage() {
         {/* Page header */}
         <div className="flex items-start justify-between mb-1">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Management</p>
-            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Kids</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t(L.admin.management)}</p>
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.roles.students)}</h1>
           </div>
           {pending > 0 && (
             <span
               className="text-xs font-bold px-3 py-1 rounded-full mt-1"
               style={{ background: 'rgba(194,133,27,0.12)', color: '#c2851b' }}
             >
-              {pending} pending
+              {pending}{' '}{t(L.admin.pending)}
             </span>
           )}
         </div>
@@ -102,7 +105,7 @@ export default function AssignedKidsPage() {
           </svg>
           <input
             type="text"
-            placeholder="Search by name…"
+            placeholder={t(L.admin.searchByName)}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-11 pl-9 pr-4 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground"
@@ -115,10 +118,10 @@ export default function AssignedKidsPage() {
           style={{ background: '#f0e8d6' }}
         >
           {[
-            { key: 'all', label: 'All' },
-            { key: 'accepted', label: 'Approved' },
-            { key: 'pending', label: 'Pending' },
-            { key: 'transferred', label: 'Transferred' },
+            { key: 'all', label: t(L.status.all) },
+            { key: 'accepted', label: t(L.status.approved) },
+            { key: 'pending', label: t(L.status.pending) },
+            { key: 'transferred', label: t(L.status.transferred) },
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -145,11 +148,11 @@ export default function AssignedKidsPage() {
                 value={typeFilter}
                 onChange={setTypeFilter}
                 options={[
-                  { value: 'all', label: 'All types' },
-                  { value: 'kid', label: 'Kids' },
-                  { value: 'admin', label: 'Superusers' },
+                  { value: 'all', label: t(L.admin.allTypes) },
+                  { value: 'kid', label: t(L.roles.students) },
+                  { value: 'admin', label: t(L.admin.coordinators) },
                 ]}
-                placeholder="All types"
+                placeholder={t(L.admin.allTypes)}
                 icon=""
               />
             </div>
@@ -161,8 +164,8 @@ export default function AssignedKidsPage() {
                 name="class-filter"
                 value={classFilter}
                 onChange={setClassFilter}
-                options={[{ value: 'all', label: 'All classes' }, ...classes.map(c => ({ value: c, label: c }))]}
-                placeholder="All classes"
+                options={[{ value: 'all', label: t(L.admin.allClasses) }, ...classes.map(c => ({ value: c, label: c }))]}
+                placeholder={t(L.admin.allClasses)}
                 icon=""
               />
             </div>
@@ -180,7 +183,7 @@ export default function AssignedKidsPage() {
               <circle cx="16" cy="14" r="6" stroke="currentColor" strokeWidth="2.5"/>
               <path d="M4 34c0-6 5.4-10 12-10s12 4 12 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
-            <p className="font-semibold text-sm">No kids found</p>
+            <p className="font-semibold text-sm">{t(L.admin.noStudentsFound)}</p>
           </div>
         ) : (
           <div className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -191,7 +194,7 @@ export default function AssignedKidsPage() {
                     kidId={kid.id}
                     kidName={kid.user.name}
                     readToday={kid.status === 'accepted'}
-                    statusLabel={kid.status === 'transferred' ? 'Transferred' : kid.status === 'rejected' ? 'Rejected' : 'Pending'}
+                    statusLabel={kid.status === 'transferred' ? t(L.status.transferred) : kid.status === 'rejected' ? t(L.status.rejected) : t(L.status.pending)}
                     onTap={() => router.push(`/admin/kids/${kid.type}/${kid.id}`)}
                   />
                   {(kid.status === 'pending' || kid.status === 'transferred') && (
@@ -202,14 +205,14 @@ export default function AssignedKidsPage() {
                         className="flex-1"
                         onClick={() => handleAction(kid.id, kid.type, false)}
                       >
-                        Reject
+                        {t(L.admin.reject)}
                       </Button>
                       <Button
                         size="sm"
                         className="flex-[2] shadow-[0_2px_0_rgba(138,90,15,0.25)]"
                         onClick={() => handleAction(kid.id, kid.type, true)}
                       >
-                        Approve
+                        {t(L.admin.approve)}
                       </Button>
                     </div>
                   )}
@@ -220,7 +223,7 @@ export default function AssignedKidsPage() {
                         className="w-full shadow-[0_2px_0_rgba(138,90,15,0.25)]"
                         onClick={() => handleAction(kid.id, kid.type, true)}
                       >
-                        Accept
+                        {t(L.admin.accept)}
                       </Button>
                     </div>
                   )}
