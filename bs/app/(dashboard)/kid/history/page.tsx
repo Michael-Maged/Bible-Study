@@ -6,8 +6,11 @@ import LoadingScreen from '@/components/LoadingScreen'
 import { cacheHistory, getCachedHistory } from '@/utils/offlineCache'
 import KidNav from '@/components/KidNav'
 import { useOfflineData } from '@/hooks/useOfflineData'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 export default function HistoryPage() {
+  const { t } = useLanguage()
   const { data: history, loading } = useOfflineData(getReadingHistory, getCachedHistory, cacheHistory)
 
   if (loading) return <LoadingScreen />
@@ -40,17 +43,17 @@ export default function HistoryPage() {
         {/* Page header */}
         <div className="mb-2">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{monthLabel}</p>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">Your month</h1>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground mt-1">{t(L.kid.yourMonth)}</h1>
         </div>
 
         {/* Stat tiles */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { value: history?.longestStreak ?? 0, label: 'Longest streak', accent: true },
-            { value: `${completionRate}%`, label: 'Completion', accent: false },
-            { value: history?.totalDays ?? 0, label: 'Days read', accent: false },
-          ].map(({ value, label, accent }) => (
-            <div key={label} className="rounded-2xl border border-border bg-card p-3">
+            { value: history?.longestStreak ?? 0, labelKey: 'longestStreak' as const, labelText: t(L.kid.longestStreak), accent: true },
+            { value: `${completionRate}%`, labelKey: 'completion' as const, labelText: t(L.kid.completion), accent: false },
+            { value: history?.totalDays ?? 0, labelKey: 'daysRead' as const, labelText: t(L.kid.daysRead), accent: false },
+          ].map(({ value, labelKey, labelText, accent }) => (
+            <div key={labelKey} className="rounded-2xl border border-border bg-card p-3">
               <div
                 className="text-[22px] font-bold tracking-tight leading-none"
                 style={{ color: accent ? 'var(--primary)' : 'var(--foreground)' }}
@@ -58,7 +61,7 @@ export default function HistoryPage() {
                 {value}
               </div>
               <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mt-1.5">
-                {label}
+                {labelText}
               </div>
             </div>
           ))}
@@ -131,15 +134,15 @@ export default function HistoryPage() {
           <div className="flex flex-wrap gap-4 justify-center mt-4 pt-3 border-t border-border">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-[3px]" style={{ background: '#c2851b' }} />
-              <span className="text-[11px] font-semibold text-muted-foreground">Completed</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">{t(L.kid.completed)}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-[3px]" style={{ background: 'rgba(166,66,66,0.10)', border: '1px solid rgba(166,66,66,0.28)' }} />
-              <span className="text-[11px] font-semibold text-muted-foreground">Missed</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">{t(L.kid.missed)}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-[3px]" style={{ background: '#f4e4c0', border: '2px solid #c2851b' }} />
-              <span className="text-[11px] font-semibold text-muted-foreground">Today</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">{t(L.kid.todayLabel)}</span>
             </div>
           </div>
         </div>
