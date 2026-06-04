@@ -97,7 +97,7 @@ function SettingRow({
 }
 
 export default function ProfilePage() {
-  const { t } = useLanguage()
+  const { t, lang, toggle } = useLanguage()
   const { data: profile, loading } = useOfflineData(getUserProfile, getCachedProfile, cacheProfile)
   const [notifEnabled, setNotifEnabled] = useState(
     () => typeof window !== 'undefined' && localStorage.getItem('push_opted_out') !== 'true'
@@ -196,7 +196,7 @@ export default function ProfilePage() {
             )}
             {profile.age && (
               <span className="text-xs font-semibold px-3 py-1 rounded-full border border-border bg-card text-foreground">
-                {profile.age} yrs
+                {profile.age} {t(L.kid.yrs)}
               </span>
             )}
             {profile.gender && (
@@ -235,8 +235,9 @@ export default function ProfilePage() {
               </svg>
             }
             label={t(L.kid.language)}
-            sub={t(L.kid.english)}
+            sub={lang === 'en' ? t(L.kid.english) : t(L.kid.arabic)}
             chevron
+            onClick={toggle}
           />
           <SettingRow
             icon={

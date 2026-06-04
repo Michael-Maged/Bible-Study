@@ -111,7 +111,7 @@ export default function RegisterPage() {
       setStep('otp')
     } else {
       setStatus('error')
-      setMessage(result.error || 'Failed to send code')
+      setMessage(result.error || t(L.register.failedToSendCode))
     }
   }
 
@@ -126,7 +126,7 @@ export default function RegisterPage() {
       setStep('form')
     } else {
       setStatus('error')
-      setMessage(result.error || 'Invalid or expired code')
+      setMessage(result.error || t(L.register.invalidOrExpiredCode))
     }
   }
 
@@ -141,18 +141,18 @@ export default function RegisterPage() {
     setStatus('loading')
     const formData = new FormData(e.currentTarget)
     if (formData.get('password') !== formData.get('confirmPassword')) {
-      setStatus('error'); setMessage('Passwords do not match'); return
+      setStatus('error'); setMessage(t(L.register.passwordsDoNotMatch)); return
     }
     try {
       const result = await registerKidWithEmail(formData)
       if (result.success) {
-        setStatus('success'); setMessage('Registration successful! Waiting for admin approval…')
+        setStatus('success'); setMessage(t(L.register.registrationSuccess))
         setTimeout(() => router.push('/login'), 2000)
       } else {
-        setStatus('error'); setMessage(result.error || 'Registration failed')
+        setStatus('error'); setMessage(result.error || t(L.register.registrationFailed))
       }
     } catch (err) {
-      setStatus('error'); setMessage(err instanceof Error ? err.message : 'An error occurred')
+      setStatus('error'); setMessage(err instanceof Error ? err.message : t(L.register.anErrorOccurred))
     }
   }
 
@@ -161,7 +161,7 @@ export default function RegisterPage() {
       <PageShell>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <form onSubmit={handleSendOtp} className="space-y-4">
-            <LabeledInput label="Email" icon={Mail} type="email" name="email" placeholder="your@email.com" required />
+            <LabeledInput label={t(L.auth.email)} icon={Mail} type="email" name="email" placeholder="your@email.com" required />
             {status === 'error' && message && <MessageBox type="error" message={message} />}
             <Button type="submit" disabled={status === 'loading'} className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]">
               {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />{t(L.register.sending)}</> : t(L.register.sendCode)}
@@ -183,7 +183,7 @@ export default function RegisterPage() {
           </p>
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Verification Code</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t(L.register.verificationCode)}</label>
               <input
                 type="text"
                 name="otp"
@@ -216,7 +216,7 @@ export default function RegisterPage() {
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-bold text-foreground mb-4">{t(L.register.yourDetails)}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <LabeledInput label={t(L.register.fullName)} icon={User} type="text" name="name" placeholder="Your full name" required />
+          <LabeledInput label={t(L.register.fullName)} icon={User} type="text" name="name" placeholder={t(L.register.fullNamePlaceholder)} required />
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t(L.register.emailVerified)}</label>
@@ -234,22 +234,22 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Password</label>
-            <PasswordInput name="password" placeholder="Password (min 6 characters)" minLength={6} required className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30" />
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t(L.register.password)}</label>
+            <PasswordInput name="password" placeholder={t(L.register.passwordPlaceholder)} minLength={6} required className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30" />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Confirm Password</label>
-            <PasswordInput name="confirmPassword" placeholder="Confirm Password" minLength={6} required className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30" />
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t(L.register.confirmPassword)}</label>
+            <PasswordInput name="confirmPassword" placeholder={t(L.register.confirmPasswordPlaceholder)} minLength={6} required className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <LabeledInput label={t(L.register.age)} icon={User} type="number" name="age" placeholder="Age" min="1" max="18" required />
+            <LabeledInput label={t(L.register.age)} icon={User} type="number" name="age" placeholder={t(L.register.agePlaceholder)} min="1" max="18" required />
             <LabeledSelect label={t(L.register.gender)} id="gender" name="gender" value={selectedGender} onChange={setSelectedGender} options={[{ value: 'male', label: t(L.register.male) }, { value: 'female', label: t(L.register.female) }]} placeholder={t(L.register.gender)} icon="⚧" required />
           </div>
 
-          <LabeledSelect label="Church Stage" id="tenant" name="tenant" value={selectedTenant} onChange={handleTenantChange} options={tenants.map((t) => ({ value: t.id, label: t.name }))} placeholder={t(L.register.selectFamily)} icon="⛪" required />
-          <LabeledSelect label="Grade" id="grade" name="grade" value={selectedGrade} onChange={handleGradeChange} options={grades.map((g) => ({ value: g.id, label: g.name }))} placeholder={t(L.register.selectGrade)} icon="🎓" disabled={!selectedTenant} required />
-          <LabeledSelect label="Class" id="class" name="class" value={selectedClass} onChange={setSelectedClass} options={classes.map((c) => ({ value: c.id, label: c.name }))} placeholder={t(L.register.selectClass)} icon="📚" disabled={!selectedGrade} required />
+          <LabeledSelect label={t(L.register.churchStage)} id="tenant" name="tenant" value={selectedTenant} onChange={handleTenantChange} options={tenants.map((t) => ({ value: t.id, label: t.name }))} placeholder={t(L.register.selectFamily)} icon="⛪" required />
+          <LabeledSelect label={t(L.entities.grade)} id="grade" name="grade" value={selectedGrade} onChange={handleGradeChange} options={grades.map((g) => ({ value: g.id, label: g.name }))} placeholder={t(L.register.selectGrade)} icon="🎓" disabled={!selectedTenant} required />
+          <LabeledSelect label={t(L.entities.class)} id="class" name="class" value={selectedClass} onChange={setSelectedClass} options={classes.map((c) => ({ value: c.id, label: c.name }))} placeholder={t(L.register.selectClass)} icon="📚" disabled={!selectedGrade} required />
 
           {(status === 'success' || status === 'error') && message && (
             <MessageBox type={status === 'success' ? 'success' : 'error'} message={message} />

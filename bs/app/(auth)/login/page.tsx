@@ -35,8 +35,8 @@ function LoginForm() {
 
   const errorParam = searchParams.get('error')
   const oauthError =
-    errorParam === 'not_registered' ? 'No account found. Please register first.' :
-    errorParam === 'auth_failed' ? 'Sign in failed. Please try again.' :
+    errorParam === 'not_registered' ? t(L.loginErrors.notRegistered) :
+    errorParam === 'auth_failed' ? t(L.loginErrors.authFailed) :
     null
 
   async function handleGoogleLogin() {
@@ -50,7 +50,7 @@ function LoginForm() {
     })
     if (error) {
       setStatus('error')
-      setMessage('Google sign-in failed. Please try again.')
+      setMessage(t(L.loginErrors.googleFailed))
     }
   }
 
@@ -66,11 +66,11 @@ function LoginForm() {
         window.location.href = result.user.role === 'admin' || result.user.role === 'superuser' ? '/admin' : '/kid/dashboard'
       } else {
         setStatus('error')
-        setMessage(result.error || 'Login failed')
+        setMessage(result.error || t(L.register.loginFailed))
       }
     } catch (err) {
       setStatus('error')
-      setMessage(err instanceof Error ? err.message : 'Login failed')
+      setMessage(err instanceof Error ? err.message : t(L.register.loginFailed))
     }
   }
 
@@ -90,7 +90,7 @@ function LoginForm() {
       setStep('sent')
     } else {
       setStatus('error')
-      setMessage(error.message || 'Failed to send reset email')
+      setMessage(error.message || t(L.loginErrors.failedToSendReset))
     }
   }
 

@@ -119,7 +119,7 @@ export default function LeaderboardPage() {
                       {user.name.split(' ')[0]}
                     </div>
                     <div className="text-[11px] font-bold text-[#8a5a0f]">
-                      {user.current_score} pts
+                      {user.current_score} {t(L.kid.pts)}
                     </div>
                     {/* Podium bar */}
                     <div
@@ -181,7 +181,7 @@ export default function LeaderboardPage() {
               className="font-bold text-sm px-3 py-1 rounded-full"
               style={{ background: 'rgba(255,255,255,0.2)', color: '#fff' }}
             >
-              {currentUser.score} pts
+              {currentUser.score} {t(L.kid.pts)}
             </span>
           </div>
         </div>
