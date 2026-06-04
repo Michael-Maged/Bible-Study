@@ -127,7 +127,7 @@ function LoginForm() {
               </div>
               {status === 'error' && message && <MessageBox type="error" message={message} />}
               <Button type="submit" disabled={status === 'loading'} className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]">
-                {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />{t(L.auth.sending)}</> : t(L.auth.sendResetLink)}
+                {status === 'loading' ? <><Loader2 size={16} className="me-2 animate-spin" />{t(L.auth.sending)}</> : t(L.auth.sendResetLink)}
               </Button>
             </form>
           </div>
@@ -214,7 +214,7 @@ function LoginForm() {
                 required
                 className="h-11 rounded-xl border-border bg-background focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
-              <div className="text-right mt-1">
+              <div className="text-end mt-1">
                 <button
                   type="button"
                   onClick={() => { setStep('forgot'); setStatus('idle'); setMessage('') }}
@@ -233,7 +233,7 @@ function LoginForm() {
               disabled={status === 'loading'}
               className="w-full h-11 font-bold text-base shadow-[0_2px_0_rgba(138,90,15,0.25)]"
             >
-              {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />{t(L.auth.signingIn)}</> : t(L.auth.signIn)}
+              {status === 'loading' ? <><Loader2 size={16} className="me-2 animate-spin" />{t(L.auth.signingIn)}</> : t(L.auth.signIn)}
             </Button>
           </form>
 
