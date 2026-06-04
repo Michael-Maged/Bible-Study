@@ -15,55 +15,6 @@ const getAdminClient = () =>
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-async function sendToSubs(subs: { subscription: string }[], payload: object) {
-  const str = JSON.stringify(payload)
-  await Promise.allSettled(
-    subs.map(({ subscription }) => webpush.sendNotification(JSON.parse(subscription), str))
-  )
-}
-
-export async function sendNewRegistrationNotification({
-  kidName,
-  ageGroup,
-  grade,
-  tenant,
-  gender,
-}: {
-  kidName: string
-  ageGroup: string
-  grade: number
-  tenant: string
-  gender: string
-}) {
-  const supabase = getAdminClient()
-
-  const { data: gradeData } = await supabase
-    .from('grade')
-    .select('gender')
-    .eq('grade_num', grade)
-    .eq('tenant', tenant)
-    .single()
-
-  const isMixed = gradeData?.gender === 'mix' || gradeData?.gender === 'mixed'
-
-  let query = supabase
-    .from('pushsubscriptions')
-    .select('subscription')
-    .eq('grade', grade)
-    .eq('tenant', tenant)
-
-  if (!isMixed) query = query.eq('gender', gender)
-
-  const { data: subs } = await query
-  if (!subs?.length) return
-
-  await sendToSubs(subs, {
-    title: '📋 New Registration',
-    body: `${kidName} (${ageGroup}) is awaiting approval`,
-    url: '/admin/pending',
-  })
-}
-
 export async function sendDailyReadingReminder() {
   const supabase = getAdminClient()
   const today = new Date().toLocaleDateString('en-CA')

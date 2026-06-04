@@ -2,7 +2,6 @@
 
 import { createAdminClient } from '@/utils/supabase/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendNewRegistrationNotification } from '@/utils/pushNotify'
 
 const getAnonClient = () => createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -69,28 +68,6 @@ export async function registerKidWithEmail(formData: FormData) {
     if (userError) {
       await supabaseAdmin.auth.admin.deleteUser(data.user.id)
       return { success: false, error: userError.message }
-    }
-
-    // Fetch grade_num to notify matching admins
-    const supabaseAnon = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    const { data: classData } = await supabaseAnon
-      .from('classes')
-      .select('grade')
-      .eq('id', userData.classId)
-      .single()
-
-    if (classData) {
-      const ageGroup = userData.age < 10 ? 'Under 10' : userData.age < 13 ? '10–12' : '13+'
-      await sendNewRegistrationNotification({
-        kidName: userData.name,
-        ageGroup,
-        grade: classData.grade,
-        tenant: userData.tenantId,
-        gender: userData.gender,
-      })
     }
 
     return { success: true }

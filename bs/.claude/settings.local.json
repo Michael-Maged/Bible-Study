@@ -6,7 +6,30 @@
       "Bash(git commit -m ' *)",
       "WebFetch(domain:localhost)",
       "Bash(curl -s -o - http://localhost:60132/)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(npx tsc *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Michael Maged\\\\Desktop\\\\Bible Study app\\\\Bible-Study\\\\bs\\\\app\" -Directory)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(pkill *)",
+      "Bash(ls bs/app/)",
+      "Bash(ls app/)",
+      "Bash(gh pr create --title 'feat: add Google sign-in for existing users' --body ' *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(git merge *)",
+      "Bash(git branch *)",
+      "Bash(Remove-Item -Recurse -Force .next)",
+      "Bash(git rm *)",
+      "Bash(npm install *)",
+      "Bash(node -e ' *)",
+      "Bash(xargs grep -l \"OTP\\\\|sendEmailOtp\")",
+      "Bash(npm uninstall *)",
+      "Bash(git fetch *)",
+      "Bash(grep -v \"//\\\\|L\\\\.\\\\|className\\\\|style\\\\|type=\\\\|variant=\\\\|size=\\\\|key=\\\\|stroke\\\\|fill\\\\|animation\\\\|font\\\\|accent\\\\|border\\\\|cursor\\\\|shadow\\\\|resize\\\\|inline\\\\|flex\\\\|grid\\\\|space\\\\|rounded\\\\|overflow\\\\|tracking\\\\|leading\\\\|uppercase\\\\|transition\\\\|background\\\\|opacity\\\\|color\\\\|weight\\\\|Content-Type\\\\|application/json\\\\|api/\\\\|supabase\\\\|auth_id\\\\|admin\\\\|tenant\\\\|grade\\\\|reading\\\\|question\\\\|score\\\\|options\\\\|book\\\\|chapter\\\\|from_verse\\\\|to_verse\\\\|day\\\\|GET\\\\|POST\\\\|PUT\\\\|DELETE\\\\|success\\\\|data\\\\|error\\\\|text\\\\|user\\\\|verses_count\\\\|arr\\\\|chapters\\\\|import\\\\|export\\\\|const\\\\|let\\\\|var\\\\|function\\\\|return\\\\|await\\\\|async\\\\|true\\\\|false\\\\|null\\\\|undefined\")",
+      "Bash(gh pr create --title 'BS-55: English/Arabic bilingual interface + terminology rename' --body ' *)",
+      "Bash(del *)"
     ]
   }
 }
