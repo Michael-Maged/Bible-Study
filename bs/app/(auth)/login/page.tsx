@@ -11,7 +11,6 @@ import PasswordInput from '@/components/PasswordInput'
 import AppLogo from '@/components/AppLogo'
 import OfflineBanner from '@/components/OfflineBanner'
 import { useLanguage } from '@/contexts/LanguageContext'
-import LangToggle from '@/components/LangToggle'
 import { L } from '@/utils/labels'
 
 function WarmOrnament() {
@@ -174,10 +173,7 @@ function LoginForm() {
       <div className="w-full max-w-sm space-y-6">
 
         {/* Hero */}
-        <div className="relative text-center space-y-2">
-          <div className="absolute top-0 end-0">
-            <LangToggle />
-          </div>
+        <div className="text-center space-y-2">
           <AppLogo size="lg" className="justify-center" />
           <WarmOrnament />
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Bible Kids</p>

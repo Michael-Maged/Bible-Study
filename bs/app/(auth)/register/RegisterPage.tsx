@@ -13,7 +13,6 @@ import AppLogo from '@/components/AppLogo'
 import { Button } from '@/components/ui/button'
 import type { Tenant, Grade, Class } from '@/types'
 import { useLanguage } from '@/contexts/LanguageContext'
-import LangToggle from '@/components/LangToggle'
 import { L } from '@/utils/labels'
 
 function WarmOrnament() {
@@ -160,8 +159,7 @@ export default function RegisterPage() {
   if (step === 'email') {
     return (
       <PageShell>
-        <div className="relative rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <LangToggle className="absolute top-4 end-4" />
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <form onSubmit={handleSendOtp} className="space-y-4">
             <LabeledInput label="Email" icon={Mail} type="email" name="email" placeholder="your@email.com" required />
             {status === 'error' && message && <MessageBox type="error" message={message} />}

@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
-import LangToggle from '@/components/LangToggle'
 import { L } from '@/utils/labels'
 
 type KidNavTab = 'dashboard' | 'history' | 'leaderboard' | 'profile'
@@ -60,10 +59,7 @@ export default function KidNav({ active }: { active: KidNavTab }) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border" style={{ paddingBottom: 8 }}>
-      <div className="flex items-stretch max-w-lg mx-auto relative">
-        <div className="absolute -top-8 end-3">
-          <LangToggle />
-        </div>
+      <div className="flex items-stretch max-w-lg mx-auto">
         {tabs.map((tab) => {
           const isActive = active === tab.key
           return (

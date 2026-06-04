@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
-import LangToggle from '@/components/LangToggle'
 import { L } from '@/utils/labels'
 
 type AdminNavTab = 'dashboard' | 'kids' | 'assignments' | 'history' | 'leaderboard'
@@ -79,10 +78,7 @@ export default function AdminNav({ active }: { active: AdminNavTab }) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border">
-      <div className="flex items-stretch justify-around max-w-lg mx-auto relative">
-        <div className="absolute -top-8 end-3">
-          <LangToggle />
-        </div>
+      <div className="flex items-stretch justify-around max-w-lg mx-auto">
         {tabs.map((tab) => {
           const isActive = active === tab.key
           return (

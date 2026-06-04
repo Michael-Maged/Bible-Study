@@ -9,7 +9,6 @@ import MessageBox from '@/components/MessageBox'
 import PasswordInput from '@/components/PasswordInput'
 import AppLogo from '@/components/AppLogo'
 import { useLanguage } from '@/contexts/LanguageContext'
-import LangToggle from '@/components/LangToggle'
 import { L } from '@/utils/labels'
 
 function WarmOrnament() {
@@ -106,10 +105,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative">
-      <div className="absolute top-4 end-4">
-        <LangToggle />
-      </div>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <AppLogo size="lg" className="justify-center" />
