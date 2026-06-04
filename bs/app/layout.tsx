@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Cairo } from "next/font/google";
 import "./globals.css";
+import Providers from "@/components/Providers";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -74,7 +75,7 @@ export default function RootLayout({
             sessionStorage.setItem('_last_active', Date.now().toString());
           `
         }} />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

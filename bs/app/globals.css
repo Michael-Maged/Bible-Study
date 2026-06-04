@@ -209,3 +209,8 @@ select option:checked {
   --popover: #ffffff;
   --popover-foreground: #2a1f12;
 }
+
+/* Arabic font override — activated by LanguageContext setting data-lang="ar" */
+html[data-lang="ar"] body {
+  font-family: var(--font-arabic);
+}
