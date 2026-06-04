@@ -83,7 +83,7 @@ export default function HistoryPage() {
   const handleSave = async (readingId: string) => {
     // Save passage edits
     const result = await updateReading(readingId, editForm)
-    if (!result.success) { setFeedback({ type: 'error', message: result.error || 'Failed to update' }); return }
+    if (!result.success) { setFeedback({ type: 'error', message: result.error || t(L.assignments.failedToUpdate) }); return }
 
     // Update existing questions
     for (const q of editableQuestions.filter(q => !deletedQuestionIds.includes(q.id))) {
@@ -102,16 +102,16 @@ export default function HistoryPage() {
     }
 
     setEditingId(null)
-    setFeedback({ type: 'success', message: 'Reading updated!' })
+    setFeedback({ type: 'success', message: t(L.assignments.readingUpdated) })
     setTimeout(() => setFeedback(null), 3000)
     loadReadings()
   }
 
   const handleDelete = async (readingId: string) => {
-    if (!confirm('Delete this reading?')) return
+    if (!confirm(t(L.assignments.deleteReading))) return
     const result = await deleteReading(readingId)
     if (result.success) loadReadings()
-    else setFeedback({ type: 'error', message: result.error || 'Failed to delete' })
+    else setFeedback({ type: 'error', message: result.error || t(L.assignments.failedToDelete) })
   }
 
   // Existing question helpers
@@ -173,7 +173,7 @@ export default function HistoryPage() {
         {loading ? (
           <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
             <Loader2 size={20} className="animate-spin" />
-            <span className="text-sm">Loading…</span>
+            <span className="text-sm">{t(L.common.loading)}</span>
           </div>
         ) : readings.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card p-10 text-center space-y-2">
@@ -181,8 +181,8 @@ export default function HistoryPage() {
               <rect x="6" y="4" width="24" height="28" rx="3" stroke="currentColor" strokeWidth="2.2"/>
               <path d="M12 13h12M12 18h12M12 23h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
-            <p className="font-bold">No Future Readings</p>
-            <p className="text-sm text-muted-foreground">No readings have been scheduled yet</p>
+            <p className="font-bold">{t(L.assignments.noFutureReadings)}</p>
+            <p className="text-sm text-muted-foreground">{t(L.assignments.noReadingsScheduled)}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -197,28 +197,28 @@ export default function HistoryPage() {
                     <div className="space-y-4">
 
                       {/* Passage fields */}
-                      <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Passage</p>
+                      <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.assignments.passage)}</p>
                       <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Date</label>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{t(L.assignments.date)}</label>
                         <input type="date" value={editForm.day} onChange={(e) => setEditForm({ ...editForm, day: e.target.value })} className={inputClass} />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Book</label>
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{t(L.assignments.book)}</label>
                         <select value={editForm.book} onChange={(e) => setEditForm({ ...editForm, book: parseInt(e.target.value), chapter: 0, from_verse: 0, to_verse: 0 })} className={inputClass}>
                           {bibleBooks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                         </select>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Chapter</label>
+                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{t(L.assignments.chapter)}</label>
                           <input type="number" min="1" value={editForm.chapter || ''} onChange={(e) => setEditForm({ ...editForm, chapter: parseInt(e.target.value) || 0, from_verse: 0, to_verse: 0 })} placeholder="e.g. 3" className={inputClass} />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Verses</label>
+                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{t(L.assignments.versesLabel)}</label>
                           <div className="flex items-center gap-1">
-                            <input type="number" min="1" value={editForm.from_verse || ''} onChange={(e) => setEditForm({ ...editForm, from_verse: parseInt(e.target.value) || 0 })} placeholder="From" className={inputClass} />
+                            <input type="number" min="1" value={editForm.from_verse || ''} onChange={(e) => setEditForm({ ...editForm, from_verse: parseInt(e.target.value) || 0 })} placeholder={t(L.assignments.fromPlaceholder)} className={inputClass} />
                             <span className="text-muted-foreground">–</span>
-                            <input type="number" min="1" value={editForm.to_verse || ''} onChange={(e) => setEditForm({ ...editForm, to_verse: parseInt(e.target.value) || 0 })} placeholder="To" className={inputClass} />
+                            <input type="number" min="1" value={editForm.to_verse || ''} onChange={(e) => setEditForm({ ...editForm, to_verse: parseInt(e.target.value) || 0 })} placeholder={t(L.assignments.toPlaceholder)} className={inputClass} />
                           </div>
                         </div>
                       </div>
@@ -226,7 +226,7 @@ export default function HistoryPage() {
                       {/* Existing questions */}
                       {editableQuestions.filter(q => !deletedQuestionIds.includes(q.id)).length > 0 && (
                         <div className="space-y-3">
-                          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Existing Questions</p>
+                          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.assignments.existingQuestions)}</p>
                           {editableQuestions.map((q, qi) => deletedQuestionIds.includes(q.id) ? null : (
                             <div key={q.id} className="rounded-xl border bg-background p-3 space-y-2" style={{ borderColor: 'rgba(194,133,27,0.35)', borderLeftWidth: 3, borderLeftColor: '#c2851b' }}>
                               <div className="flex items-center justify-between">
@@ -239,11 +239,11 @@ export default function HistoryPage() {
                                 value={q.question}
                                 onChange={(e) => updateExistingQuestion(qi, 'question', e.target.value)}
                                 className="w-full px-3 py-2 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground resize-none"
-                                placeholder="Enter question…"
+                                placeholder={t(L.assignments.enterQuestion)}
                                 rows={2}
                               />
                               <div className="flex items-center gap-2">
-                                <label className="text-xs font-bold text-muted-foreground">Score</label>
+                                <label className="text-xs font-bold text-muted-foreground">{t(L.assignments.scoreLabel)}</label>
                                 <input type="number" value={q.score} onChange={(e) => updateExistingQuestion(qi, 'score', parseInt(e.target.value))} className="w-16 h-8 px-2 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" min="1" />
                               </div>
                               <div className="space-y-1.5">
@@ -265,9 +265,9 @@ export default function HistoryPage() {
                       {/* New questions */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Add Questions</p>
+                          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.assignments.addQuestions)}</p>
                           <button onClick={addNewQuestion} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full border border-border bg-card hover:bg-accent/30 transition-colors">
-                            <Plus size={11} />New
+                            <Plus size={11} />{t(L.assignments.newBtn)}
                           </button>
                         </div>
                         {newQuestions.map((q, qi) => (
@@ -280,11 +280,11 @@ export default function HistoryPage() {
                               value={q.question}
                               onChange={(e) => updateNewQuestion(qi, 'question', e.target.value)}
                               className="w-full px-3 py-2 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground resize-none"
-                              placeholder="Enter question…"
+                              placeholder={t(L.assignments.enterQuestion)}
                               rows={2}
                             />
                             <div className="flex items-center gap-2">
-                              <label className="text-xs font-bold text-muted-foreground">Score</label>
+                              <label className="text-xs font-bold text-muted-foreground">{t(L.assignments.scoreLabel)}</label>
                               <input type="number" value={q.score} onChange={(e) => updateNewQuestion(qi, 'score', parseInt(e.target.value))} className="w-16 h-8 px-2 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" min="1" />
                             </div>
                             <div className="space-y-1.5">
@@ -299,7 +299,7 @@ export default function HistoryPage() {
                               ))}
                               {q.options.length < 4 && (
                                 <button onClick={() => addNewOption(qi)} className="w-full py-1.5 border-2 border-dashed border-border rounded-xl text-muted-foreground text-xs font-bold hover:border-primary hover:text-primary transition-colors">
-                                  + Add Option
+                                  {t(L.assignments.addOption)}
                                 </button>
                               )}
                             </div>
@@ -308,8 +308,8 @@ export default function HistoryPage() {
                       </div>
 
                       <div className="flex gap-2 pt-1">
-                        <Button className="flex-1 shadow-[0_2px_0_rgba(138,90,15,0.25)]" size="sm" onClick={() => handleSave(reading.id)}>Save</Button>
-                        <Button variant="outline" className="flex-1" size="sm" onClick={() => { setEditingId(null) }}>Cancel</Button>
+                        <Button className="flex-1 shadow-[0_2px_0_rgba(138,90,15,0.25)]" size="sm" onClick={() => handleSave(reading.id)}>{t(L.assignments.save)}</Button>
+                        <Button variant="outline" className="flex-1" size="sm" onClick={() => { setEditingId(null) }}>{t(L.assignments.cancel)}</Button>
                       </div>
                     </div>
                   )
@@ -334,11 +334,11 @@ export default function HistoryPage() {
                       <div className="pl-5">
                         {reading.grade ? (
                           <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border border-border bg-card text-foreground">
-                            Grade {typeof reading.grade === 'object' ? reading.grade.grade_num : reading.grade}
+                            {t(L.assignments.gradePrefix)} {typeof reading.grade === 'object' ? reading.grade.grade_num : reading.grade}
                           </span>
                         ) : (
                           <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(194,133,27,0.10)', color: '#c2851b' }}>
-                            Whole Tenant
+                            {t(L.assignments.wholeTenantBadge)}
                           </span>
                         )}
                       </div>

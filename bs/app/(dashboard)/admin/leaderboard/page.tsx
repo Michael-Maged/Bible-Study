@@ -95,7 +95,7 @@ export default function AdminLeaderboardPage() {
                       {user.name.split(' ')[0]}
                     </div>
                     <div className="text-[11px] font-bold text-[#8a5a0f]">
-                      {user.current_score} pts
+                      {user.current_score} {t(L.admin.pts)}
                     </div>
                     <div
                       className="w-full rounded-t-[10px] rounded-b-[4px] flex items-start justify-center pt-1.5"

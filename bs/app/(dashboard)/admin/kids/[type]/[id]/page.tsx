@@ -90,10 +90,10 @@ export default function KidDetailPage() {
     const result = await adjustKidPoints(profile.id, sign * delta)
     if (result.success && result.data) {
       setProfile((p) => p ? { ...p, current_score: result.data!.newScore } : p)
-      setFeedback({ type: 'success', message: `Points ${sign > 0 ? 'added' : 'removed'} successfully` })
+      setFeedback({ type: 'success', message: sign > 0 ? t(L.admin.pointsAdded) : t(L.admin.pointsRemoved) })
       setPointsDelta('')
     } else {
-      setFeedback({ type: 'error', message: (result as { error?: string }).error || 'Failed' })
+      setFeedback({ type: 'error', message: (result as { error?: string }).error || t(L.admin.failed) })
     }
     setAdjusting(false)
     setTimeout(() => setFeedback(null), 3000)
@@ -102,7 +102,7 @@ export default function KidDetailPage() {
   if (loading) return <LoadingScreen />
   if (!request) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <p className="text-muted-foreground">Not found</p>
+      <p className="text-muted-foreground">{t(L.admin.notFound)}</p>
     </div>
   )
 
@@ -169,7 +169,7 @@ export default function KidDetailPage() {
             <div className="flex flex-wrap gap-1.5 mt-2">
               {(profile?.age || request.user.age) && (
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border border-border bg-card text-foreground">
-                  {profile?.age || request.user.age} yrs
+                  {profile?.age || request.user.age} {t(L.admin.yrs)}
                 </span>
               )}
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full border border-border bg-card text-foreground capitalize">
@@ -191,9 +191,9 @@ export default function KidDetailPage() {
         {isKid && profile && (
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Score', value: score.toLocaleString(), accent: true },
-              { label: 'Streak', value: `${streak}d`, accent: false },
-              { label: 'Best', value: `${bestStreak}d`, accent: false },
+              { label: t(L.admin.score), value: score.toLocaleString(), accent: true },
+              { label: t(L.admin.streak), value: `${streak}d`, accent: false },
+              { label: t(L.admin.best), value: `${bestStreak}d`, accent: false },
             ].map(({ label, value, accent }) => (
               <div key={label} className="rounded-2xl border border-border bg-card p-3">
                 <div
@@ -213,19 +213,19 @@ export default function KidDetailPage() {
         {/* This Month */}
         {isKid && stats && (
           <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">This Month</p>
+            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.admin.thisMonth)}</p>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="space-y-1">
                 <p className="text-[22px] font-bold text-primary">{stats.totalDaysThisMonth}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Days Read</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{t(L.admin.daysRead)}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[22px] font-bold" style={{ color: '#a64242' }}>{stats.missedDaysThisMonth}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Missed</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{t(L.admin.missed)}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[22px] font-bold text-foreground">{monthCompletion}%</p>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Rate</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{t(L.admin.rate)}</p>
               </div>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -236,7 +236,7 @@ export default function KidDetailPage() {
             </div>
             {stats.overallQuizPct != null && (
               <p className="text-xs text-muted-foreground text-center">
-                Quiz accuracy: <span className="font-bold text-foreground">{stats.overallQuizPct}%</span>
+                {t(L.admin.quizAccuracy)} <span className="font-bold text-foreground">{stats.overallQuizPct}%</span>
               </p>
             )}
           </div>
@@ -245,11 +245,11 @@ export default function KidDetailPage() {
         {/* Adjust Points */}
         {isKid && profile && request.status === 'accepted' && (
           <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">Adjust Points</p>
+            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.admin.adjustPoints)}</p>
             <input
               type="number"
               min="1"
-              placeholder="Enter amount…"
+              placeholder={t(L.admin.enterAmount)}
               value={pointsDelta}
               onChange={(e) => setPointsDelta(e.target.value)}
               className="w-full h-11 px-4 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground"
@@ -261,7 +261,7 @@ export default function KidDetailPage() {
                 size="sm"
                 className="shadow-[0_2px_0_rgba(138,90,15,0.25)]"
               >
-                + Add Points
+                {t(L.admin.addPoints)}
               </Button>
               <Button
                 variant="destructive"
@@ -269,7 +269,7 @@ export default function KidDetailPage() {
                 disabled={adjusting || !pointsDelta}
                 size="sm"
               >
-                − Remove
+                {t(L.admin.removePoints)}
               </Button>
             </div>
             {feedback && <MessageBox type={feedback.type} message={feedback.message} />}
@@ -281,7 +281,7 @@ export default function KidDetailPage() {
           <div className="rounded-2xl border border-border bg-card overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">{t(L.nav.history)}</p>
-              <span className="text-xs text-muted-foreground">{stats.totalDaysRead} total</span>
+              <span className="text-xs text-muted-foreground">{stats.totalDaysRead} {t(L.admin.total)}</span>
             </div>
             <div className="divide-y divide-border">
               {stats.readingHistory.map((row) => (
@@ -327,7 +327,7 @@ export default function KidDetailPage() {
               className="w-full"
               onClick={() => setTransferOpen(true)}
             >
-              Transfer to Another Class
+              {t(L.admin.transferClass)}
             </Button>
           </div>
         )}
@@ -336,18 +336,18 @@ export default function KidDetailPage() {
 
       <ConfirmDialog
         open={confirmAction === 'reject'}
-        title="Reject this kid?"
-        description="This will reject their registration request. They will not be able to access the platform."
-        confirmLabel="Reject"
+        title={t(L.admin.rejectKidTitle)}
+        description={t(L.admin.rejectKidDesc)}
+        confirmLabel={t(L.admin.reject)}
         onConfirm={() => handleAction(false)}
         onCancel={() => setConfirmAction(null)}
         loading={actionLoading}
       />
       <ConfirmDialog
         open={confirmAction === 'approve'}
-        title="Approve this kid?"
-        description="This will grant them access to the Bible study platform."
-        confirmLabel="Approve"
+        title={t(L.admin.approveKidTitle)}
+        description={t(L.admin.approveKidDesc)}
+        confirmLabel={t(L.admin.approve)}
         variant="warning"
         onConfirm={() => handleAction(true)}
         onCancel={() => setConfirmAction(null)}
