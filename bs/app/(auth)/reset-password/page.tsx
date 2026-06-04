@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button'
 import MessageBox from '@/components/MessageBox'
 import PasswordInput from '@/components/PasswordInput'
 import AppLogo from '@/components/AppLogo'
+import { useLanguage } from '@/contexts/LanguageContext'
+import LangToggle from '@/components/LangToggle'
+import { L } from '@/utils/labels'
 
 function WarmOrnament() {
   return (
@@ -21,6 +24,7 @@ function WarmOrnament() {
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [ready, setReady] = useState(false)
   const [linkError, setLinkError] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -62,7 +66,7 @@ export default function ResetPasswordPage() {
       setMessage(error.message || 'Failed to reset password')
     } else {
       setStatus('success')
-      setMessage('Password updated! Redirecting to sign in…')
+      setMessage(t(L.auth.passwordUpdated))
       setTimeout(() => router.push('/login'), 2000)
     }
   }
@@ -75,12 +79,12 @@ export default function ResetPasswordPage() {
           <div className="text-center space-y-2">
             <AppLogo size="lg" className="justify-center" />
             <WarmOrnament />
-            <h1 className="text-2xl font-bold tracking-tight text-foreground mt-3">Link invalid</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground mt-3">{t(L.auth.linkInvalid)}</h1>
           </div>
           <MessageBox type="error" message={linkError} />
           <p className="text-center text-sm text-muted-foreground">
             <a href="/login" className="text-primary font-semibold hover:underline underline-offset-4">
-              Back to sign in
+              {t(L.auth.backToSignIn)}
             </a>
           </p>
         </div>
@@ -95,27 +99,30 @@ export default function ResetPasswordPage() {
         <div className="w-full max-w-sm space-y-6 text-center">
           <AppLogo size="lg" className="justify-center" />
           <Loader2 size={24} className="animate-spin mx-auto text-primary" />
-          <p className="text-sm text-muted-foreground">Verifying reset link…</p>
+          <p className="text-sm text-muted-foreground">{t(L.auth.verifyingLink)}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative">
+      <div className="absolute top-4 end-4">
+        <LangToggle />
+      </div>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <AppLogo size="lg" className="justify-center" />
           <WarmOrnament />
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Bible Kids</p>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-3">Set new password</h1>
-          <p className="text-sm text-muted-foreground">Choose a strong password</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-3">{t(L.auth.setNewPassword)}</h1>
+          <p className="text-sm text-muted-foreground">{t(L.auth.chooseStrongPass)}</p>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <form onSubmit={handleReset} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">New Password</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t(L.auth.newPassword)}</label>
               <PasswordInput
                 name="password"
                 placeholder="New password (min 6 characters)"
@@ -125,7 +132,7 @@ export default function ResetPasswordPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Confirm Password</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t(L.auth.confirmPassword)}</label>
               <PasswordInput
                 name="confirmPassword"
                 placeholder="Confirm new password"
@@ -144,13 +151,13 @@ export default function ResetPasswordPage() {
               disabled={status === 'loading' || status === 'success'}
               className="w-full h-11 font-bold shadow-[0_2px_0_rgba(138,90,15,0.25)]"
             >
-              {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />Updating…</> : 'Set New Password'}
+              {status === 'loading' ? <><Loader2 size={16} className="mr-2 animate-spin" />{t(L.auth.updating)}</> : t(L.auth.setNewPasswordBtn)}
             </Button>
           </form>
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          <a href="/login" className="text-primary font-semibold hover:underline underline-offset-4">Back to sign in</a>
+          <a href="/login" className="text-primary font-semibold hover:underline underline-offset-4">{t(L.auth.backToSignIn)}</a>
         </p>
       </div>
     </div>

@@ -3,6 +3,8 @@
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import AppLogo from '@/components/AppLogo'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { L } from '@/utils/labels'
 
 function TimelineStep({
   state,
@@ -56,6 +58,7 @@ function TimelineStep({
 
 export default function PendingPage() {
   const router = useRouter()
+  const { t } = useLanguage()
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -76,7 +79,7 @@ export default function PendingPage() {
             onClick={handleSignOut}
             className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
-            Sign out
+            {t(L.auth.signOut)}
           </button>
         </div>
 
@@ -102,16 +105,16 @@ export default function PendingPage() {
             <div className="w-6 h-px bg-primary opacity-60" />
           </div>
 
-          <h2 className="text-xl font-bold tracking-tight text-foreground mt-3">You&apos;re in the queue</h2>
+          <h2 className="text-xl font-bold tracking-tight text-foreground mt-3">{t(L.pending.title)}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mt-2">
-            Your teacher will review your account. You&apos;ll be notified once approved — usually within 24 hours.
+            {t(L.pending.subtitle)}
           </p>
         </div>
 
         {/* Timeline card */}
         <div className="bg-card rounded-2xl border border-border p-5">
-          <TimelineStep state="active" label="Waiting for teacher approval" meta="In review" />
-          <TimelineStep state="next" label="Start today's reading" meta="Up next" last />
+          <TimelineStep state="active" label={t(L.pending.waitingLabel)} meta={t(L.pending.inReview)} />
+          <TimelineStep state="next" label={t(L.pending.startReading)} meta={t(L.pending.upNext)} last />
         </div>
 
         {/* Sign out action */}
@@ -119,7 +122,7 @@ export default function PendingPage() {
           onClick={handleSignOut}
           className="w-full h-11 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted/60 transition-colors"
         >
-          Sign out
+          {t(L.auth.signOut)}
         </button>
 
       </div>
