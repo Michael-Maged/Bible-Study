@@ -4,6 +4,7 @@ import { createClient as createAdminSupabase } from '@supabase/supabase-js'
 import { sendApprovalEmail, sendRejectionEmail } from '@/utils/sendEmail'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { superadminSessionToken } from '@/app/(auth)/login/emailActions'
 
 function adminClient() {
   return createAdminSupabase(
@@ -21,7 +22,9 @@ function anonClient() {
 
 async function requireSuperadmin() {
   const cookieStore = await cookies()
-  if (cookieStore.get('user-role')?.value !== 'superadmin') redirect('/login')
+  const role  = cookieStore.get('user-role')?.value
+  const token = cookieStore.get('superadmin-token')?.value
+  if (role !== 'superadmin' || token !== superadminSessionToken()) redirect('/login')
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -285,5 +288,6 @@ export async function rejectCoordinator(adminId: string): Promise<{ success: boo
 export async function signOutSuperadmin() {
   const cookieStore = await cookies()
   cookieStore.set('user-role', '', { path: '/', maxAge: 0 })
+  cookieStore.set('superadmin-token', '', { path: '/', maxAge: 0 })
   redirect('/login')
 }
