@@ -63,7 +63,13 @@ function LoginForm() {
       const result = await loginWithEmail(formData.get('email') as string, formData.get('password') as string)
       if (result.success && result.user) {
         if (result.isPending) { router.push('/pending'); return }
-        window.location.href = result.user.role === 'admin' || result.user.role === 'superuser' ? '/admin' : '/kid/dashboard'
+        if (result.user.role === 'superadmin') {
+          window.location.href = '/superadmin'
+        } else if (result.user.role === 'admin' || result.user.role === 'superuser') {
+          window.location.href = '/admin'
+        } else {
+          window.location.href = '/kid/dashboard'
+        }
       } else {
         setStatus('error')
         setMessage(result.error || t(L.register.loginFailed))
