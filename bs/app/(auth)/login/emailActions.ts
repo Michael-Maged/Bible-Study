@@ -21,15 +21,14 @@ export async function loginWithEmail(email: string, password: string) {
   if (saEmail && saPass && safeEqual(email, saEmail) && safeEqual(password, saPass)) {
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    const cookieOpts = {
+    const baseOpts = {
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
-      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax' as const,
     }
-    cookieStore.set('user-role', 'superadmin', cookieOpts)
-    cookieStore.set('superadmin-token', superadminSessionToken(), cookieOpts)
+    cookieStore.set('user-role', 'superadmin', baseOpts)
+    cookieStore.set('superadmin-token', superadminSessionToken(), { ...baseOpts, httpOnly: true })
     return { success: true, user: { role: 'superadmin' }, isPending: false }
   }
 
@@ -82,7 +81,6 @@ export async function loginWithEmail(email: string, password: string) {
       cookieStore.set('user-role', userRole, {
         path: '/',
         maxAge: 60 * 60 * 24 * 7,
-        httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
       })
