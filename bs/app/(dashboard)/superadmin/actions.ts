@@ -49,11 +49,20 @@ export type SuperadminStats = {
   totalFamilies: number
 }
 
+export async function setAdminRole(adminId: string, role: 'admin' | 'superuser'): Promise<{ success: boolean; error?: string }> {
+  await requireSuperadmin()
+  const supabase = adminClient()
+  const { error } = await supabase.from('admin').update({ role }).eq('id', adminId)
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
 export async function getSuperadminData(): Promise<{
   success: boolean
   stats?: SuperadminStats
   pending?: PendingCoordinator[]
   active?: ActiveCoordinator[]
+  servants?: ActiveCoordinator[]
   error?: string
 }> {
   await requireSuperadmin()
@@ -102,7 +111,16 @@ export async function getSuperadminData(): Promise<{
       tenantName: r.tenant ? (tenantMap[r.tenant] ?? r.tenant) : null,
     }))
 
-  return { success: true, stats, pending, active }
+  const servants: ActiveCoordinator[] = rows
+    .filter(r => r.role === 'superuser' && r.status === 'accepted')
+    .map(r => ({
+      id: r.id, role: r.role, grade: r.grade, tenant: r.tenant,
+      user: r.user,
+      gradeName: r.gradeInfo?.name ?? null,
+      tenantName: r.tenant ? (tenantMap[r.tenant] ?? r.tenant) : null,
+    }))
+
+  return { success: true, stats, pending, active, servants }
 }
 
 export async function approveCoordinator(adminId: string): Promise<{ success: boolean; error?: string }> {
