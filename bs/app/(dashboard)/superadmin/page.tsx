@@ -14,12 +14,5 @@ export default async function SuperadminPage() {
     redirect('/login')
   }
 
-  return (
-    <SuperadminView
-      stats={result.stats!}
-      pending={result.pending!}
-      active={result.active!}
-      servants={result.servants!}
-    />
-  )
+  return <SuperadminView stats={result.stats!} pending={result.pending!} />
 }
