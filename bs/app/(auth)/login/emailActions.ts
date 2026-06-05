@@ -3,6 +3,23 @@
 import { createClient } from '@/utils/supabase/server'
 
 export async function loginWithEmail(email: string, password: string) {
+  // Superadmin: credential-only auth (no Supabase account)
+  if (
+    email === process.env.SUPERADMIN_EMAIL &&
+    password === process.env.SUPERADMIN_PASSWORD
+  ) {
+    const { cookies } = await import('next/headers')
+    const cookieStore = await cookies()
+    cookieStore.set('user-role', 'superadmin', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    })
+    return { success: true, user: { role: 'superadmin' }, isPending: false }
+  }
+
   try {
     const supabase = await createClient()
     
