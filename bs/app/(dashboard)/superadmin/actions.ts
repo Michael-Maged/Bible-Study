@@ -54,6 +54,11 @@ export type SuperadminStats = {
   totalFamilies: number
 }
 
+export type TenantInfo = {
+  id: string
+  name: string
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function fetchTenantMap() {
@@ -89,20 +94,23 @@ export async function getSuperadminData(): Promise<{
   success: boolean
   stats?: SuperadminStats
   pending?: PendingCoordinator[]
+  tenants?: TenantInfo[]
   error?: string
 }> {
   await requireSuperadmin()
   const supabase = adminClient()
 
-  const [{ data, error }, enrollmentCount, tenants] = await Promise.all([
+  const [{ data, error }, enrollmentCount, tenantsRes] = await Promise.all([
     fetchAdminRows(),
     supabase.from('enrollment').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
-    supabase.from('tenant').select('id, name'),
+    supabase.from('tenant').select('id, name').order('name'),
   ])
 
   if (error) return { success: false, error: error.message }
 
-  const tenantMap = Object.fromEntries((tenants.data ?? []).map(t => [t.id, t.name as string]))
+  const tenantList: TenantInfo[] = (tenantsRes.data ?? []).map(t => ({ id: t.id, name: t.name as string }))
+  const tenantMap = Object.fromEntries(tenantList.map(t => [t.id, t.name]))
+
   const rows = (data ?? []) as unknown as Array<{
     id: string; role: string; grade: number | null; tenant: string | null; status: string
     user: { id: string; name: string; email: string; auth_id: string } | null
@@ -114,7 +122,7 @@ export async function getSuperadminData(): Promise<{
     pendingCoordinators: rows.filter(r => r.role === 'admin' && r.status === 'pending').length,
     totalServants: rows.filter(r => r.role === 'superuser' && r.status === 'accepted').length,
     totalStudents: enrollmentCount.count ?? 0,
-    totalFamilies: tenants.data?.length ?? 0,
+    totalFamilies: tenantList.length,
   }
 
   const pending: PendingCoordinator[] = rows
@@ -123,10 +131,10 @@ export async function getSuperadminData(): Promise<{
       id: r.id, grade: r.grade, tenant: r.tenant, status: r.status,
       user: r.user,
       gradeName: r.gradeInfo?.name ?? null,
-      tenantName: r.tenant ? (tenantMap[r.tenant] ?? r.tenant) : null,
+      tenantName: r.tenant ? (tenantMap[r.tenant] ?? null) : null,
     }))
 
-  return { success: true, stats, pending }
+  return { success: true, stats, pending, tenants: tenantList }
 }
 
 // ─── Coordinators page ────────────────────────────────────────────────────────

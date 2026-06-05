@@ -14,5 +14,5 @@ export default async function SuperadminPage() {
     redirect('/login')
   }
 
-  return <SuperadminView stats={result.stats!} pending={result.pending!} />
+  return <SuperadminView stats={result.stats!} pending={result.pending!} tenants={result.tenants!} />
 }

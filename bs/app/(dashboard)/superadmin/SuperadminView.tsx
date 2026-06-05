@@ -5,15 +5,16 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { approveCoordinator, rejectCoordinator } from './actions'
-import type { SuperadminStats, PendingCoordinator } from './actions'
+import type { SuperadminStats, PendingCoordinator, TenantInfo } from './actions'
 import SuperadminNav from './SuperadminNav'
 
 interface Props {
   stats: SuperadminStats
   pending: PendingCoordinator[]
+  tenants: TenantInfo[]
 }
 
-export default function SuperadminView({ stats, pending }: Props) {
+export default function SuperadminView({ stats, pending, tenants }: Props) {
   const { lang } = useLanguage()
   const isAr = lang === 'ar'
   const [pendingList, setPendingList] = useState(pending)
@@ -73,6 +74,32 @@ export default function SuperadminView({ stats, pending }: Props) {
                     <Button size="sm" className="flex-[2] shadow-[0_2px_0_rgba(138,90,15,0.25)]" disabled={loadingId === coord.id} onClick={() => handleAction(coord.id, true)}>
                       {loadingId === coord.id ? <Loader2 size={14} className="animate-spin" /> : (isAr ? 'قبول' : 'Approve')}
                     </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Families list */}
+        <section>
+          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground mb-3">
+            {isAr ? 'الأسر' : 'Families'}
+            <span className="ms-2 px-2 py-0.5 rounded-full text-[10px] bg-accent text-accent-foreground font-bold">
+              {tenants.length}
+            </span>
+          </p>
+          {tenants.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+              {isAr ? 'لا توجد أسر' : 'No families yet'}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
+              {tenants.map((tenant, i) => (
+                <div key={tenant.id} className="px-4 py-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-[11px] font-bold text-muted-foreground w-5 flex-shrink-0">{i + 1}</span>
+                    <p className="font-semibold text-sm text-foreground truncate">{tenant.name}</p>
                   </div>
                 </div>
               ))}
