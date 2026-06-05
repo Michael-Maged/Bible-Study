@@ -4,7 +4,7 @@ import { createClient as createAdminSupabase } from '@supabase/supabase-js'
 import { sendApprovalEmail, sendRejectionEmail } from '@/utils/sendEmail'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { superadminSessionToken } from '@/app/(auth)/login/emailActions'
+import { superadminSessionToken } from '@/utils/superadminToken'
 
 function adminClient() {
   return createAdminSupabase(

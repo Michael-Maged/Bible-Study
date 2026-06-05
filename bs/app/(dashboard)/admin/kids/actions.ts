@@ -46,7 +46,8 @@ export async function fetchAssignedKids() {
     .eq('tenant', tenant)
     .eq('grade', adminGradeNum)
 
-  const superusers = superuserData
+  // Only coordinators (admin role) should see the servants list
+  const superusers = adminData.role === 'admin' && superuserData
     ? (isMixedGender ? superuserData : superuserData.filter(s => s.user?.gender === adminData.user?.gender))
     : []
 

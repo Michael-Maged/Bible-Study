@@ -1,14 +1,8 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
-import { timingSafeEqual, createHmac } from 'crypto'
-
-export function superadminSessionToken(): string {
-  const secret = process.env.SUPERADMIN_SESSION_SECRET ?? 'fallback-change-in-prod'
-  return createHmac('sha256', secret)
-    .update(`${process.env.SUPERADMIN_EMAIL}:${process.env.SUPERADMIN_PASSWORD}`)
-    .digest('hex')
-}
+import { timingSafeEqual } from 'crypto'
+import { superadminSessionToken } from '@/utils/superadminToken'
 
 function safeEqual(a: string, b: string): boolean {
   try { return timingSafeEqual(Buffer.from(a), Buffer.from(b)) } catch { return false }
