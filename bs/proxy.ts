@@ -5,7 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const publicPaths = ['/login', '/register', '/admin-register', '/auth/callback', '/pending', '/reset-password']
-  const adminPaths = ['/admin']
+  const adminPaths = ['/admin', '/superadmin']
   const kidPaths = ['/kid']
 
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
@@ -58,8 +58,13 @@ export async function proxy(request: NextRequest) {
   }
 
   // Protect admin routes - only admin and superuser can access
-  if (isAdminPath && (userRole !== 'admin' && userRole !== 'superuser')) {
+  if (isAdminPath && userRole !== 'admin' && userRole !== 'superuser' && userRole !== 'superadmin') {
     return NextResponse.redirect(new URL('/kid/dashboard', request.url))
+  }
+
+  // Redirect superadmin away from /admin to their own dashboard
+  if (userRole === 'superadmin' && pathname.startsWith('/admin')) {
+    return NextResponse.redirect(new URL('/superadmin', request.url))
   }
 
   // Protect kid routes - kids cannot access admin routes
@@ -87,7 +92,9 @@ export async function proxy(request: NextRequest) {
 
   // Redirect root path based on role
   if (pathname === '/') {
-    if (userRole === 'admin' || userRole === 'superuser') {
+    if (userRole === 'superadmin') {
+      return NextResponse.redirect(new URL('/superadmin', request.url))
+    } else if (userRole === 'admin' || userRole === 'superuser') {
       return NextResponse.redirect(new URL('/admin', request.url))
     } else {
       return NextResponse.redirect(new URL('/kid/dashboard', request.url))
