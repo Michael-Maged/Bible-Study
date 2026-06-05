@@ -59,19 +59,20 @@ export async function getSuperadminData(): Promise<{
   await requireSuperadmin()
   const supabase = adminClient()
 
-  const [adminRows, enrollmentCount, tenantCount] = await Promise.all([
-    supabase.from('admin').select('id, role, grade, tenant, status, user:user(id, name, email, auth_id), gradeInfo:grade!admin_grade_fkey(name), tenantInfo:tenant!admin_tenant_fkey(name)'),
+  const [adminRows, enrollmentCount, tenants] = await Promise.all([
+    supabase.from('admin').select('id, role, grade, tenant, status, user(id, name, email, auth_id), gradeInfo:grade!admin_grade_fkey(name)'),
     supabase.from('enrollment').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
-    supabase.from('tenant').select('id', { count: 'exact', head: true }),
+    supabase.from('tenant').select('id, name'),
   ])
 
   if (adminRows.error) return { success: false, error: adminRows.error.message }
+
+  const tenantMap = Object.fromEntries((tenants.data ?? []).map(t => [t.id, t.name]))
 
   const rows = (adminRows.data ?? []) as unknown as Array<{
     id: string; role: string; grade: number | null; tenant: string | null; status: string
     user: { id: string; name: string; email: string; auth_id: string } | null
     gradeInfo: { name: string } | null
-    tenantInfo: { name: string } | null
   }>
 
   const stats: SuperadminStats = {
@@ -80,7 +81,7 @@ export async function getSuperadminData(): Promise<{
     totalServants: rows.filter(r => r.role === 'superuser').length,
     pendingServants: rows.filter(r => r.role === 'superuser' && r.status === 'pending').length,
     totalStudents: enrollmentCount.count ?? 0,
-    totalFamilies: tenantCount.count ?? 0,
+    totalFamilies: tenants.data?.length ?? 0,
   }
 
   const pending: PendingCoordinator[] = rows
@@ -89,7 +90,7 @@ export async function getSuperadminData(): Promise<{
       id: r.id, role: r.role, grade: r.grade, tenant: r.tenant, status: r.status,
       user: r.user,
       gradeName: r.gradeInfo?.name ?? null,
-      tenantName: r.tenantInfo?.name ?? null,
+      tenantName: r.tenant ? (tenantMap[r.tenant] ?? r.tenant) : null,
     }))
 
   const active: ActiveCoordinator[] = rows
@@ -98,7 +99,7 @@ export async function getSuperadminData(): Promise<{
       id: r.id, role: r.role, grade: r.grade, tenant: r.tenant,
       user: r.user,
       gradeName: r.gradeInfo?.name ?? null,
-      tenantName: r.tenantInfo?.name ?? null,
+      tenantName: r.tenant ? (tenantMap[r.tenant] ?? r.tenant) : null,
     }))
 
   return { success: true, stats, pending, active }
