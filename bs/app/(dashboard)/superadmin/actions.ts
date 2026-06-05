@@ -12,6 +12,13 @@ function adminClient() {
   )
 }
 
+function anonClient() {
+  return createAdminSupabase(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
 async function requireSuperadmin() {
   const cookieStore = await cookies()
   if (cookieStore.get('user-role')?.value !== 'superadmin') redirect('/login')
@@ -62,8 +69,8 @@ export type TenantInfo = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function fetchTenantMap() {
-  const supabase = adminClient()
-  const { data } = await supabase.from('tenant').select('id, name')
+  const { data, error } = await anonClient().from('tenant').select('id, name')
+  if (error) console.error('[superadmin] fetchTenantMap error:', error.message)
   return Object.fromEntries((data ?? []).map(t => [t.id, t.name as string]))
 }
 
@@ -103,10 +110,11 @@ export async function getSuperadminData(): Promise<{
   const [{ data, error }, enrollmentCount, tenantsRes] = await Promise.all([
     fetchAdminRows(),
     supabase.from('enrollment').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
-    supabase.from('tenant').select('id, name').order('name'),
+    anonClient().from('tenant').select('id, name').order('name'),
   ])
 
   if (error) return { success: false, error: error.message }
+  if (tenantsRes.error) console.error('[superadmin] tenant query error:', tenantsRes.error.message)
 
   const tenantList: TenantInfo[] = (tenantsRes.data ?? []).map(t => ({ id: t.id, name: t.name as string }))
   const tenantMap = Object.fromEntries(tenantList.map(t => [t.id, t.name]))
@@ -161,8 +169,8 @@ export async function getServants(): Promise<{ success: boolean; data?: Member[]
   const supabase = adminClient()
   const [{ data, error }, gradesRes, tenants] = await Promise.all([
     fetchAdminRows(),
-    supabase.from('grade').select('grade_num, name, tenant').order('grade_num'),
-    supabase.from('tenant').select('id, name'),
+    anonClient().from('grade').select('grade_num, name, tenant').order('grade_num'),
+    anonClient().from('tenant').select('id, name'),
   ])
   if (error) return { success: false, error: error.message }
   const tenantMap = Object.fromEntries((tenants.data ?? []).map(t => [t.id, t.name as string]))
