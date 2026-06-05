@@ -13,9 +13,7 @@ function groupByGrade(rows: ServantRowState[]): { key: string; label: string; me
   const map = new Map<string, { label: string; members: ServantRowState[] }>()
   for (const row of rows) {
     const key = `${row.grade ?? 'none'}__${row.tenant ?? 'none'}`
-    const label = row.gradeName
-      ? `${row.gradeName}${row.tenantName ? ` — ${row.tenantName}` : ''}`
-      : row.grade != null ? `Grade ${row.grade}` : 'Unassigned'
+    const label = row.gradeName ?? (row.grade != null ? `Grade ${row.grade}` : 'Unassigned')
     if (!map.has(key)) map.set(key, { label, members: [] })
     map.get(key)!.members.push(row)
   }
@@ -94,7 +92,7 @@ export default function ServantsView({ servants, grades }: { servants: Member[];
 
                       {/* Info + Promote */}
                       <div className="flex items-center gap-3">
-                        <PersonRow name={servant.user?.name} email={servant.user?.email} tenantName={servant.tenantName} gradeName={undefined} />
+                        <PersonRow name={servant.user?.name} email={servant.user?.email} />
                         <Button
                           size="sm"
                           className="flex-shrink-0 text-xs shadow-[0_2px_0_rgba(138,90,15,0.25)]"
