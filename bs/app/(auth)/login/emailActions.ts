@@ -1,22 +1,44 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { timingSafeEqual, createHmac } from 'crypto'
+
+function superadminSessionToken(): string {
+  // Deterministic token derived from credentials + a server secret.
+  // Regenerates on env change, invalidating all existing superadmin sessions.
+  const secret = process.env.SUPERADMIN_SESSION_SECRET ?? 'fallback-change-in-prod'
+  return createHmac('sha256', secret)
+    .update(`${process.env.SUPERADMIN_EMAIL}:${process.env.SUPERADMIN_PASSWORD}`)
+    .digest('hex')
+}
+
+function safeEqual(a: string, b: string): boolean {
+  try {
+    return timingSafeEqual(Buffer.from(a), Buffer.from(b))
+  } catch {
+    return false
+  }
+}
+
+export { superadminSessionToken }
 
 export async function loginWithEmail(email: string, password: string) {
   // Superadmin: credential-only auth (no Supabase account)
-  if (
-    email === process.env.SUPERADMIN_EMAIL &&
-    password === process.env.SUPERADMIN_PASSWORD
-  ) {
+  const saEmail = process.env.SUPERADMIN_EMAIL ?? ''
+  const saPass  = process.env.SUPERADMIN_PASSWORD ?? ''
+  if (saEmail && saPass && safeEqual(email, saEmail) && safeEqual(password, saPass)) {
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    cookieStore.set('user-role', 'superadmin', {
+    const cookieOpts = {
       path: '/',
       maxAge: 60 * 60 * 24 * 7,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    })
+      sameSite: 'lax' as const,
+    }
+    cookieStore.set('user-role', 'superadmin', cookieOpts)
+    // Signed session token — forgeable user-role cookie alone is not enough
+    cookieStore.set('superadmin-token', superadminSessionToken(), cookieOpts)
     return { success: true, user: { role: 'superadmin' }, isPending: false }
   }
 
